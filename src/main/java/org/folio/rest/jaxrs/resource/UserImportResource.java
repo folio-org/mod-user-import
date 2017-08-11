@@ -62,6 +62,30 @@ public interface UserImportResource {
       return new UserImportResource.PostUserImportResponse(responseBuilder.build());
     }
 
+    /**
+     * Bad request, possibly error in user data
+     * 
+     * @param entity
+     *     
+     */
+    public static UserImportResource.PostUserImportResponse withPlainBadRequest(String entity) {
+      Response.ResponseBuilder responseBuilder = Response.status(400).header("Content-Type", "text/plain");
+      responseBuilder.entity(entity);
+      return new UserImportResource.PostUserImportResponse(responseBuilder.build());
+    }
+
+    /**
+     * Internal server error
+     * 
+     * @param entity
+     *     
+     */
+    public static UserImportResource.PostUserImportResponse withPlainInternalServerError(String entity) {
+      Response.ResponseBuilder responseBuilder = Response.status(500).header("Content-Type", "text/plain");
+      responseBuilder.entity(entity);
+      return new UserImportResource.PostUserImportResponse(responseBuilder.build());
+    }
+
   }
 
 }
