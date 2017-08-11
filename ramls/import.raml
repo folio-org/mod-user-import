@@ -1,0 +1,32 @@
+#%RAML 0.8
+title: User import
+version: v1
+baseUri: http://github.com/org/qultoltd/mod-user-import
+
+documentation:
+  - title: mod-user-import API
+    content: This documents the API calls that can be made to import users into the system
+
+schemas:
+  - userdata: !include schemas/userdata.json
+  - userdataCollection: !include schemas/userdataCollection.json
+
+resourceTypes:
+  - collection: !include ./raml-util/rtypes/collection.raml
+  - collection-item: !include ./raml-util/rtypes/item-collection.raml
+
+/user-import:
+  post:
+    body:
+      application/json:
+        schema: userdataCollection
+    description: Create or update a list of users
+    responses:
+      200:
+        description: "Return OK"
+        body:
+          text/plain:
+      500:
+        description: "Internal server error"
+        body:
+          text/plain

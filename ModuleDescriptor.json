@@ -1,0 +1,23 @@
+{
+  "id": "mod-user-import",
+  "name": "User import",
+  "provides": [
+    {
+      "id": "mod-user-import",
+      "version": "0.0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/user-import",
+          "modulePermissions": [
+            "users.collection.get",
+            "addresstypes.collection.get",
+            "usergroups.collection.get"
+          ]
+        }
+      ]
+    }
+  ]
+}
