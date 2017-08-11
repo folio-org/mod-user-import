@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -307,12 +308,13 @@ public class UserImportAPI implements UserImportResource {
     JsonArray existingUserList, List<User> usersToImport) {
     Future<JsonObject> future = Future.future();
 
+    List<String> externalIds = extractExistingIds(existingUserList);
+
     for (User user : usersToImport) {
-      //TODO: change to check if user exist
       //TODO handle responses
       //TODO log errors
       //TODO create statistics from number of created/updated + failed users
-      if (userExist(user, existingUserList)) {
+      if (externalIds.contains(user.getExternalSystemId())) {
         updateUser(okapiHeaders, vertxContext, user);
       } else {
         createNewUser(okapiHeaders, vertxContext, user);
@@ -345,8 +347,18 @@ public class UserImportAPI implements UserImportResource {
     return processFuture;
   }
 
-  private boolean userExist(User user, JsonArray existingUserList) {
-    return false;
+  private List<String> extractExistingIds(JsonArray existingUserList) {
+    List<String> externalIds = new ArrayList<>();
+
+    List existingUsers = existingUserList.getList();
+    if (existingUsers != null && !existingUsers.isEmpty() && existingUsers.get(0) instanceof JsonObject) {
+      List<JsonObject> userList = (List<JsonObject>) existingUserList.getList();
+      for (JsonObject user : userList) {
+        externalIds.add(user.getString("externalSystemId"));
+      }
+    }
+
+    return externalIds;
   }
 
 }
