@@ -110,48 +110,6 @@
         </executions>
       </plugin>
 
-<!--       <plugin> -->
-<!--         <groupId>org.codehaus.mojo</groupId> -->
-<!--         <artifactId>aspectj-maven-plugin</artifactId> -->
-<!--         <version>1.10</version> -->
-<!--         <configuration> -->
-<!--           <verbose>true</verbose> -->
-<!--           <showWeaveInfo>false</showWeaveInfo> -->
-<!--           <complianceLevel>1.8</complianceLevel> -->
-<!--           <includes> -->
-<!--             <include>**/impl/*.java</include> -->
-<!--             <include>**/*.aj</include> -->
-<!--           </includes> -->
-<!--           <aspectDirectory>src/main/java/org/folio/rest/annotations</aspectDirectory> -->
-<!--           <XaddSerialVersionUID>true</XaddSerialVersionUID> -->
-<!--           <showWeaveInfo>true</showWeaveInfo> -->
-<!--           <aspectLibraries> -->
-<!--             <aspectLibrary> -->
-<!--               <groupId>org.folio</groupId> -->
-<!--               <artifactId>domain-models-api-aspects</artifactId> -->
-<!--             </aspectLibrary> -->
-<!--           </aspectLibraries> -->
-<!--         </configuration> -->
-<!--         <executions> -->
-<!--           <execution> -->
-<!--             <goals> -->
-<!--               <goal>compile</goal> -->
-<!--             </goals> -->
-<!--           </execution> -->
-<!--         </executions> -->
-<!--         <dependencies> -->
-<!--           <dependency> -->
-<!--             <groupId>org.aspectj</groupId> -->
-<!--             <artifactId>aspectjrt</artifactId> -->
-<!--             <version>1.8.9</version> -->
-<!--           </dependency> -->
-<!--           <dependency> -->
-<!--             <groupId>org.aspectj</groupId> -->
-<!--             <artifactId>aspectjtools</artifactId> -->
-<!--             <version>1.8.9</version> -->
-<!--           </dependency> -->
-<!--         </dependencies> -->
-<!--       </plugin> -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.0.1</version>
@@ -191,54 +149,26 @@
         </executions>
       </plugin>
 
-      <!-- Replace the baseUri and the protocols in the RAMLs that have been copied to
-        apidocs directory so that they can be used via the local html api console. -->
-<!--       <plugin> -->
-<!--         <artifactId>maven-antrun-plugin</artifactId> -->
-<!--         <version>1.8</version> -->
-<!--         <executions> -->
-<!--           <execution> -->
-<!--             <phase>prepare-package</phase> -->
-<!--             <configuration> -->
-<!--               <target> -->
-<!--                 <replace token="baseUri: http://github.com/org/folio/mod-users" value="baseUri: http://localhost:{http.port}" dir="${basedir}/target/classes/apidocs/raml"> -->
-<!--                   <include name="**/*.raml" /> -->
-<!--                 </replace> -->
-<!--                 <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml"> -->
-<!--                   <include name="**/*.raml" /> -->
-<!--                 </replace> -->
-<!--                 <replace token="../.." value="../raml-util" dir="${basedir}/target/classes/apidocs/raml"> -->
-<!--                   <include name="**/*.raml" /> -->
-<!--                 </replace> -->
-<!--               </target> -->
-<!--             </configuration> -->
-<!--             <goals> -->
-<!--               <goal>run</goal> -->
-<!--             </goals> -->
-<!--           </execution> -->
-<!--         </executions> -->
-<!--       </plugin> -->
-
-<!--       <plugin> -->
-<!--         <groupId>org.codehaus.mojo</groupId> -->
-<!--         <artifactId>properties-maven-plugin</artifactId> -->
-<!--         <version>1.0.0</version> -->
-<!--         <executions> -->
-<!--           <execution> -->
-<!--             <goals> -->
-<!--               <goal>set-system-properties</goal> -->
-<!--             </goals> -->
-<!--           </execution> -->
-<!--         </executions> -->
-<!--         <configuration> -->
-<!--           <properties> -->
-<!--             <property> -->
-<!--               <name>log4j.configuration</name> -->
-<!--               <value>${project.baseUri}src/main/resources/log4j.properties</value> -->
-<!--             </property> -->
-<!--           </properties> -->
-<!--         </configuration> -->
-<!--       </plugin> -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>set-system-properties</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <properties>
+            <property>
+              <name>log4j.configuration</name>
+              <value>${project.baseUri}src/main/resources/log4j.properties</value>
+            </property>
+          </properties>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
