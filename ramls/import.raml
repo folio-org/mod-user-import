@@ -11,11 +11,13 @@ schemas:
   - userdata: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
 
-resourceTypes:
-  - collection: !include ./raml-util/rtypes/collection.raml
-  - collection-item: !include ./raml-util/rtypes/item-collection.raml
-
 /user-import:
+  get:
+    responses:
+      200:
+        description: "Fake endpoint"
+        body:
+          text/plain:
   post:
     body:
       application/json:

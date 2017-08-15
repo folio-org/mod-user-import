@@ -1,10 +1,13 @@
 
 package org.folio.rest.jaxrs.model;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.annotation.Generated;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -19,7 +22,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "phone",
     "mobilePhone",
     "dateOfBirth",
-    "preferredContact"
+    "addresses",
+    "preferredContactTypeId"
 })
 public class Personal {
 
@@ -43,9 +47,12 @@ public class Personal {
     private String mobilePhone;
     @JsonProperty("dateOfBirth")
     private Date dateOfBirth;
-    @JsonProperty("preferredContact")
+    @JsonProperty("addresses")
+    @Size(min = 0)
     @Valid
-    private PreferredContact preferredContact;
+    private List<Address> addresses = new ArrayList<Address>();
+    @JsonProperty("preferredContactTypeId")
+    private String preferredContactTypeId;
 
     /**
      * 
@@ -229,25 +236,50 @@ public class Personal {
     /**
      * 
      * @return
-     *     The preferredContact
+     *     The addresses
      */
-    @JsonProperty("preferredContact")
-    public PreferredContact getPreferredContact() {
-        return preferredContact;
+    @JsonProperty("addresses")
+    public List<Address> getAddresses() {
+        return addresses;
     }
 
     /**
      * 
-     * @param preferredContact
-     *     The preferredContact
+     * @param addresses
+     *     The addresses
      */
-    @JsonProperty("preferredContact")
-    public void setPreferredContact(PreferredContact preferredContact) {
-        this.preferredContact = preferredContact;
+    @JsonProperty("addresses")
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
     }
 
-    public Personal withPreferredContact(PreferredContact preferredContact) {
-        this.preferredContact = preferredContact;
+    public Personal withAddresses(List<Address> addresses) {
+        this.addresses = addresses;
+        return this;
+    }
+
+    /**
+     * 
+     * @return
+     *     The preferredContactTypeId
+     */
+    @JsonProperty("preferredContactTypeId")
+    public String getPreferredContactTypeId() {
+        return preferredContactTypeId;
+    }
+
+    /**
+     * 
+     * @param preferredContactTypeId
+     *     The preferredContactTypeId
+     */
+    @JsonProperty("preferredContactTypeId")
+    public void setPreferredContactTypeId(String preferredContactTypeId) {
+        this.preferredContactTypeId = preferredContactTypeId;
+    }
+
+    public Personal withPreferredContactTypeId(String preferredContactTypeId) {
+        this.preferredContactTypeId = preferredContactTypeId;
         return this;
     }
 

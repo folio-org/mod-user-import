@@ -21,17 +21,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "username",
     "id",
+    "externalSystemId",
     "barcode",
     "active",
     "type",
     "patronGroup",
     "meta",
-    "externalSystemId",
     "personal",
-    "openDate",
     "enrollmentDate",
     "expirationDate",
-    "lastUpdateDate"
+    "createdDate",
+    "updatedDate"
 })
 public class User {
 
@@ -45,6 +45,8 @@ public class User {
     private String username;
     @JsonProperty("id")
     private String id;
+    @JsonProperty("externalSystemId")
+    private String externalSystemId;
     @JsonProperty("barcode")
     private String barcode;
     @JsonProperty("active")
@@ -56,22 +58,20 @@ public class User {
     @JsonProperty("meta")
     @Valid
     private Meta meta;
-    @JsonProperty("externalSystemId")
-    private String externalSystemId;
     /**
      * 
      */
     @JsonProperty("personal")
     @Valid
     private Personal personal;
-    @JsonProperty("openDate")
-    private Date openDate;
     @JsonProperty("enrollmentDate")
     private Date enrollmentDate;
     @JsonProperty("expirationDate")
     private Date expirationDate;
-    @JsonProperty("lastUpdateDate")
-    private Date lastUpdateDate;
+    @JsonProperty("createdDate")
+    private Date createdDate;
+    @JsonProperty("updatedDate")
+    private Date updatedDate;
 
     /**
      * 
@@ -124,6 +124,31 @@ public class User {
 
     public User withId(String id) {
         this.id = id;
+        return this;
+    }
+
+    /**
+     * 
+     * @return
+     *     The externalSystemId
+     */
+    @JsonProperty("externalSystemId")
+    public String getExternalSystemId() {
+        return externalSystemId;
+    }
+
+    /**
+     * 
+     * @param externalSystemId
+     *     The externalSystemId
+     */
+    @JsonProperty("externalSystemId")
+    public void setExternalSystemId(String externalSystemId) {
+        this.externalSystemId = externalSystemId;
+    }
+
+    public User withExternalSystemId(String externalSystemId) {
+        this.externalSystemId = externalSystemId;
         return this;
     }
 
@@ -255,31 +280,6 @@ public class User {
     /**
      * 
      * @return
-     *     The externalSystemId
-     */
-    @JsonProperty("externalSystemId")
-    public String getExternalSystemId() {
-        return externalSystemId;
-    }
-
-    /**
-     * 
-     * @param externalSystemId
-     *     The externalSystemId
-     */
-    @JsonProperty("externalSystemId")
-    public void setExternalSystemId(String externalSystemId) {
-        this.externalSystemId = externalSystemId;
-    }
-
-    public User withExternalSystemId(String externalSystemId) {
-        this.externalSystemId = externalSystemId;
-        return this;
-    }
-
-    /**
-     * 
-     * @return
      *     The personal
      */
     @JsonProperty("personal")
@@ -299,31 +299,6 @@ public class User {
 
     public User withPersonal(Personal personal) {
         this.personal = personal;
-        return this;
-    }
-
-    /**
-     * 
-     * @return
-     *     The openDate
-     */
-    @JsonProperty("openDate")
-    public Date getOpenDate() {
-        return openDate;
-    }
-
-    /**
-     * 
-     * @param openDate
-     *     The openDate
-     */
-    @JsonProperty("openDate")
-    public void setOpenDate(Date openDate) {
-        this.openDate = openDate;
-    }
-
-    public User withOpenDate(Date openDate) {
-        this.openDate = openDate;
         return this;
     }
 
@@ -380,25 +355,50 @@ public class User {
     /**
      * 
      * @return
-     *     The lastUpdateDate
+     *     The createdDate
      */
-    @JsonProperty("lastUpdateDate")
-    public Date getLastUpdateDate() {
-        return lastUpdateDate;
+    @JsonProperty("createdDate")
+    public Date getCreatedDate() {
+        return createdDate;
     }
 
     /**
      * 
-     * @param lastUpdateDate
-     *     The lastUpdateDate
+     * @param createdDate
+     *     The createdDate
      */
-    @JsonProperty("lastUpdateDate")
-    public void setLastUpdateDate(Date lastUpdateDate) {
-        this.lastUpdateDate = lastUpdateDate;
+    @JsonProperty("createdDate")
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 
-    public User withLastUpdateDate(Date lastUpdateDate) {
-        this.lastUpdateDate = lastUpdateDate;
+    public User withCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+        return this;
+    }
+
+    /**
+     * 
+     * @return
+     *     The updatedDate
+     */
+    @JsonProperty("updatedDate")
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+
+    /**
+     * 
+     * @param updatedDate
+     *     The updatedDate
+     */
+    @JsonProperty("updatedDate")
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public User withUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
         return this;
     }
 

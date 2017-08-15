@@ -27,7 +27,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <raml-module-builder.version>13.0.3-SNAPSHOT</raml-module-builder.version>
+    <raml-module-builder.version>13.1.1-SNAPSHOT</raml-module-builder.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <ramlfiles_util_path>${basedir}/ramls/raml-util</ramlfiles_util_path>
     <okapi.version>1.8.2-SNAPSHOT</okapi.version>

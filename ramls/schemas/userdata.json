@@ -1,5 +1,5 @@
 {
-  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "User Schema",
   "type": "object",
   "properties": {
@@ -7,6 +7,9 @@
       "type": "string"
     },
     "id": {
+      "type": "string"
+    },
+    "externalSystemId": {
       "type": "string"
     },
     "barcode": {
@@ -23,9 +26,6 @@
     },
     "meta": {
       "type": "object"
-    },
-    "externalSystemId": {
-      "type": "string"
     },
     "personal": {
       "type": "object",
@@ -52,56 +52,71 @@
           "type": "string",
           "format": "date-time"
         },
-        "preferredContact": {
-          "type": "object",
-          "properties": {
-            "value": {
-              "type": "string",
-              "enum": [
-                "EMAIL",
-                "MAIL",
-                "TEXT",
-                "PHONE",
-                "MOBILE"
-              ]
+        "addresses": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "countryId": {
+                "type": "string"
+              },
+              "addressLine1": {
+                "type": "string"
+              },
+              "addressLine2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string"
+              },
+              "addressTypeId": {
+                "type": "string"
+              },
+              "primaryAddress": {
+                "type": "boolean"
+              }
             },
-            "desc": {
-              "type": "string",
-              "enum": [
-                "Email",
-                "Mail (Primary Address)",
-                "Text message",
-                "Phone",
-                "Mobile phone"
-              ]
-            }
+            "additionalProperties": false
           }
+        },
+        "preferredContactTypeId": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
       "required": [
-         "lastName"
+        "lastName"
       ]
     },
-    "openDate": {
-       "type": "string",
-       "format": "date-time"
-    },
     "enrollmentDate": {
-       "type": "string",
-       "format": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "expirationDate": {
-       "type": "string",
-       "format": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
-    "lastUpdateDate": {
-       "type": "string",
-       "format": "date-time"
+    "createdDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedDate": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "additionalProperties": false,
   "required": [
     "username"
-   ]
+  ]
 }

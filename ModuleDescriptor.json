@@ -6,6 +6,12 @@
       "id": "mod-user-import",
       "version": "0.0.1",
       "handlers": [
+      	{
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/user-import"
+        },
         {
           "methods": [
             "POST"
@@ -14,7 +20,11 @@
           "modulePermissions": [
             "users.collection.get",
             "addresstypes.collection.get",
-            "usergroups.collection.get"
+            "usergroups.collection.get",
+            "users.item.get",
+            "users.item.post",
+            "users.item.put",
+            "perms.users.item.post"
           ]
         }
       ]
