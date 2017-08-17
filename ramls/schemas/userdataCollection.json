@@ -12,6 +12,12 @@
     },
     "total_records": {
       "type": "integer"
+    },
+    "deactivate_missing_users": {
+      "type": "boolean"
+    },
+    "update_only_present_fields": {
+      "type": "boolean"
     }
   },
   "required": [

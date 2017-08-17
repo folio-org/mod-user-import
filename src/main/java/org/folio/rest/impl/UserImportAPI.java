@@ -59,10 +59,11 @@ public class UserImportAPI implements UserImportResource {
   }
 
   @Override
-  public void postUserImport(UserdataCollection entity, RoutingContext routingContext, Map<String, String> okapiHeaders,
+  public void postUserImport(UserdataCollection userCollection, RoutingContext routingContext,
+    Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) throws Exception {
-    if (entity.getTotalRecords() == 0) {
+    if (userCollection.getTotalRecords() == 0) {
       asyncResultHandler
         .handle(Future.succeededFuture(PostUserImportResponse.withPlainOK("OK")));
     } else {
@@ -76,27 +77,39 @@ public class UserImportAPI implements UserImportResource {
 
               Map<String, String> patronGroups = extractPatronGroups(patronGroupResponse.result());
 
-              List<List<User>> userPartitions = Lists.partition(entity.getUsers(), 10);
+              Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
 
-              List<Future> futures = new ArrayList<>();
+              if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
+                asyncResultHandler
+                  .handle(
+                    Future.succeededFuture(PostUserImportResponse
+                      .withPlainBadRequest("Failed to import users. Function not yet implemented.")));
+              } else {
 
-              for (List<User> currentPartition : userPartitions) {
-                Future<String> userBatchProcessResponse =
-                  processUserBatch(okapiHeaders, vertxContext, currentPartition, patronGroups, addressTypes);
-                futures.add(userBatchProcessResponse);
-              }
+                List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
-              CompositeFuture.all(futures).setHandler(ar -> {
-                if (ar.succeeded()) {
-                  asyncResultHandler
-                    .handle(
-                      Future.succeededFuture(PostUserImportResponse.withPlainOK("Users were imported successfully.")));
-                } else {
-                  asyncResultHandler
-                    .handle(
-                      Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+                List<Future> futures = new ArrayList<>();
+
+                for (List<User> currentPartition : userPartitions) {
+                  Future<String> userBatchProcessResponse =
+                    processUserBatch(okapiHeaders, vertxContext, currentPartition, patronGroups, addressTypes,
+                      updateOnlyPresentData);
+                  futures.add(userBatchProcessResponse);
                 }
-              });
+
+                CompositeFuture.all(futures).setHandler(ar -> {
+                  if (ar.succeeded()) {
+                    asyncResultHandler
+                      .handle(
+                        Future
+                          .succeededFuture(PostUserImportResponse.withPlainOK("Users were imported successfully.")));
+                  } else {
+                    asyncResultHandler
+                      .handle(
+                        Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+                  }
+                });
+              }
 
             } else {
               asyncResultHandler
@@ -342,10 +355,10 @@ public class UserImportAPI implements UserImportResource {
 
   private Future<JsonObject> processUserSearchResult(Map<String, String> okapiHeaders, Context vertxContext,
     JsonArray existingUserList, List<User> usersToImport, Map<String, String> patronGroups,
-    Map<String, String> addressTypes) {
+    Map<String, String> addressTypes, boolean updateOnlyPresentData) {
     Future<JsonObject> future = Future.future();
 
-    Map<String, String> externalIds = extractExistingIds(existingUserList);
+    Map<String, User> externalIds = extractExistingUsers(existingUserList);
     List<Future> futures = new ArrayList<>();
 
     for (User user : usersToImport) {
@@ -353,7 +366,11 @@ public class UserImportAPI implements UserImportResource {
       //TODO create statistics from number of created/updated + failed users
       updateUserData(user, patronGroups, addressTypes);
       if (externalIds.containsKey(user.getExternalSystemId())) {
-        user.setId(externalIds.get(user.getExternalSystemId()));
+        if (updateOnlyPresentData) {
+          user = updateExistingUserWithIncomingFields(user, externalIds.get(user.getExternalSystemId()));
+        } else {
+          user.setId(externalIds.get(user.getExternalSystemId()).getId());
+        }
         Future<Buffer> userUpdateResponse = updateUser(okapiHeaders, vertxContext, user);
         futures.add(userUpdateResponse);
       } else {
@@ -374,7 +391,8 @@ public class UserImportAPI implements UserImportResource {
   }
 
   private Future<String> processUserBatch(Map<String, String> okapiHeaders, Context vertxContext,
-    List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes) {
+    List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
+    boolean updateOnlyPresentData) {
     Future<String> processFuture = Future.future();
     Future<JsonObject> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition);
     userSearchResponse.setHandler(userSearchAsyncResponse -> {
@@ -382,7 +400,7 @@ public class UserImportAPI implements UserImportResource {
 
         Future<JsonObject> userSearchAsyncResult =
           processUserSearchResult(okapiHeaders, vertxContext, userSearchAsyncResponse.result().getJsonArray("users"),
-            currentPartition, patronGroups, addressTypes);
+            currentPartition, patronGroups, addressTypes, updateOnlyPresentData);
         userSearchAsyncResult.setHandler(response -> {
           if (response.succeeded()) {
             processFuture.complete();
@@ -398,12 +416,12 @@ public class UserImportAPI implements UserImportResource {
     return processFuture;
   }
 
-  private Map<String, String> extractExistingIds(JsonArray existingUserList) {
-    Map<String, String> externalIds = new HashMap<>();
+  private Map<String, User> extractExistingUsers(JsonArray existingUserList) {
+    Map<String, User> externalIds = new HashMap<>();
     for (int i = 0; i < existingUserList.size(); i++) {
       JsonObject existingUser = existingUserList.getJsonObject(i);
       User mappedUser = existingUser.mapTo(User.class);
-      externalIds.put(mappedUser.getExternalSystemId(), mappedUser.getId());
+      externalIds.put(mappedUser.getExternalSystemId(), mappedUser);
     }
 
     return externalIds;
@@ -429,6 +447,49 @@ public class UserImportAPI implements UserImportResource {
             preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
       }
     }
+  }
+
+  private User updateExistingUserWithIncomingFields(User user, User existingUser) {
+    JsonObject current = JsonObject.mapFrom(user);
+    JsonObject existing = JsonObject.mapFrom(existingUser);
+
+    List<Address> addresses = null;
+
+    existing.mergeIn(current);
+
+    User response = existing.mapTo(User.class);
+
+    if (existingUser.getPersonal() != null) {
+      List<Address> currentAddresses = null;
+      List<Address> existingAddresses = existingUser.getPersonal().getAddresses();
+      if (user.getPersonal() != null) {
+        currentAddresses = user.getPersonal().getAddresses();
+      }
+      if (currentAddresses == null) {
+        addresses = existingAddresses;
+      } else {
+        Map<String, Address> currentAddressMap = new HashMap<>();
+        Map<String, Address> existingAddressMap = new HashMap<>();
+        currentAddresses.stream().forEach(object -> {
+          currentAddressMap.put(((Address) object).getAddressTypeId(), (Address) object);
+        });
+        existingAddresses.stream().forEach(object -> {
+          existingAddressMap.put(((Address) object).getAddressTypeId(), (Address) object);
+        });
+
+        existingAddressMap.putAll(currentAddressMap);
+        addresses = new ArrayList<>();
+        for (Address address : existingAddressMap.values()) {
+          addresses.add(address);
+        }
+      }
+    }
+
+    if (addresses != null) {
+      response.getPersonal().setAddresses(addresses);
+    }
+
+    return response;
   }
 
 }
