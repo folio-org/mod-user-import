@@ -9,9 +9,9 @@ The structure of the body is:
 <pre><code>
 {
   "users": [],
-  "total\_records": 0,
-  "deactivate\_missing\_users": false,
-  "update\_only\_present\_fields": false
+  "total_records": 0,
+  "deactivate_missing_users": false,
+  "update_only_present_fields": false
 }
 </code></pre>
 
