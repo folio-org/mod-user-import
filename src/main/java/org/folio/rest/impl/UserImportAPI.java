@@ -549,6 +549,7 @@ public class UserImportAPI implements UserImportResource {
   private Future<JsonObject> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, Context vertxContext) {
     Future<JsonObject> future = Future.future();
 
+    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
     String url = "externalSystemId <> ''";
     try {
       url = URLEncoder.encode(url, "UTF-8");
