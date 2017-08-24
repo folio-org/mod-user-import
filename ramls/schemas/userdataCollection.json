@@ -18,6 +18,9 @@
     },
     "update_only_present_fields": {
       "type": "boolean"
+    },
+    "source_type": {
+      "type": "string" 
     }
   },
   "required": [

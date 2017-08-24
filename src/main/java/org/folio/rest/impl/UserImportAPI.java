@@ -15,6 +15,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import io.vertx.core.AsyncResult;
@@ -81,7 +82,8 @@ public class UserImportAPI implements UserImportResource {
 
               if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
 
-                Future<JsonObject> usersResponse = listAllUsersWithExternalSystemId(okapiHeaders, vertxContext);
+                Future<JsonObject> usersResponse =
+                  listAllUsersWithExternalSystemId(okapiHeaders, vertxContext, userCollection.getSourceType());
 
                 usersResponse.setHandler(handler -> {
 
@@ -102,7 +104,8 @@ public class UserImportAPI implements UserImportResource {
                     for (List<User> currentPartition : userPartitions) {
                       Future<JsonObject> userSearchAsyncResult =
                         processUserSearchResult(okapiHeaders, vertxContext, existingUserMap,
-                          currentPartition, patronGroups, addressTypes, updateOnlyPresentData);
+                          currentPartition, patronGroups, addressTypes, updateOnlyPresentData,
+                          userCollection.getSourceType());
                       futures.add(userSearchAsyncResult);
                     }
 
@@ -145,7 +148,7 @@ public class UserImportAPI implements UserImportResource {
                 for (List<User> currentPartition : userPartitions) {
                   Future<String> userBatchProcessResponse =
                     processUserBatch(okapiHeaders, vertxContext, currentPartition, patronGroups, addressTypes,
-                      updateOnlyPresentData);
+                      updateOnlyPresentData, userCollection.getSourceType());
                   futures.add(userBatchProcessResponse);
                 }
 
@@ -407,7 +410,7 @@ public class UserImportAPI implements UserImportResource {
 
   private Future<JsonObject> processUserSearchResult(Map<String, String> okapiHeaders, Context vertxContext,
     Map<String, User> existingUsers, List<User> usersToImport, Map<String, String> patronGroups,
-    Map<String, String> addressTypes, boolean updateOnlyPresentData) {
+    Map<String, String> addressTypes, boolean updateOnlyPresentData, String sourceType) {
     Future<JsonObject> future = Future.future();
 
     List<Future> futures = new ArrayList<>();
@@ -415,7 +418,7 @@ public class UserImportAPI implements UserImportResource {
     for (User user : usersToImport) {
       //TODO log errors
       //TODO create statistics from number of created/updated + failed users
-      updateUserData(user, patronGroups, addressTypes);
+      updateUserData(user, patronGroups, addressTypes, sourceType);
       if (existingUsers.containsKey(user.getExternalSystemId())) {
         if (updateOnlyPresentData) {
           user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
@@ -444,7 +447,7 @@ public class UserImportAPI implements UserImportResource {
 
   private Future<String> processUserBatch(Map<String, String> okapiHeaders, Context vertxContext,
     List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
-    boolean updateOnlyPresentData) {
+    boolean updateOnlyPresentData, String sourceType) {
     Future<String> processFuture = Future.future();
     Future<JsonObject> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition);
     userSearchResponse.setHandler(userSearchAsyncResponse -> {
@@ -454,7 +457,7 @@ public class UserImportAPI implements UserImportResource {
 
         Future<JsonObject> userSearchAsyncResult =
           processUserSearchResult(okapiHeaders, vertxContext, existingUsers,
-            currentPartition, patronGroups, addressTypes, updateOnlyPresentData);
+            currentPartition, patronGroups, addressTypes, updateOnlyPresentData, sourceType);
         userSearchAsyncResult.setHandler(response -> {
           if (response.succeeded()) {
             processFuture.complete();
@@ -481,7 +484,11 @@ public class UserImportAPI implements UserImportResource {
     return existingUsers;
   }
 
-  private void updateUserData(User user, Map<String, String> patronGroups, Map<String, String> addressTypes) {
+  private void updateUserData(User user, Map<String, String> patronGroups, Map<String, String> addressTypes,
+    String sourceType) {
+    if (!Strings.isNullOrEmpty(sourceType)) {
+      user.setExternalSystemId(sourceType + "_" + user.getExternalSystemId());
+    }
     if (user.getPatronGroup() != null && patronGroups.containsKey(user.getPatronGroup())) {
       user.setPatronGroup(patronGroups.get(user.getPatronGroup()));
     }
@@ -546,11 +553,15 @@ public class UserImportAPI implements UserImportResource {
     return response;
   }
 
-  private Future<JsonObject> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, Context vertxContext) {
+  private Future<JsonObject> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, Context vertxContext,
+    String prefix) {
     Future<JsonObject> future = Future.future();
 
     String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
     String url = "externalSystemId <> ''";
+    if (!Strings.isNullOrEmpty(prefix)) {
+      url = "externalSystemId = ^" + prefix + "_*";
+    }
     try {
       url = URLEncoder.encode(url, "UTF-8");
     } catch (UnsupportedEncodingException exc) {
