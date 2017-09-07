@@ -10,21 +10,21 @@
         "$ref": "userdata"
       }
     },
-    "total_records": {
+    "totalRecords": {
       "type": "integer"
     },
-    "deactivate_missing_users": {
+    "deactivateMissingUsers": {
       "type": "boolean"
     },
-    "update_only_present_fields": {
+    "updateOnlyPresentFields": {
       "type": "boolean"
     },
-    "source_type": {
+    "sourceType": {
       "type": "string" 
     }
   },
   "required": [
     "users",
-    "total_records"
+    "totalRecords"
   ]
 }
