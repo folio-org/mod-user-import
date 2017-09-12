@@ -56,7 +56,7 @@ public class UserImportAPI implements UserImportResource {
   public void getUserImport(RoutingContext routingContext, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
     asyncResultHandler
-      .handle(Future.succeededFuture(GetUserImportResponse.withPlainOK("OK")));
+      .handle(Future.succeededFuture(GetUserImportResponse.withPlainOK("This is a fake endpoint.")));
   }
 
   @Override
@@ -66,141 +66,127 @@ public class UserImportAPI implements UserImportResource {
     Context vertxContext) throws Exception {
     if (userCollection.getTotalRecords() == 0) {
       asyncResultHandler
-        .handle(Future.succeededFuture(PostUserImportResponse.withPlainOK("OK")));
+        .handle(Future.succeededFuture(PostUserImportResponse.withPlainOK("No users to import.")));
     } else {
-      Future<JsonArray> addressTypeAsyncRequest = getAddressTypes(okapiHeaders, vertxContext);
-      addressTypeAsyncRequest.setHandler(res -> {
-        if (res.succeeded()) {
-          Map<String, String> addressTypes = extractAddressTypes(res.result());
-          Future<JsonArray> patronGroupsAsyncRequest = getPatronGroups(okapiHeaders, vertxContext);
-          patronGroupsAsyncRequest.setHandler(patronGroupResponse -> {
-            if (patronGroupResponse.succeeded()) {
+      importUsers(asyncResultHandler, okapiHeaders, vertxContext, userCollection);
+    }
+  }
 
-              Map<String, String> patronGroups = extractPatronGroups(patronGroupResponse.result());
+  private void importUsers(Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, Context vertxContext, UserdataCollection userCollection) {
 
-              Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
+    Future<Map<String, String>> addressTypeAsyncRequest = getAddressTypes(okapiHeaders, vertxContext);
 
-              if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
+    Future<Map<String, String>> patronGroupsAsyncRequest = getPatronGroups(okapiHeaders, vertxContext);
 
-                Future<JsonObject> usersResponse =
-                  listAllUsersWithExternalSystemId(okapiHeaders, vertxContext, userCollection.getSourceType());
+    CompositeFuture.all(addressTypeAsyncRequest, patronGroupsAsyncRequest).setHandler(ar -> {
+      if (ar.succeeded()) {
 
-                usersResponse.setHandler(handler -> {
+        if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
+          processWithDeactivatingUsers(asyncResultHandler, okapiHeaders, vertxContext, userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result());
+        } else {
+          processUserImport(userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result(), okapiHeaders, vertxContext, asyncResultHandler);
+        }
 
-                  if (handler.failed()) {
-                    asyncResultHandler
-                      .handle(
-                        Future.succeededFuture(PostUserImportResponse
-                          .withPlainBadRequest("Failed to import users. Function not yet implemented.")));
-                  } else {
-                    logger.info("response: " + handler.result());
-                    JsonArray existingUsers = handler.result().getJsonArray("users");
-                    Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
+      } else {
+        asyncResultHandler
+          .handle(
+            Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+      }
+    });
 
-                    List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
+  }
 
-                    List<Future> futures = new ArrayList<>();
+  private void processWithDeactivatingUsers(Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, Context vertxContext, UserdataCollection userCollection,
+    Map<String, String> patronGroups, Map<String, String> addressTypes) {
+    Future<List<Map>> usersResponse =
+      listAllUsersWithExternalSystemId(okapiHeaders, vertxContext, userCollection.getSourceType());
 
-                    for (List<User> currentPartition : userPartitions) {
-                      Future<JsonObject> userSearchAsyncResult =
-                        processUserSearchResult(okapiHeaders, vertxContext, existingUserMap,
-                          currentPartition, patronGroups, addressTypes, updateOnlyPresentData,
-                          userCollection.getSourceType());
-                      futures.add(userSearchAsyncResult);
-                    }
+    usersResponse.setHandler(handler -> {
 
-                    CompositeFuture.all(futures).setHandler(ar -> {
-                      if (ar.succeeded()) {
-                        if (existingUserMap.isEmpty()) {
-                          asyncResultHandler
-                            .handle(
-                              Future
-                                .succeededFuture(
-                                  PostUserImportResponse.withPlainOK("Users were imported successfully.")));
-                        } else {
-                          Future<Void> deactivateResult = deactivateUsers(okapiHeaders, vertxContext, existingUserMap);
+      if (handler.failed()) {
+        asyncResultHandler
+          .handle(
+            Future.succeededFuture(PostUserImportResponse
+              .withPlainBadRequest("Failed to import users. Function not yet implemented.")));
+      } else {
+        logger.info("response: " + handler.result());
+        List<Map> existingUsers = handler.result();
+        Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
 
-                          deactivateResult.setHandler(deactivateHandler -> {
-                            asyncResultHandler
-                              .handle(
-                                Future.succeededFuture(PostUserImportResponse
-                                  .withPlainOK("Deactivated missing users.")));
+        List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
-                          });
-                        }
-                      } else {
-                        asyncResultHandler
-                          .handle(
-                            Future
-                              .succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
-                      }
-                    });
+        List<Future> futures = new ArrayList<>();
 
-                  }
-                });
+        Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
 
-              } else {
+        for (List<User> currentPartition : userPartitions) {
+          Future<JsonObject> userSearchAsyncResult =
+            processUserSearchResult(okapiHeaders, vertxContext, existingUserMap,
+              currentPartition, patronGroups, addressTypes, updateOnlyPresentData,
+              userCollection.getSourceType());
+          futures.add(userSearchAsyncResult);
+        }
 
-                List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
-
-                List<Future> futures = new ArrayList<>();
-
-                for (List<User> currentPartition : userPartitions) {
-                  Future<String> userBatchProcessResponse =
-                    processUserBatch(okapiHeaders, vertxContext, currentPartition, patronGroups, addressTypes,
-                      updateOnlyPresentData, userCollection.getSourceType());
-                  futures.add(userBatchProcessResponse);
-                }
-
-                CompositeFuture.all(futures).setHandler(ar -> {
-                  if (ar.succeeded()) {
-                    asyncResultHandler
-                      .handle(
-                        Future
-                          .succeededFuture(PostUserImportResponse.withPlainOK("Users were imported successfully.")));
-                  } else {
-                    asyncResultHandler
-                      .handle(
-                        Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
-                  }
-                });
-              }
-
-            } else {
+        CompositeFuture.all(futures).setHandler(ar -> {
+          if (ar.succeeded()) {
+            if (existingUserMap.isEmpty()) {
               asyncResultHandler
                 .handle(
-                  Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Not OK for the patron groups")));
+                  Future
+                    .succeededFuture(
+                      PostUserImportResponse.withPlainOK("Users were imported successfully.")));
+            } else {
+              Future<Void> deactivateResult = deactivateUsers(okapiHeaders, vertxContext, existingUserMap);
+
+              deactivateResult.setHandler(deactivateHandler -> {
+                asyncResultHandler
+                  .handle(
+                    Future.succeededFuture(PostUserImportResponse
+                      .withPlainOK("Deactivated missing users.")));
+
+              });
             }
-          });
+          } else {
+            asyncResultHandler
+              .handle(
+                Future
+                  .succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+          }
+        });
 
-        } else {
-          asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Not OK for address types")));
-        }
-      });
-    }
+      }
+    });
   }
 
-  private Map<String, String> extractAddressTypes(JsonArray addressTypes) {
-    Map<String, String> addressTypeMap = new HashMap<>();
-    for (int i = 0; i < addressTypes.size(); i++) {
-      JsonObject addressType = addressTypes.getJsonObject(i);
-      addressTypeMap.put(addressType.getString("addressType"), addressType.getString("id"));
+  private void processUserImport(UserdataCollection userCollection, Map<String, String> patronGroups, Map<String, String> addressTypes, Map<String, String> okapiHeaders, Context vertxContext, Handler<AsyncResult<Response>> asyncResultHandler) {
+    List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
+
+    List<Future> futures = new ArrayList<>();
+    Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
+
+    for (List<User> currentPartition : userPartitions) {
+      Future<String> userBatchProcessResponse =
+        processUserBatch(okapiHeaders, vertxContext, currentPartition, patronGroups, addressTypes,
+          updateOnlyPresentData, userCollection.getSourceType());
+      futures.add(userBatchProcessResponse);
     }
-    return addressTypeMap;
+
+    CompositeFuture.all(futures).setHandler(ar -> {
+      if (ar.succeeded()) {
+        asyncResultHandler
+          .handle(
+            Future
+              .succeededFuture(PostUserImportResponse.withPlainOK("Users were imported successfully.")));
+      } else {
+        asyncResultHandler
+          .handle(
+            Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+      }
+    });
   }
 
-  private Map<String, String> extractPatronGroups(JsonArray patronGroups) {
-    Map<String, String> patronGroupMap = new HashMap<>();
-    for (int i = 0; i < patronGroups.size(); i++) {
-      JsonObject patronGroup = patronGroups.getJsonObject(i);
-      patronGroupMap.put(patronGroup.getString("group"), patronGroup.getString("id"));
-    }
-    return patronGroupMap;
-  }
-
-  private Future<JsonArray> getAddressTypes(Map<String, String> okapiHeaders, Context vertxContext) {
-    Future<JsonArray> future = Future.future();
+  private Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders, Context vertxContext) {
+    Future<Map<String, String>> future = Future.future();
 
     String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
 
@@ -220,7 +206,9 @@ public class UserImportAPI implements UserImportResource {
         } else {
           try {
             JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject.getJsonArray("addressTypes"));
+            JsonArray addressTypeArray = resultObject.getJsonArray("addressTypes");
+            Map<String, String> addressTypes = extractAddressTypes(addressTypeArray);
+            future.complete(addressTypes);
           } catch (Exception e) {
             future.fail(e);
           }
@@ -231,8 +219,17 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Future<JsonArray> getPatronGroups(Map<String, String> okapiHeaders, Context vertxContext) {
-    Future<JsonArray> future = Future.future();
+  private Map<String, String> extractAddressTypes(JsonArray addressTypes) {
+    Map<String, String> addressTypeMap = new HashMap<>();
+    for (int i = 0; i < addressTypes.size(); i++) {
+      JsonObject addressType = addressTypes.getJsonObject(i);
+      addressTypeMap.put(addressType.getString("addressType"), addressType.getString("id"));
+    }
+    return addressTypeMap;
+  }
+
+  private Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders, Context vertxContext) {
+    Future<Map<String, String>> future = Future.future();
 
     String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
 
@@ -251,7 +248,10 @@ public class UserImportAPI implements UserImportResource {
         } else {
           try {
             JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject.getJsonArray("usergroups"));
+
+            JsonArray patronGroupArray = resultObject.getJsonArray("usergroups");
+            Map<String, String> patronGroups = extractPatronGroups(patronGroupArray);
+            future.complete(patronGroups);
           } catch (Exception e) {
             future.fail(e);
           }
@@ -262,53 +262,13 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Future<JsonObject> listUsers(Map<String, String> okapiHeaders, Context vertxContext, List<User> users) {
-    Future<JsonObject> future = Future.future();
-
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
-
-    StringBuilder userQueryBuilder = new StringBuilder("(");
-
-    for (int i = 0; i < users.size(); i++) {
-      userQueryBuilder.append("externalSystemId==\"").append(users.get(i).getExternalSystemId() + "\"");
-      if (i < users.size() - 1) {
-        userQueryBuilder.append(" or ");
-      } else {
-        userQueryBuilder.append(")");
-      }
+  private Map<String, String> extractPatronGroups(JsonArray patronGroups) {
+    Map<String, String> patronGroupMap = new HashMap<>();
+    for (int i = 0; i < patronGroups.size(); i++) {
+      JsonObject patronGroup = patronGroups.getJsonObject(i);
+      patronGroupMap.put(patronGroup.getString("group"), patronGroup.getString("id"));
     }
-
-    String url = userQueryBuilder.toString();
-    try {
-      url = URLEncoder.encode(url, "UTF-8");
-    } catch (UnsupportedEncodingException exc) {
-      logger.warn("Could not encode request URL.");
-    }
-
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url);
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Accept", "application/json");
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 200) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject);
-          } catch (Exception e) {
-            future.fail(e);
-          }
-        }
-      });
-    });
-    request.end();
-    return future;
+    return patronGroupMap;
   }
 
   private Future<JsonObject> createNewUser(Map<String, String> okapiHeaders, Context vertxContext, User user) {
@@ -449,11 +409,11 @@ public class UserImportAPI implements UserImportResource {
     List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
     boolean updateOnlyPresentData, String sourceType) {
     Future<String> processFuture = Future.future();
-    Future<JsonObject> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition);
+    Future<List<Map>> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition);
     userSearchResponse.setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
 
-        Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result().getJsonArray("users"));
+        Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
 
         Future<JsonObject> userSearchAsyncResult =
           processUserSearchResult(okapiHeaders, vertxContext, existingUsers,
@@ -473,11 +433,62 @@ public class UserImportAPI implements UserImportResource {
     return processFuture;
   }
 
-  private Map<String, User> extractExistingUsers(JsonArray existingUserList) {
+  private Future<List<Map>> listUsers(Map<String, String> okapiHeaders, Context vertxContext, List<User> users) {
+    Future<List<Map>> future = Future.future();
+
+    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+
+    StringBuilder userQueryBuilder = new StringBuilder("(");
+
+    for (int i = 0; i < users.size(); i++) {
+      userQueryBuilder.append("externalSystemId==\"").append(users.get(i).getExternalSystemId() + "\"");
+      if (i < users.size() - 1) {
+        userQueryBuilder.append(" or ");
+      } else {
+        userQueryBuilder.append(")");
+      }
+    }
+
+    String url = userQueryBuilder.toString();
+    try {
+      url = URLEncoder.encode(url, "UTF-8");
+    } catch (UnsupportedEncodingException exc) {
+      logger.warn("Could not encode request URL.");
+    }
+
+    HttpClientOptions options = new HttpClientOptions();
+    options.setConnectTimeout(10);
+    options.setIdleTimeout(10);
+    HttpClient client = vertxContext.owner().createHttpClient(options);
+    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url + "&limit=" + users.size() * 2);
+    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
+      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
+      .putHeader("Accept", "application/json");
+    request.handler(res -> {
+      res.bodyHandler(buf -> {
+        if (res.statusCode() != 200) {
+          future.fail("Response is: " + buf + " " + res.statusCode());
+        } else {
+          try {
+            JsonArray resultObject = buf.toJsonObject().getJsonArray("users");
+            future.complete(resultObject.getList());
+          } catch (Exception e) {
+            future.fail(e);
+          }
+        }
+      });
+    });
+    request.end();
+    return future;
+  }
+
+  private Map<String, User> extractExistingUsers(List<Map> existingUserList) {
     Map<String, User> existingUsers = new HashMap<>();
     for (int i = 0; i < existingUserList.size(); i++) {
-      JsonObject existingUser = existingUserList.getJsonObject(i);
-      User mappedUser = existingUser.mapTo(User.class);
+      Map existingUser = existingUserList.get(i);
+      JsonObject user = JsonObject.mapFrom(existingUser);
+      User mappedUser = user.mapTo(User.class);
+      logger.info("The external system of the user is: " + mappedUser.getExternalSystemId());
       existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
     }
 
@@ -553,37 +564,54 @@ public class UserImportAPI implements UserImportResource {
     return response;
   }
 
-  private Future<JsonObject> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, Context vertxContext,
+  private Future<List<Map>> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, Context vertxContext,
     String prefix) {
-    Future<JsonObject> future = Future.future();
+    Future<List<Map>> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
-    String url = "externalSystemId <> ''";
-    if (!Strings.isNullOrEmpty(prefix)) {
-      url = "externalSystemId = ^" + prefix + "_*";
-    }
-    try {
-      url = URLEncoder.encode(url, "UTF-8");
-    } catch (UnsupportedEncodingException exc) {
-      logger.warn("Could not encode request URL.");
-    }
+    List<Map> existingUserList = new ArrayList<>();
+
+    final String url = createUrl(prefix);
+
+    int limit = 5;
 
     HttpClientOptions options = new HttpClientOptions();
     options.setConnectTimeout(10);
     options.setIdleTimeout(10);
     HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url);
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Accept", "application/json");
+    HttpClientRequest request = assembleUserSearchRequest(client, okapiHeaders, url, limit, 0);
     request.handler(res -> {
       res.bodyHandler(buf -> {
         if (res.statusCode() != 200) {
           future.fail("Response is: " + buf + " " + res.statusCode());
         } else {
           try {
+            List<Future> futures = new ArrayList<>();
+
             JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject);
+            List<Map> users = resultObject.getJsonArray("users").getList();
+            existingUserList.addAll(users);
+            int totalRecords = resultObject.getInteger("totalRecords");
+            if (totalRecords > limit) {
+
+              int numberOfPages = totalRecords / limit;
+              if (totalRecords % limit != 0) {
+                numberOfPages++;
+              }
+              for (int offset = 1; offset < numberOfPages; offset++) {
+                Future subFuture = processResponse(existingUserList, client, okapiHeaders, url, limit, offset * limit);
+                futures.add(subFuture);
+              }
+
+              CompositeFuture.all(futures).setHandler(ar -> {
+                if (ar.succeeded()) {
+                  future.complete(existingUserList);
+                } else {
+                  future.fail("Failed to process users.");
+                }
+              });
+            } else {
+              future.complete(existingUserList);
+            }
           } catch (Exception e) {
             future.fail(e);
           }
@@ -592,6 +620,52 @@ public class UserImportAPI implements UserImportResource {
     });
     request.end();
     return future;
+  }
+
+  private Future processResponse(List<Map> existingUserList, HttpClient client, Map<String, String> okapiHeaders, String url, int limit, int offset) {
+    Future future = Future.future();
+
+    HttpClientRequest subRequest = assembleUserSearchRequest(client, okapiHeaders, url, limit, offset);
+    subRequest.handler(handler -> {
+      handler.bodyHandler(bodyHandler -> {
+        if (handler.statusCode() != 200) {
+          future.fail("Response is: " + bodyHandler + " " + handler.statusCode());
+        } else {
+          JsonObject subResultObject = bodyHandler.toJsonObject();
+          List<Map> users = subResultObject.getJsonArray("users").getList();
+          existingUserList.addAll(users);
+          future.complete();
+        }
+      });
+    });
+    subRequest.end();
+
+    return future;
+  }
+
+  private String createUrl(String prefix) {
+    String url;
+    if (!Strings.isNullOrEmpty(prefix)) {
+      url = "externalSystemId = ^" + prefix + "_*";
+    } else {
+      url = "externalSystemId <> ''";
+    }
+    try {
+      url = URLEncoder.encode(url, "UTF-8");
+    } catch (UnsupportedEncodingException exc) {
+      logger.warn("Could not encode request URL.");
+    }
+    return url;
+  }
+
+  private HttpClientRequest assembleUserSearchRequest(HttpClient client, Map<String, String> okapiHeaders, String url, int limit, int offset) {
+    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url + "&limit=" + limit + "&offset=" + offset + "&orderBy=externalSystemId&order=asc");
+    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
+      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
+      .putHeader("Accept", "application/json");
+
+    return request;
   }
 
   private Future<Void> deactivateUsers(Map<String, String> okapiHeaders, Context vertxContext,
