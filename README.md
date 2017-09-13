@@ -44,20 +44,20 @@ Example import request
 }
 </code></pre>
 
-====patronGroup====
+### patronGroup
 The value can be the name of an existing patron group in the system. E.g. faculty, staff, undergrad, graduate. The import module will match the patron group names for the patron group ids.
 
-====addressTypeId====
+### addressTypeId
 The value can be the name of an existing address type in the system. E.g. Home, Claim, Order. The import module will match the address type names for the address type ids.
 
-====preferredContactTypeId====
+### preferredContactTypeId
 The value can be one of the following: mail, email, text, phone, mobile.
 
-====Deactivate missing users option====
+### deactivateMissingUsers
 This should be true if the users missing from the current import batch should be deactivated in FOLIO.
 
-====Update only present fields====
+### updateOnlyPresentFields
 This should be true if only the fields present in the import should be updated. E.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved. 
 
-====sourceType====
+### sourceType
 A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. 
