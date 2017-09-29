@@ -40,6 +40,7 @@
       <artifactId>junit</artifactId>
       <version>4.12</version>
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -51,6 +52,35 @@
       <artifactId>okapi-common</artifactId>
       <version>${okapi.version}</version>
     </dependency>
+    
+    
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>3.0.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>3.0.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+	  <groupId>io.vertx</groupId>
+	  <artifactId>vertx-unit</artifactId>
+	  <version>3.4.2</version>
+	  <scope>test</scope>
+	</dependency>
   </dependencies>
   <build>
     <plugins>

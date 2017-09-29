@@ -9,11 +9,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
+import org.folio.rest.tools.client.HttpClientFactory;
+import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -23,10 +26,8 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -35,12 +36,12 @@ import io.vertx.ext.web.RoutingContext;
 
 public class UserImportAPI implements UserImportResource {
 
-  public static String OKAPI_URL_HEADER = "X-Okapi-URL";
-  public static String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
-  public static String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
-  public static String OKAPI_PERMISSIONS_HEADER = "X-Okapi-Permissions";
+  public static final String OKAPI_URL_HEADER = "X-Okapi-URL";
+  public static final String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
+  public static final String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
+  public static final String OKAPI_PERMISSIONS_HEADER = "X-Okapi-Permissions";
 
-  private final Logger logger = LoggerFactory.getLogger(UserImportAPI.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
 
   private static final Map<String, String> preferredContactTypeIds = new HashMap<>();
 
@@ -76,21 +77,30 @@ public class UserImportAPI implements UserImportResource {
 
     Future<Map<String, String>> addressTypeAsyncRequest = getAddressTypes(okapiHeaders, vertxContext);
 
-    Future<Map<String, String>> patronGroupsAsyncRequest = getPatronGroups(okapiHeaders, vertxContext);
-
-    CompositeFuture.all(addressTypeAsyncRequest, patronGroupsAsyncRequest).setHandler(ar -> {
-      if (ar.succeeded()) {
-
-        if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
-          processWithDeactivatingUsers(asyncResultHandler, okapiHeaders, vertxContext, userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result());
-        } else {
-          processUserImport(userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result(), okapiHeaders, vertxContext, asyncResultHandler);
-        }
-
-      } else {
+    addressTypeAsyncRequest.setHandler(addressTypeResultHandler -> {
+      if (addressTypeResultHandler.failed()) {
+        LOGGER.warn("Failed to list address types.");
         asyncResultHandler
           .handle(
-            Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to import users.")));
+            Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to list address types.")));
+      } else {
+        Future<Map<String, String>> patronGroupsAsyncRequest = getPatronGroups(okapiHeaders, vertxContext);
+        patronGroupsAsyncRequest.setHandler(patronGroupResultHandler -> {
+
+          if (patronGroupResultHandler.succeeded()) {
+
+            if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
+              processWithDeactivatingUsers(asyncResultHandler, okapiHeaders, vertxContext, userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result());
+            } else {
+              processUserImport(userCollection, patronGroupsAsyncRequest.result(), addressTypeAsyncRequest.result(), okapiHeaders, vertxContext, asyncResultHandler);
+            }
+
+          } else {
+            asyncResultHandler
+              .handle(
+                Future.succeededFuture(PostUserImportResponse.withPlainBadRequest("Failed to list patron groups.")));
+          }
+        });
       }
     });
 
@@ -104,12 +114,13 @@ public class UserImportAPI implements UserImportResource {
     usersResponse.setHandler(handler -> {
 
       if (handler.failed()) {
+        LOGGER.warn("Failed to list users with externalSystemId (and specific sourceType)");
         asyncResultHandler
           .handle(
             Future.succeededFuture(PostUserImportResponse
-              .withPlainBadRequest("Failed to import users. Function not yet implemented.")));
+              .withPlainBadRequest("Failed to import users.")));
       } else {
-        logger.info("response: " + handler.result());
+        LOGGER.info("response: " + handler.result());
         List<Map> existingUsers = handler.result();
         Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
 
@@ -118,6 +129,9 @@ public class UserImportAPI implements UserImportResource {
         List<Future> futures = new ArrayList<>();
 
         Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
+        if (updateOnlyPresentData == null) {
+          updateOnlyPresentData = Boolean.FALSE;
+        }
 
         for (List<User> currentPartition : userPartitions) {
           Future<JsonObject> userSearchAsyncResult =
@@ -163,6 +177,9 @@ public class UserImportAPI implements UserImportResource {
 
     List<Future> futures = new ArrayList<>();
     Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
+    if (updateOnlyPresentData == null) {
+      updateOnlyPresentData = Boolean.FALSE;
+    }
 
     for (List<User> currentPartition : userPartitions) {
       Future<String> userBatchProcessResponse =
@@ -188,34 +205,34 @@ public class UserImportAPI implements UserImportResource {
   private Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders, Context vertxContext) {
     Future<Map<String, String>> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.getAbs(okapiURL + "/addresstypes");
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Content-type", "application/json")
-      .putHeader("Accept", "application/json");
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 200) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
+
+    final String addressTypeQuery = UriBuilder.fromPath("/addresstypes").build().toString();
+
+    HttpClientInterface addressTypeClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    addressTypeClient.setDefaultHeaders(headers);
+    try {
+      addressTypeClient.request(addressTypeQuery)
+        .whenComplete((addressTypeResponse, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(addressTypeResponse.getCode())) {
+            LOGGER.warn("Failed to list address types.");
+            future.fail(addressTypeResponse.getError().toString());
+          } else {
+            JsonObject resultObject = addressTypeResponse.getBody();
             JsonArray addressTypeArray = resultObject.getJsonArray("addressTypes");
             Map<String, String> addressTypes = extractAddressTypes(addressTypeArray);
             future.complete(addressTypes);
-          } catch (Exception e) {
-            future.fail(e);
           }
-        }
-      });
-    });
-    request.end();
+        });
+
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to list address types", exc.getMessage());
+      future.fail(exc);
+    }
     return future;
   }
 
@@ -231,34 +248,34 @@ public class UserImportAPI implements UserImportResource {
   private Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders, Context vertxContext) {
     Future<Map<String, String>> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.getAbs(okapiURL + "/groups");
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Accept", "application/json");
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 200) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
 
+    final String patronGroupQuery = UriBuilder.fromPath("/groups").build().toString();
+
+    HttpClientInterface patronGroupClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    patronGroupClient.setDefaultHeaders(headers);
+
+    try {
+      patronGroupClient.request(patronGroupQuery)
+        .whenComplete((patronGroupResponse, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(patronGroupResponse.getCode())) {
+            LOGGER.warn("Failed to list patron groups");
+            future.fail(patronGroupResponse.getError().toString());
+          } else {
+            JsonObject resultObject = patronGroupResponse.getBody();
             JsonArray patronGroupArray = resultObject.getJsonArray("usergroups");
             Map<String, String> patronGroups = extractPatronGroups(patronGroupArray);
             future.complete(patronGroups);
-          } catch (Exception e) {
-            future.fail(e);
           }
-        }
-      });
-    });
-    request.end();
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to list patron groups", exc.getMessage());
+      future.fail(exc);
+    }
     return future;
   }
 
@@ -271,67 +288,85 @@ public class UserImportAPI implements UserImportResource {
     return patronGroupMap;
   }
 
-  private Future<JsonObject> createNewUser(Map<String, String> okapiHeaders, Context vertxContext, User user) {
-    Future<JsonObject> future = Future.future();
+  private Future<Void> createNewUser(Map<String, String> okapiHeaders, Context vertxContext, User user) {
+    Future<Void> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
     user.setId(UUID.randomUUID().toString());
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.postAbs(okapiURL + "/users", res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 201) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            Future<JsonObject> permissionsFuture = addEmptyPermissionSetForUser(okapiHeaders, vertxContext, user);
-            permissionsFuture.setHandler(futurePermissionHandler -> {
-              if (futurePermissionHandler.failed()) {
-                logger.error("Failed to register permissions for user.");
-              }
-              future.complete(futurePermissionHandler.result());
-            });
-          } catch (Exception e) {
-            future.fail(e);
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
+    headers.put("Content-type", "application/json");
+
+    final String userCreationQuery = UriBuilder.fromPath("/users").build().toString();
+
+    HttpClientInterface userCreationClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+
+    try {
+      userCreationClient.request(HttpMethod.POST, user, userCreationQuery, headers)
+        .whenComplete((userCreationResponse, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
+            LOGGER.warn("Failed to create new user with externalSystemId: {}", user.getExternalSystemId());
+            future.fail(userCreationResponse.getError().toString());
+          } else {
+            try {
+              Future<JsonObject> permissionsFuture = addEmptyPermissionSetForUser(okapiHeaders, vertxContext, user);
+              permissionsFuture.setHandler(futurePermissionHandler -> {
+                if (futurePermissionHandler.failed()) {
+                  LOGGER.error("Failed to register permissions for user with externalSystemId: {}", user.getExternalSystemId());
+                }
+                future.complete();
+              });
+            } catch (Exception e) {
+              LOGGER.warn("Failed to register permission for user with externalSystemId: {}", user.getExternalSystemId());
+              future.complete();
+            }
           }
-        }
-      });
-    });
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Content-type", "application/json")
-      .putHeader("Accept", "application/json");
-    request.end(JsonObject.mapFrom(user).encode());
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to create new user with externalSystemId: {}", user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
+    }
+
     return future;
   }
 
-  private Future<Buffer> updateUser(Map<String, String> okapiHeaders, Context vertxContext, User user) {
-    Future<Buffer> future = Future.future();
+  private Future<Object> updateUser(Map<String, String> okapiHeaders, Context vertxContext, User user) {
+    Future<Object> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.putAbs(okapiURL + "/users/" + user.getId(), res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 204) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          future.complete(buf);
-        }
-      });
-    });
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Content-type", "application/json")
-      .putHeader("Accept", "text/plain");
-    request.end(JsonObject.mapFrom(user).encode());
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "text/plain");
+    headers.put("Content-type", "application/json");
+
+    HttpClientInterface userUpdateClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+
+    try {
+      final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
+
+      userUpdateClient.request(HttpMethod.PUT, user, userUpdateQuery, headers)
+        .whenComplete((res, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
+            LOGGER.warn("Failed to update user with externalSystemId: {}", user.getExternalSystemId());
+            future.fail(res.getError().toString());
+          } else {
+            try {
+              future.complete(user);
+            } catch (Exception e) {
+              LOGGER.warn("Failed to update user with externalSystemId: {}", user.getExternalSystemId(), e.getMessage());
+              future.fail(e);
+            }
+          }
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to update user with externalSystemId: {}", user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
+    }
+
     return future;
   }
 
@@ -339,44 +374,52 @@ public class UserImportAPI implements UserImportResource {
     User user) {
     Future<JsonObject> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.postAbs(okapiURL + "/perms/users");
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Content-type", "application/json")
-      .putHeader("Accept", "application/json").setRawMethod("PUT");
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 201) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject);
-          } catch (Exception e) {
-            future.fail(e);
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
+    headers.put("Content-type", "application/json");
+
+    HttpClientInterface permissionsClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    permissionsClient.setDefaultHeaders(headers);
+
+    try {
+      JsonObject object = new JsonObject();
+      object.put("userId", user.getId());
+      object.put("permissions", new JsonArray());
+
+      final String permissionAddQuery = UriBuilder.fromPath("/perms/users").build().toString();
+
+      permissionsClient.request(HttpMethod.POST, object, permissionAddQuery, headers)
+        .whenComplete((response, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+            LOGGER.warn("Failed to add permission for user with externalSystemId: {}", user.getExternalSystemId());
+            future.fail(response.getError().toString());
+          } else {
+            try {
+              future.complete(response.getBody());
+            } catch (Exception e) {
+              LOGGER.warn("Failed to add permissions for user with externalSystemId: {}", user.getExternalSystemId(), e.getMessage());
+              future.fail(e);
+            }
           }
-        }
-      });
-    });
-    request.end("{\"username\": \"" + user.getUsername() + "\", \"permissions\": []}");
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to add permissions for user with externalSystemId: {}", user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
+    }
     return future;
   }
 
   private Future<JsonObject> processUserSearchResult(Map<String, String> okapiHeaders, Context vertxContext,
     Map<String, User> existingUsers, List<User> usersToImport, Map<String, String> patronGroups,
-    Map<String, String> addressTypes, boolean updateOnlyPresentData, String sourceType) {
+    Map<String, String> addressTypes, Boolean updateOnlyPresentData, String sourceType) {
     Future<JsonObject> future = Future.future();
 
     List<Future> futures = new ArrayList<>();
 
     for (User user : usersToImport) {
-      //TODO log errors
       //TODO create statistics from number of created/updated + failed users
       updateUserData(user, patronGroups, addressTypes, sourceType);
       if (existingUsers.containsKey(user.getExternalSystemId())) {
@@ -385,11 +428,11 @@ public class UserImportAPI implements UserImportResource {
         } else {
           user.setId(existingUsers.get(user.getExternalSystemId()).getId());
         }
-        Future<Buffer> userUpdateResponse = updateUser(okapiHeaders, vertxContext, user);
+        Future<Object> userUpdateResponse = updateUser(okapiHeaders, vertxContext, user);
         futures.add(userUpdateResponse);
         existingUsers.remove(user.getExternalSystemId());
       } else {
-        Future<JsonObject> userCreationResponse = createNewUser(okapiHeaders, vertxContext, user);
+        Future<Void> userCreationResponse = createNewUser(okapiHeaders, vertxContext, user);
         futures.add(userCreationResponse);
       }
     }
@@ -398,6 +441,7 @@ public class UserImportAPI implements UserImportResource {
       if (ar.succeeded()) {
         future.complete();
       } else {
+        LOGGER.warn("Failed to import users.");
         future.fail("Failed to import users.");
       }
     });
@@ -407,9 +451,9 @@ public class UserImportAPI implements UserImportResource {
 
   private Future<String> processUserBatch(Map<String, String> okapiHeaders, Context vertxContext,
     List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
-    boolean updateOnlyPresentData, String sourceType) {
+    Boolean updateOnlyPresentData, String sourceType) {
     Future<String> processFuture = Future.future();
-    Future<List<Map>> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition);
+    Future<List<Map>> userSearchResponse = listUsers(okapiHeaders, vertxContext, currentPartition, sourceType);
     userSearchResponse.setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
 
@@ -422,26 +466,32 @@ public class UserImportAPI implements UserImportResource {
           if (response.succeeded()) {
             processFuture.complete();
           } else {
+            LOGGER.warn("Failed to process user search result.");
             processFuture.fail("Not OK for user processing");
           }
         });
 
       } else {
+        LOGGER.warn("Failed to process user search result.");
         processFuture.fail("Not OK for user search.");
       }
     });
     return processFuture;
   }
 
-  private Future<List<Map>> listUsers(Map<String, String> okapiHeaders, Context vertxContext, List<User> users) {
+  private Future<List<Map>> listUsers(Map<String, String> okapiHeaders, Context vertxContext, List<User> users, String sourceType) {
     Future<List<Map>> future = Future.future();
 
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
     StringBuilder userQueryBuilder = new StringBuilder("(");
 
     for (int i = 0; i < users.size(); i++) {
-      userQueryBuilder.append("externalSystemId==\"").append(users.get(i).getExternalSystemId() + "\"");
+      userQueryBuilder.append("externalSystemId==\"");
+      if (!Strings.isNullOrEmpty(sourceType)) {
+        userQueryBuilder.append(sourceType).append("_");
+      }
+      userQueryBuilder.append(users.get(i).getExternalSystemId() + "\"");
       if (i < users.size() - 1) {
         userQueryBuilder.append(" or ");
       } else {
@@ -453,32 +503,34 @@ public class UserImportAPI implements UserImportResource {
     try {
       url = URLEncoder.encode(url, "UTF-8");
     } catch (UnsupportedEncodingException exc) {
-      logger.warn("Could not encode request URL.");
+      LOGGER.warn("Could not encode request URL.");
     }
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url + "&limit=" + users.size() * 2);
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Accept", "application/json");
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 200) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            JsonArray resultObject = buf.toJsonObject().getJsonArray("users");
-            future.complete(resultObject.getList());
-          } catch (Exception e) {
-            future.fail(e);
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
+
+    final String userSearchQuery = UriBuilder.fromPath("/users?query=" + url + "&limit=" + users.size() * 2).build().toString();
+
+    HttpClientInterface userSearchClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    userSearchClient.setDefaultHeaders(headers);
+
+    try {
+      userSearchClient.request(userSearchQuery)
+        .whenComplete((userSearchQueryResponse, ex) -> {
+          if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
+            LOGGER.warn("Failed to process user search result.");
+            future.fail(userSearchQueryResponse.getError().toString());
+          } else {
+            JsonObject resultObject = userSearchQueryResponse.getBody();
+            JsonArray array = resultObject.getJsonArray("users");
+            future.complete(array.getList());
           }
-        }
-      });
-    });
-    request.end();
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to process user search result", exc.getMessage());
+      future.fail(exc);
+    }
     return future;
   }
 
@@ -488,7 +540,7 @@ public class UserImportAPI implements UserImportResource {
       Map existingUser = existingUserList.get(i);
       JsonObject user = JsonObject.mapFrom(existingUser);
       User mappedUser = user.mapTo(User.class);
-      logger.info("The external system of the user is: " + mappedUser.getExternalSystemId());
+      LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
       existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
     }
 
@@ -521,6 +573,7 @@ public class UserImportAPI implements UserImportResource {
     }
   }
 
+  //TODO: fix for deep copy and not just addresses.
   private User updateExistingUserWithIncomingFields(User user, User existingUser) {
     JsonObject current = JsonObject.mapFrom(user);
     JsonObject existing = JsonObject.mapFrom(existingUser);
@@ -574,71 +627,97 @@ public class UserImportAPI implements UserImportResource {
 
     int limit = 5;
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(10);
-    options.setIdleTimeout(10);
-    HttpClient client = vertxContext.owner().createHttpClient(options);
-    HttpClientRequest request = assembleUserSearchRequest(client, okapiHeaders, url, limit, 0);
-    request.handler(res -> {
-      res.bodyHandler(buf -> {
-        if (res.statusCode() != 200) {
-          future.fail("Response is: " + buf + " " + res.statusCode());
-        } else {
-          try {
-            List<Future> futures = new ArrayList<>();
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-            JsonObject resultObject = buf.toJsonObject();
-            List<Map> users = resultObject.getJsonArray("users").getList();
-            existingUserList.addAll(users);
-            int totalRecords = resultObject.getInteger("totalRecords");
-            if (totalRecords > limit) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
 
-              int numberOfPages = totalRecords / limit;
-              if (totalRecords % limit != 0) {
-                numberOfPages++;
-              }
-              for (int offset = 1; offset < numberOfPages; offset++) {
-                Future subFuture = processResponse(existingUserList, client, okapiHeaders, url, limit, offset * limit);
-                futures.add(subFuture);
-              }
+    HttpClientInterface userSearchClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    userSearchClient.setDefaultHeaders(headers);
 
-              CompositeFuture.all(futures).setHandler(ar -> {
-                if (ar.succeeded()) {
-                  future.complete(existingUserList);
-                } else {
-                  future.fail("Failed to process users.");
+    try {
+
+      final String userSearchQuery = UriBuilder.fromPath("/users?query=" + url + "&limit=" + limit + "&offset=" + 0 + "&orderBy=externalSystemId&order=asc").build().toString();
+      userSearchClient.request(HttpMethod.GET, userSearchQuery, headers)
+        .whenComplete((response, ex) -> {
+
+          if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+            LOGGER.warn("Failed to process user search result.");
+            future.fail(response.getError().toString());
+          } else {
+
+            try {
+              List<Future> futures = new ArrayList<>();
+
+              JsonObject resultObject = response.getBody();
+              JsonArray array = resultObject.getJsonArray("users");
+              List<Map> users = array.getList();
+              existingUserList.addAll(users);
+              int totalRecords = resultObject.getInteger("totalRecords");
+              if (totalRecords > limit) {
+
+                int numberOfPages = totalRecords / limit;
+                if (totalRecords % limit != 0) {
+                  numberOfPages++;
                 }
-              });
-            } else {
-              future.complete(existingUserList);
+                for (int offset = 1; offset < numberOfPages; offset++) {
+                  Future subFuture = processResponse(existingUserList, userSearchClient, okapiHeaders, url, limit, offset * limit);
+                  futures.add(subFuture);
+                }
+
+                CompositeFuture.all(futures).setHandler(ar -> {
+                  if (ar.succeeded()) {
+                    future.complete(existingUserList);
+                  } else {
+                    LOGGER.warn("Failed to process users.");
+                    future.fail("Failed to process users.");
+                  }
+                });
+              } else {
+                future.complete(existingUserList);
+              }
+            } catch (Exception e) {
+              LOGGER.warn("Failed to process users.", e.getMessage());
+              future.fail(e);
             }
-          } catch (Exception e) {
-            future.fail(e);
           }
-        }
-      });
-    });
-    request.end();
+
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to process users.", exc.getMessage());
+      future.fail(exc);
+    }
     return future;
   }
 
-  private Future processResponse(List<Map> existingUserList, HttpClient client, Map<String, String> okapiHeaders, String url, int limit, int offset) {
+  private Future processResponse(List<Map> existingUserList, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String url, int limit, int offset) {
     Future future = Future.future();
 
-    HttpClientRequest subRequest = assembleUserSearchRequest(client, okapiHeaders, url, limit, offset);
-    subRequest.handler(handler -> {
-      handler.bodyHandler(bodyHandler -> {
-        if (handler.statusCode() != 200) {
-          future.fail("Response is: " + bodyHandler + " " + handler.statusCode());
-        } else {
-          JsonObject subResultObject = bodyHandler.toJsonObject();
-          List<Map> users = subResultObject.getJsonArray("users").getList();
-          existingUserList.addAll(users);
-          future.complete();
-        }
-      });
-    });
-    subRequest.end();
+    try {
+      userSearchClient.request(HttpMethod.GET, "/users?query=" + url + "&limit=" + limit + "&offset=" + offset + "&orderBy=externalSystemId&order=asc", okapiHeaders)
+        .whenComplete((subResponse, subEx) -> {
+
+          if (!org.folio.rest.tools.client.Response.isSuccess(subResponse.getCode())) {
+            LOGGER.warn("Failed to process user search response.");
+            future.fail(subResponse.getError().toString());
+          } else {
+            try {
+              List<Map> users = subResponse.getBody().getJsonArray("users").getList();
+              existingUserList.addAll(users);
+              future.complete();
+            } catch (Exception e) {
+              LOGGER.warn("Failed to process user search response.", e.getMessage());
+              future.fail(e);
+            }
+          }
+
+        });
+
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to process user search response.", exc.getMessage());
+      future.fail(exc);
+    }
 
     return future;
   }
@@ -653,19 +732,22 @@ public class UserImportAPI implements UserImportResource {
     try {
       url = URLEncoder.encode(url, "UTF-8");
     } catch (UnsupportedEncodingException exc) {
-      logger.warn("Could not encode request URL.");
+      LOGGER.warn("Could not encode request URL.");
     }
     return url;
   }
 
-  private HttpClientRequest assembleUserSearchRequest(HttpClient client, Map<String, String> okapiHeaders, String url, int limit, int offset) {
-    String okapiURL = okapiHeaders.get(OKAPI_URL_HEADER);
-    HttpClientRequest request = client.getAbs(okapiURL + "/users?query=" + url + "&limit=" + limit + "&offset=" + offset + "&orderBy=externalSystemId&order=asc");
-    request.putHeader(OKAPI_TENANT_HEADER, okapiHeaders.get(OKAPI_TENANT_HEADER))
-      .putHeader(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER))
-      .putHeader("Accept", "application/json");
+  private HttpClientInterface assembleUserSearchRequest(HttpClient client, Map<String, String> okapiHeaders, String url, int limit, int offset) {
+    String okapiURL = getOkapiUrl(okapiHeaders);
 
-    return request;
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    headers.put("Accept", "application/json");
+
+    HttpClientInterface userSearchClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
+    userSearchClient.setDefaultHeaders(headers);
+
+    return userSearchClient;
   }
 
   private Future<Void> deactivateUsers(Map<String, String> okapiHeaders, Context vertxContext,
@@ -677,7 +759,7 @@ public class UserImportAPI implements UserImportResource {
     for (User user : existingUserMap.values()) {
       if (user.getActive()) {
         user.setActive(Boolean.FALSE);
-        Future<Buffer> userDeactivateAsyncResult =
+        Future<Object> userDeactivateAsyncResult =
           updateUser(okapiHeaders, vertxContext, user);
         futures.add(userDeactivateAsyncResult);
       }
@@ -687,11 +769,16 @@ public class UserImportAPI implements UserImportResource {
       if (ar.succeeded()) {
         future.complete();
       } else {
+        LOGGER.warn("Failed to deactivate users.");
         future.fail("Failed to deactivate users!");
       }
     });
 
     return future;
+  }
+
+  private String getOkapiUrl(Map<String, String> okapiHeaders) {
+    return okapiHeaders.get(OKAPI_URL_HEADER);
   }
 
 }
