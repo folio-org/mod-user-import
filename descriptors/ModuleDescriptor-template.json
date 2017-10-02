@@ -1,12 +1,12 @@
 {
-  "id": "mod-user-import",
+  "id": "${artifactId}-${version}",
   "name": "User import",
   "provides": [
     {
       "id": "mod-user-import",
-      "version": "0.0.1",
+      "version": "1.0",
       "handlers": [
-      	{
+        {
           "methods": [
             "GET"
           ],
@@ -28,6 +28,16 @@
           ]
         }
       ]
+    }
+  ],
+  "requires": [
+    {
+      "id": "permissions",
+      "version": "5.0"
+    },
+    {
+      "id": "users",
+      "version": "14.0"
     }
   ]
 }
