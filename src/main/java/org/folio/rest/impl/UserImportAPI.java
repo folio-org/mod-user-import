@@ -97,20 +97,20 @@ public class UserImportAPI implements UserImportResource {
     getAddressTypes(okapiHeaders).setHandler(addressTypeResultHandler -> {
       if (addressTypeResultHandler.failed()) {
         LOGGER.warn(FAILED_TO_LIST_ADDRESS_TYPES);
-        future.fail(FAILED_TO_LIST_ADDRESS_TYPES);
+        future.fail(FAILED_TO_LIST_ADDRESS_TYPES + extractErrorMessage(addressTypeResultHandler));
       } else {
         getPatronGroups(okapiHeaders).setHandler(patronGroupResultHandler -> {
 
           if (patronGroupResultHandler.succeeded()) {
 
             if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
-              processWithDeactivatingUsers(okapiHeaders, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result()).setHandler(handler -> handleFutureResult(handler, future));
+              processWithDeactivatingUsers(okapiHeaders, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result()).setHandler(future.completer());
             } else {
-              processUserImport(userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result(), okapiHeaders).setHandler(handler -> handleFutureResult(handler, future));
+              processUserImport(userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result(), okapiHeaders).setHandler(future.completer());
             }
 
           } else {
-            future.fail("Failed to list patron groups.");
+            future.fail("Failed to list patron groups." + extractErrorMessage(patronGroupResultHandler));
           }
         });
       }
@@ -126,7 +126,7 @@ public class UserImportAPI implements UserImportResource {
 
       if (handler.failed()) {
         LOGGER.warn("Failed to list users with externalSystemId (and specific sourceType)");
-        future.fail(FAILED_TO_IMPORT_USERS);
+        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(handler));
       } else {
         LOGGER.info("response: " + handler.result());
         List<Map> existingUsers = handler.result();
@@ -142,7 +142,7 @@ public class UserImportAPI implements UserImportResource {
               deactivateUsers(okapiHeaders, existingUserMap).setHandler(deactivateHandler -> future.complete("Deactivated missing users."));
             }
           } else {
-            future.fail(FAILED_TO_IMPORT_USERS);
+            future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
           }
         });
 
@@ -191,7 +191,7 @@ public class UserImportAPI implements UserImportResource {
       if (ar.succeeded()) {
         future.complete("Users were imported successfully.");
       } else {
-        future.fail(FAILED_TO_IMPORT_USERS);
+        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
     return future;
@@ -435,7 +435,7 @@ public class UserImportAPI implements UserImportResource {
         future.complete();
       } else {
         LOGGER.warn(FAILED_TO_IMPORT_USERS);
-        future.fail(FAILED_TO_IMPORT_USERS);
+        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
 
@@ -457,13 +457,13 @@ public class UserImportAPI implements UserImportResource {
               processFuture.complete();
             } else {
               LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-              processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+              processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
             }
           });
 
       } else {
         LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-        processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+        processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
       }
     });
     return processFuture;
@@ -664,7 +664,7 @@ public class UserImportAPI implements UserImportResource {
             future.complete(existingUserList);
           } else {
             LOGGER.warn(FAILED_TO_PROCESS_USERS);
-            future.fail(FAILED_TO_PROCESS_USERS);
+            future.fail(FAILED_TO_PROCESS_USERS + extractErrorMessage(ar));
           }
         });
       } else {
@@ -738,7 +738,7 @@ public class UserImportAPI implements UserImportResource {
         future.complete();
       } else {
         LOGGER.warn("Failed to deactivate users.");
-        future.fail("Failed to deactivate users.");
+        future.fail("Failed to deactivate users." + extractErrorMessage(ar));
       }
     });
 
@@ -760,14 +760,17 @@ public class UserImportAPI implements UserImportResource {
 
   private List getUsersFromResult(JsonObject result) {
     JsonArray array = result.getJsonArray("users");
+    if (array == null) {
+      return new ArrayList();
+    }
     return array.getList();
   }
 
-  private void handleFutureResult(AsyncResult<String> handler, Future<String> future) {
-    if (handler.succeeded()) {
-      future.complete(handler.result());
+  private String extractErrorMessage(AsyncResult asyncResult) {
+    if (asyncResult.cause() != null && asyncResult.cause().getMessage() != null) {
+      return "Error message: " + asyncResult.cause().getMessage();
     } else {
-      future.fail(handler.result());
+      return "";
     }
   }
 
