@@ -198,6 +198,204 @@
     
     
     {
+      "url": "/users?query=%28externalSystemId%3D%3D%22user_address%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [{
+          "id": "2cbf64a1-5904-4748-ae77-3d0605e911e7",
+          "externalSystemId": "user_address",
+          "personal": {
+            "firstName": "User",
+            "lastName": "Address",
+            "email": "user_address@user.org",
+            "preferredContactTypeId": "email",
+            "addresses": [
+              {
+                "addressLine1": "8026 Upham Lane",
+                "city": "Jacksonville",
+                "region": "Florida",
+                "postalCode": "32259",
+                "addressTypeId": "Payment",
+                "primaryAddress": true
+              }
+            ]
+          },
+          "barcode": "30313233",
+          "username": "user_address",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
+      },
+      "receivedPath": "",
+      "sendData": {
+      }
+    },
+    {
+      "url": "/users/2cbf64a1-5904-4748-ae77-3d0605e911e7",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "2cbf64a1-5904-4748-ae77-3d0605e911e7",
+        "proxyFor": [],
+        "externalSystemId": "user_address",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Address",
+          "email": "user_address@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": [
+            {
+              "addressLine1": "8026 Upham Lane",
+              "city": "Jacksonville",
+              "region": "Florida",
+              "postalCode": "32259",
+              "addressTypeId": "Payment",
+              "primaryAddress": true
+            },
+            {
+              "addressLine1": "Test first line",
+              "city": "Test city",
+              "region": "Test region",
+              "postalCode": "12345",
+              "addressTypeId": "Home",
+              "primaryAddress": false
+            }
+          ]
+        },
+        "barcode": "30313233",
+        "username": "user_address",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "user_address",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Address",
+          "email": "user_address@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": [
+            {
+              "addressLine1": "8026 Upham Lane",
+              "city": "Jacksonville",
+              "region": "Florida",
+              "postalCode": "32259",
+              "addressTypeId": "Payment",
+              "primaryAddress": true
+            },
+            {
+              "addressLine1": "Test first line",
+              "city": "Test city",
+              "region": "Test region",
+              "postalCode": "12345",
+              "addressTypeId": "Home",
+              "primaryAddress": false
+            }
+          ]
+        },
+        "barcode": "30313233",
+        "username": "user_address",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%22user2_address2%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [{
+          "id": "da4106eb-ec94-49ce-8019-9cc89281091c",
+          "externalSystemId": "user2_address2",
+          "personal": {
+            "firstName": "User2",
+            "lastName": "Address2",
+            "email": "user2_address2@user.org",
+            "preferredContactTypeId": "email",
+            "addresses": [
+              {
+                "addressLine1": "8026 Upham Lane",
+                "city": "Jacksonville",
+                "region": "Florida",
+                "postalCode": "32259",
+                "addressTypeId": "Payment",
+                "primaryAddress": true
+              }
+            ]
+          },
+          "barcode": "34353637",
+          "username": "user2_address2",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
+      },
+      "receivedPath": "",
+      "sendData": {
+      }
+    },
+    {
+      "url": "/users/da4106eb-ec94-49ce-8019-9cc89281091c",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "da4106eb-ec94-49ce-8019-9cc89281091c",
+        "proxyFor": [],
+        "externalSystemId": "user2_address2",
+        "personal": {
+          "firstName": "User2",
+          "lastName": "Address2",
+          "email": "user2_address2@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": [
+            {
+              "addressLine1": "Test first line",
+              "city": "Test city",
+              "region": "Test region",
+              "postalCode": "12345",
+              "addressTypeId": "Home",
+              "primaryAddress": true
+            }
+          ]
+        },
+        "barcode": "34353637",
+        "username": "user2_address2",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "user2_address2",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Address",
+          "email": "user2_address2@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": [
+            {
+              "addressLine1": "Test first line",
+              "city": "Test city",
+              "region": "Test region",
+              "postalCode": "12345",
+              "addressTypeId": "Home",
+              "primaryAddress": true
+            }
+          ]
+        },
+        "barcode": "34353637",
+        "username": "user2_address2",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    
+    
+    {
       "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,

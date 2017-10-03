@@ -3,7 +3,11 @@ package org.folio.rest.impl;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.folio.rest.RestVerticle;
+import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.tools.client.test.HttpClientMock2;
@@ -115,6 +119,70 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithUserAddressUpdate() {
+    JsonObject obj = new JsonObject();
+    JsonArray users = new JsonArray();
+    User user = generateUser("30313233", "User", "Address", "2cbf64a1-5904-4748-ae77-3d0605e911e7");
+    Address address = new Address();
+    address.setAddressLine1("Test first line");
+    address.setCity("Test city");
+    address.setRegion("Test region");
+    address.setPostalCode("12345");
+    address.setAddressTypeId("Home");
+    address.setPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
+    users.add(JsonObject.mapFrom(user));
+    obj.put("users", users);
+    obj.put("totalRecords", 1);
+    obj.put("updateOnlyPresentFields", true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(obj.encode())
+      .post("/user-import")
+      .then()
+      .body(equalTo("Users were imported successfully."))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserAddressRewrite() {
+    JsonObject obj = new JsonObject();
+    JsonArray users = new JsonArray();
+    User user = generateUser("34353637", "User2", "Address2", "da4106eb-ec94-49ce-8019-9cc89281091c");
+    Address address = new Address();
+    address.setAddressLine1("Test first line");
+    address.setCity("Test city");
+    address.setRegion("Test region");
+    address.setPostalCode("12345");
+    address.setAddressTypeId("Home");
+    address.setPrimaryAddress(Boolean.TRUE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
+    users.add(JsonObject.mapFrom(user));
+    obj.put("users", users);
+    obj.put("totalRecords", 1);
+    obj.put("updateOnlyPresentFields", false);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(obj.encode())
+      .post("/user-import")
+      .then()
+      .body(equalTo("Users were imported successfully."))
+      .statusCode(200);
+  }
+
+  @Test
   public void testImportWithDeactivate() {
     JsonObject obj = new JsonObject();
     JsonArray users = new JsonArray();
@@ -202,6 +270,11 @@ public class UserImportAPITest {
   }
 
   private JsonObject generateUserObject(String barcode, String firstName, String lastName, String id) {
+    User user = generateUser(barcode, firstName, lastName, id);
+    return JsonObject.mapFrom(user);
+  }
+
+  private User generateUser(String barcode, String firstName, String lastName, String id) {
     String username = firstName.toLowerCase() + "_" + lastName.toLowerCase();
     User user = new User();
     if (id != null) {
@@ -218,6 +291,6 @@ public class UserImportAPITest {
     personal.setEmail(username + "@user.org");
     personal.setPreferredContactTypeId("email");
     user.setPersonal(personal);
-    return JsonObject.mapFrom(user);
+    return user;
   }
 }

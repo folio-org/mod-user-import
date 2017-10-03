@@ -481,7 +481,7 @@ public class UserImportAPI implements UserImportResource {
       if (!Strings.isNullOrEmpty(sourceType)) {
         userQueryBuilder.append(sourceType).append("_");
       }
-      userQueryBuilder.append(users.get(i).getExternalSystemId() + "\"");
+      userQueryBuilder.append(users.get(i).getExternalSystemId()).append("\"");
       if (i < users.size() - 1) {
         userQueryBuilder.append(" or ");
       } else {
@@ -524,8 +524,7 @@ public class UserImportAPI implements UserImportResource {
 
   private Map<String, User> extractExistingUsers(List<Map> existingUserList) {
     Map<String, User> existingUsers = new HashMap<>();
-    for (int i = 0; i < existingUserList.size(); i++) {
-      Map existingUser = existingUserList.get(i);
+    for (Map existingUser : existingUserList) {
       JsonObject user = JsonObject.mapFrom(existingUser);
       User mappedUser = user.mapTo(User.class);
       LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
@@ -582,16 +581,12 @@ public class UserImportAPI implements UserImportResource {
       if (currentAddresses == null) {
         addresses = existingAddresses;
       } else {
-        Map<String, Address> currentAddressMap = new HashMap<>();
-        Map<String, Address> existingAddressMap = new HashMap<>();
-        currentAddresses.stream().forEach(address -> currentAddressMap.put(address.getAddressTypeId(), address));
-        existingAddresses.stream().forEach(address -> existingAddressMap.put(address.getAddressTypeId(), address));
+        Map<String, Address> addressMap = new HashMap<>();
+        existingAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
+        currentAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
 
-        existingAddressMap.putAll(currentAddressMap);
         addresses = new ArrayList<>();
-        for (Address address : existingAddressMap.values()) {
-          addresses.add(address);
-        }
+        addresses.addAll(addressMap.values());
       }
     }
 
