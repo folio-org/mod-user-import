@@ -51,8 +51,8 @@
       <artifactId>okapi-common</artifactId>
       <version>${okapi.version}</version>
     </dependency>
-    
-    
+
+
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
@@ -66,7 +66,7 @@
       <version>3.0.3</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-unit</artifactId>
@@ -74,7 +74,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
     <distributionManagement>
     <repository>
       <id>folio-nexus</id>
@@ -98,7 +98,7 @@
 <!--     <developerConnection>scm:git:git@github.com:qultoltd/mod-user-import.git</developerConnection> -->
 <!--     <tag>v13.0.0</tag> -->
 <!--   </scm> -->
-  
+
   <build>
     <plugins>
       <plugin>
@@ -223,7 +223,7 @@
           </execution>
         </executions>
       </plugin>
-      
+
       <plugin>
         <groupId>com.coderplus.maven.plugins</groupId>
         <artifactId>copy-rename-maven-plugin</artifactId>
@@ -293,8 +293,8 @@
           </execution>
         </executions>
       </plugin>
-      
-      
+
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>

@@ -63,7 +63,7 @@ The value can be one of the following: mail, email, text, phone, mobile.
 This should be true if the users missing from the current import batch should be deactivated in FOLIO.
 
 ### updateOnlyPresentFields
-This should be true if only the fields present in the import should be updated. E.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved. 
+This should be true if only the fields present in the import should be updated. E.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved.
 
 ### sourceType
-A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. 
+A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated.
