@@ -74,8 +74,8 @@
       "receivedPath": "",
       "sendData": {}
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22amy_cabble%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -133,8 +133,8 @@
         "permissions": []
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22user_update%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -195,8 +195,8 @@
         "patronGroup": "undergrad"
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22user_address%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -302,8 +302,8 @@
         "patronGroup": "undergrad"
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22user2_address2%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -393,8 +393,8 @@
         "patronGroup": "undergrad"
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -501,8 +501,8 @@
         "permissions": []
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22test_user%22%29&limit=2&&offset=0orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -550,8 +550,8 @@
         "patronGroup": "undergrad"
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22test_test_user%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -609,8 +609,8 @@
         "permissions": []
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22test2_user2_update2%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -671,8 +671,8 @@
         "patronGroup": "undergrad"
       }
     },
-    
-    
+
+
     {
       "url": "/users?query=externalSystemId%3D%5Etest3_%2A&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
