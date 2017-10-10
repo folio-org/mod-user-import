@@ -133,6 +133,480 @@
         "permissions": []
       }
     },
+    
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%2211_12%22%2Bor%2BexternalSystemId%3D%3D%2221_22%22%2Bor%2BexternalSystemId%3D%3D%2231_32%22%2Bor%2BexternalSystemId%3D%3D%2241_42%22%2Bor%2BexternalSystemId%3D%3D%2251_52%22%2Bor%2BexternalSystemId%3D%3D%2261_62%22%2Bor%2BexternalSystemId%3D%3D%2271_72%22%2Bor%2BexternalSystemId%3D%3D%2281_82%22%2Bor%2BexternalSystemId%3D%3D%2291_92%22%2Bor%2BexternalSystemId%3D%3D%22101_102%22%29&limit=20&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "d20c1940-6e46-4762-bbd4-637edb8d8dd3",
+        "proxyFor": [],
+        "externalSystemId": "11_12",
+        "personal": {
+          "firstName": "11",
+          "lastName": "12",
+          "email": "11_12@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "1",
+        "username": "11_12",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "11_12",
+        "personal": {
+          "firstName": "11",
+          "lastName": "12",
+          "email": "11_12@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "1",
+        "username": "11_12",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "d20c1940-6e46-4762-bbd4-637edb8d8dd3",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "b2b472f1-a5f2-45f3-b583-d9a67dd39723",
+        "proxyFor": [],
+        "externalSystemId": "21_22",
+        "personal": {
+          "firstName": "21",
+          "lastName": "22",
+          "email": "21_22@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "2",
+        "username": "21_22",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "21_22",
+        "personal": {
+          "firstName": "21",
+          "lastName": "22",
+          "email": "21_22@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "2",
+        "username": "21_22",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "b2b472f1-a5f2-45f3-b583-d9a67dd39723",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "bea0726e-c01b-473a-8787-8625348ed181",
+        "proxyFor": [],
+        "externalSystemId": "31_32",
+        "personal": {
+          "firstName": "31",
+          "lastName": "32",
+          "email": "31_32@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "3",
+        "username": "31_32",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "31_32",
+        "personal": {
+          "firstName": "31",
+          "lastName": "32",
+          "email": "31_32@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "3",
+        "username": "31_32",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "bea0726e-c01b-473a-8787-8625348ed181",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "3ba3f736-37b2-46ca-ae5e-8a6848d8a7f5",
+        "proxyFor": [],
+        "externalSystemId": "41_42",
+        "personal": {
+          "firstName": "41",
+          "lastName": "42",
+          "email": "41_42@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "4",
+        "username": "41_42",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "41_42",
+        "personal": {
+          "firstName": "41",
+          "lastName": "42",
+          "email": "41_42@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "4",
+        "username": "41_42",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "3ba3f736-37b2-46ca-ae5e-8a6848d8a7f5",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "7e7ad4d8-b38d-461e-ab49-6ea9841fe4cd",
+        "proxyFor": [],
+        "externalSystemId": "51_52",
+        "personal": {
+          "firstName": "51",
+          "lastName": "52",
+          "email": "51_52@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "5",
+        "username": "51_52",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "51_52",
+        "personal": {
+          "firstName": "51",
+          "lastName": "52",
+          "email": "51_52@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "5",
+        "username": "51_52",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "7e7ad4d8-b38d-461e-ab49-6ea9841fe4cd",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "86298aa4-04ad-4543-80ba-509fb5af756d",
+        "proxyFor": [],
+        "externalSystemId": "61_62",
+        "personal": {
+          "firstName": "61",
+          "lastName": "62",
+          "email": "61_62@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "6",
+        "username": "61_62",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "61_62",
+        "personal": {
+          "firstName": "61",
+          "lastName": "62",
+          "email": "61_62@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "6",
+        "username": "61_62",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "86298aa4-04ad-4543-80ba-509fb5af756d",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "9cb67dee-4fe2-401a-9a2b-1c5b9bf32dc6",
+        "proxyFor": [],
+        "externalSystemId": "71_72",
+        "personal": {
+          "firstName": "71",
+          "lastName": "72",
+          "email": "71_72@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "7",
+        "username": "71_72",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "71_72",
+        "personal": {
+          "firstName": "71",
+          "lastName": "72",
+          "email": "71_72@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "7",
+        "username": "71_72",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "9cb67dee-4fe2-401a-9a2b-1c5b9bf32dc6",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "6277f61f-d019-445b-a76d-85e65b2eb932",
+        "proxyFor": [],
+        "externalSystemId": "81_82",
+        "personal": {
+          "firstName": "81",
+          "lastName": "82",
+          "email": "81_82@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "8",
+        "username": "81_82",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "81_82",
+        "personal": {
+          "firstName": "81",
+          "lastName": "82",
+          "email": "81_82@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "8",
+        "username": "81_82",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "6277f61f-d019-445b-a76d-85e65b2eb932",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "d6aa3176-31ae-4fd8-ab5c-ef0d1d4ff9af",
+        "proxyFor": [],
+        "externalSystemId": "91_92",
+        "personal": {
+          "firstName": "91",
+          "lastName": "92",
+          "email": "91_92@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "9",
+        "username": "91_92",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "91_92",
+        "personal": {
+          "firstName": "91",
+          "lastName": "92",
+          "email": "91_92@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "9",
+        "username": "91_92",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "d6aa3176-31ae-4fd8-ab5c-ef0d1d4ff9af",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "b1234919-67ed-4d66-92fe-28c866cb334a",
+        "proxyFor": [],
+        "externalSystemId": "101_102",
+        "personal": {
+          "firstName": "101",
+          "lastName": "102",
+          "email": "101_102@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "10",
+        "username": "101_102",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "101_102",
+        "personal": {
+          "firstName": "101",
+          "lastName": "102",
+          "email": "101_102@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "10",
+        "username": "101_102",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "b1234919-67ed-4d66-92fe-28c866cb334a",
+        "permissions": []
+      }
+    },    
+    
 
 
     {
@@ -157,8 +631,7 @@
         "totalRecords": 1
       },
       "receivedPath": "",
-      "sendData": {
-      }
+      "sendData": {}
     },
     {
       "url": "/users/58512926-9a29-483b-b801-d36aced855d3",
@@ -195,7 +668,613 @@
         "patronGroup": "undergrad"
       }
     },
-
+    
+    
+    {
+      "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [
+          {
+            "id": "126672ce-4eec-4724-b8aa-7f52adce1618",
+            "proxyFor": [],
+            "externalSystemId": "111_112",
+            "personal": {
+              "firstName": "111",
+              "lastName": "112",
+              "email": "111_112@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "11",
+            "username": "111_112",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "507f1372-09cd-4dab-bb72-7af93877b8b2",
+            "proxyFor": [],
+            "externalSystemId": "121_122",
+            "personal": {
+              "firstName": "121",
+              "lastName": "122",
+              "email": "121_122@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "12",
+            "username": "121_122",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "6f46b127-26e4-4401-9041-86c103852f72",
+            "proxyFor": [],
+            "externalSystemId": "131_132",
+            "personal": {
+              "firstName": "131",
+              "lastName": "132",
+              "email": "131_132@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "13",
+            "username": "131_132",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "169c67b2-86e3-45c4-b625-8ccdf07debe5",
+            "proxyFor": [],
+            "externalSystemId": "141_142",
+            "personal": {
+              "firstName": "141",
+              "lastName": "142",
+              "email": "141_142@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "14",
+            "username": "141_142",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "d9cb9cf5-ba70-4f74-9083-74db9a10ce27",
+            "proxyFor": [],
+            "externalSystemId": "151_152",
+            "personal": {
+              "firstName": "151",
+              "lastName": "152",
+              "email": "151_152@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "15",
+            "username": "151_152",
+            "active": true,
+            "patronGroup": "undergrad"
+          }
+        ],
+        "totalRecords": 11
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=5&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [
+          {
+            "id": "61d4d0f9-2c58-42d9-9623-33b57dc388a1",
+            "proxyFor": [],
+            "externalSystemId": "161_162",
+            "personal": {
+              "firstName": "161",
+              "lastName": "162",
+              "email": "161_162@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "16",
+            "username": "161_162",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "c2bad1ce-efcb-4edb-962a-736db883f999",
+            "proxyFor": [],
+            "externalSystemId": "171_172",
+            "personal": {
+              "firstName": "171",
+              "lastName": "172",
+              "email": "171_172@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "17",
+            "username": "171_172",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "adf149ef-3c4b-4153-832e-1ea54a4a929e",
+            "proxyFor": [],
+            "externalSystemId": "181_182",
+            "personal": {
+              "firstName": "181",
+              "lastName": "182",
+              "email": "181_182@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "18",
+            "username": "181_182",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "72c14aac-ffdb-45ae-8879-fb4b35709630",
+            "proxyFor": [],
+            "externalSystemId": "191_192",
+            "personal": {
+              "firstName": "191",
+              "lastName": "192",
+              "email": "191_192@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "19",
+            "username": "191_192",
+            "active": true,
+            "patronGroup": "undergrad"
+          },
+          {
+            "id": "eda46929-3567-46ae-b028-745ccf982c7e",
+            "proxyFor": [],
+            "externalSystemId": "1101_1102",
+            "personal": {
+              "firstName": "1101",
+              "lastName": "1102",
+              "email": "1101_1102@user.org",
+              "preferredContactTypeId": "email",
+              "addresses": []
+            },
+            "barcode": "110",
+            "username": "1101_1102",
+            "active": true,
+            "patronGroup": "undergrad"
+          }
+        ],
+        "totalRecords": 11
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=10&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [{
+          "id": "60838126-f5f0-4139-97df-011da2b6ad3c",
+          "externalSystemId": "user_old",
+          "personal": {
+            "firstName": "User",
+            "lastName": "Old",
+            "email": "user_old@user.org",
+            "preferredContactTypeId": "email",
+            "addresses": []
+          },
+          "barcode": "17181920",
+          "username": "user_old",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 11
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users/126672ce-4eec-4724-b8aa-7f52adce1618",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "126672ce-4eec-4724-b8aa-7f52adce1618",
+        "proxyFor": [],
+        "externalSystemId": "111_112",
+        "personal": {
+          "firstName": "111",
+          "lastName": "112",
+          "email": "111_112@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "11",
+        "username": "111_112",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "126672ce-4eec-4724-b8aa-7f52adce1618",
+        "externalSystemId": "111_112",
+        "personal": {
+          "firstName": "111",
+          "lastName": "112",
+          "email": "111_112@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "11",
+        "username": "111_112",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/507f1372-09cd-4dab-bb72-7af93877b8b2",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "507f1372-09cd-4dab-bb72-7af93877b8b2",
+        "proxyFor": [],
+        "externalSystemId": "121_122",
+        "personal": {
+          "firstName": "121",
+          "lastName": "122",
+          "email": "121_122@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "12",
+        "username": "121_122",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "507f1372-09cd-4dab-bb72-7af93877b8b2",
+        "externalSystemId": "121_122",
+        "personal": {
+          "firstName": "121",
+          "lastName": "122",
+          "email": "121_122@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "12",
+        "username": "121_122",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/6f46b127-26e4-4401-9041-86c103852f72",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "6f46b127-26e4-4401-9041-86c103852f72",
+        "proxyFor": [],
+        "externalSystemId": "131_132",
+        "personal": {
+          "firstName": "131",
+          "lastName": "132",
+          "email": "131_132@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "13",
+        "username": "131_132",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "6f46b127-26e4-4401-9041-86c103852f72",
+        "externalSystemId": "131_132",
+        "personal": {
+          "firstName": "131",
+          "lastName": "132",
+          "email": "131_132@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "13",
+        "username": "131_132",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/169c67b2-86e3-45c4-b625-8ccdf07debe5",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "169c67b2-86e3-45c4-b625-8ccdf07debe5",
+        "proxyFor": [],
+        "externalSystemId": "141_142",
+        "personal": {
+          "firstName": "141",
+          "lastName": "142",
+          "email": "141_142@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "14",
+        "username": "141_142",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "169c67b2-86e3-45c4-b625-8ccdf07debe5",
+        "externalSystemId": "141_142",
+        "personal": {
+          "firstName": "141",
+          "lastName": "142",
+          "email": "141_142@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "14",
+        "username": "141_142",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/d9cb9cf5-ba70-4f74-9083-74db9a10ce27",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "d9cb9cf5-ba70-4f74-9083-74db9a10ce27",
+        "proxyFor": [],
+        "externalSystemId": "151_152",
+        "personal": {
+          "firstName": "151",
+          "lastName": "152",
+          "email": "151_152@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "15",
+        "username": "151_152",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "d9cb9cf5-ba70-4f74-9083-74db9a10ce27",
+        "externalSystemId": "151_152",
+        "personal": {
+          "firstName": "151",
+          "lastName": "152",
+          "email": "151_152@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "15",
+        "username": "151_152",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/61d4d0f9-2c58-42d9-9623-33b57dc388a1",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "61d4d0f9-2c58-42d9-9623-33b57dc388a1",
+        "proxyFor": [],
+        "externalSystemId": "161_162",
+        "personal": {
+          "firstName": "161",
+          "lastName": "162",
+          "email": "161_162@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "16",
+        "username": "161_162",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "61d4d0f9-2c58-42d9-9623-33b57dc388a1",
+        "externalSystemId": "161_162",
+        "personal": {
+          "firstName": "161",
+          "lastName": "162",
+          "email": "161_162@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "16",
+        "username": "161_162",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/c2bad1ce-efcb-4edb-962a-736db883f999",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "c2bad1ce-efcb-4edb-962a-736db883f999",
+        "proxyFor": [],
+        "externalSystemId": "171_172",
+        "personal": {
+          "firstName": "171",
+          "lastName": "172",
+          "email": "171_172@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "17",
+        "username": "171_172",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "c2bad1ce-efcb-4edb-962a-736db883f999",
+        "externalSystemId": "171_172",
+        "personal": {
+          "firstName": "171",
+          "lastName": "172",
+          "email": "171_172@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "17",
+        "username": "171_172",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/adf149ef-3c4b-4153-832e-1ea54a4a929e",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "adf149ef-3c4b-4153-832e-1ea54a4a929e",
+        "proxyFor": [],
+        "externalSystemId": "181_182",
+        "personal": {
+          "firstName": "181",
+          "lastName": "182",
+          "email": "181_182@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "18",
+        "username": "181_182",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "adf149ef-3c4b-4153-832e-1ea54a4a929e",
+        "externalSystemId": "181_182",
+        "personal": {
+          "firstName": "181",
+          "lastName": "182",
+          "email": "181_182@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "18",
+        "username": "181_182",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/72c14aac-ffdb-45ae-8879-fb4b35709630",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "72c14aac-ffdb-45ae-8879-fb4b35709630",
+        "proxyFor": [],
+        "externalSystemId": "191_192",
+        "personal": {
+          "firstName": "191",
+          "lastName": "192",
+          "email": "191_192@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "19",
+        "username": "191_192",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "72c14aac-ffdb-45ae-8879-fb4b35709630",
+        "externalSystemId": "191_192",
+        "personal": {
+          "firstName": "191",
+          "lastName": "192",
+          "email": "191_192@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "19",
+        "username": "191_192",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/eda46929-3567-46ae-b028-745ccf982c7e",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "eda46929-3567-46ae-b028-745ccf982c7e",
+        "proxyFor": [],
+        "externalSystemId": "1101_1102",
+        "personal": {
+          "firstName": "1101",
+          "lastName": "1102",
+          "email": "1101_1102@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "110",
+        "username": "1101_1102",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "id": "eda46929-3567-46ae-b028-745ccf982c7e",
+        "externalSystemId": "1101_1102",
+        "personal": {
+          "firstName": "1101",
+          "lastName": "1102",
+          "email": "1101_1102@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "110",
+        "username": "1101_1102",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/users/60838126-f5f0-4139-97df-011da2b6ad3c",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "60838126-f5f0-4139-97df-011da2b6ad3c",
+        "proxyFor": [],
+        "externalSystemId": "user_old",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Old",
+          "email": "user_old@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "17181920",
+        "username": "user_old",
+        "active": false,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "user_old",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Old",
+          "email": "user_old@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "17181920",
+        "username": "user_old",
+        "active": false,
+        "patronGroup": "undergrad"
+      }
+    },
+    
 
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22user_address%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
@@ -391,114 +1470,6 @@
         "username": "user2_address2",
         "active": true,
         "patronGroup": "undergrad"
-      }
-    },
-
-
-    {
-      "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=0&orderBy=externalSystemId&order=asc",
-      "method": "get",
-      "status": 200,
-      "receivedData": {
-        "users": [{
-          "id": "60838126-f5f0-4139-97df-011da2b6ad3c",
-          "externalSystemId": "user_old",
-          "personal": {
-            "firstName": "User",
-            "lastName": "Old",
-            "email": "user_old@user.org",
-            "preferredContactTypeId": "email"
-          },
-          "barcode": "17181920",
-          "username": "user_old",
-          "active": true,
-          "patronGroup": "undergrad"
-        }],
-        "totalRecords": 1
-      },
-      "receivedPath": "",
-      "sendData": {
-      }
-    },
-    {
-      "url": "/users/60838126-f5f0-4139-97df-011da2b6ad3c",
-      "method": "put",
-      "status": 204,
-      "receivedData": {
-        "id": "60838126-f5f0-4139-97df-011da2b6ad3c",
-        "proxyFor": [],
-        "externalSystemId": "user_old",
-        "personal": {
-          "firstName": "User",
-          "lastName": "Old",
-          "email": "user_old@user.org",
-          "preferredContactTypeId": "email",
-          "addresses": []
-        },
-        "barcode": "17181920",
-        "username": "user_old",
-        "active": false,
-        "patronGroup": "undergrad"
-      },
-      "receivedPath": "",
-      "sendData": {
-        "externalSystemId": "user_old",
-        "personal": {
-          "firstName": "User",
-          "lastName": "Old",
-          "email": "user_old@user.org",
-          "preferredContactTypeId": "email"
-        },
-        "barcode": "17181920",
-        "username": "user_old",
-        "active": false,
-        "patronGroup": "undergrad"
-      }
-    },
-    {
-      "url": "/users",
-      "method": "post",
-      "status": 201,
-      "receivedData": {
-        "id": "e95d5f25-7c03-4146-aafb-0141521a89b0",
-        "proxyFor": [],
-        "externalSystemId": "user_deactivate",
-        "personal": {
-          "firstName": "User",
-          "lastName": "Deactivate",
-          "email": "user_deactivate@user.org",
-          "preferredContactTypeId": "email",
-          "addresses": []
-        },
-        "barcode": "13141516",
-        "username": "user_deactivate",
-        "active": true,
-        "patronGroup": "undergrad"
-      },
-      "receivedPath": "",
-      "sendData": {
-        "externalSystemId": "user_deactivate",
-        "personal": {
-          "firstName": "User",
-          "lastName": "Deactivate",
-          "email": "user_deactivate@user.org",
-          "preferredContactTypeId": "email"
-        },
-        "barcode": "13141516",
-        "username": "user_deactivate",
-        "active": true,
-        "patronGroup": "undergrad"
-      }
-    },
-    {
-      "url": "/perms/users",
-      "method": "post",
-      "status": 201,
-      "receivedData": {},
-      "receivedPath": "",
-      "sendData": {
-        "userId": "e95d5f25-7c03-4146-aafb-0141521a89b0",
-        "permissions": []
       }
     },
 
