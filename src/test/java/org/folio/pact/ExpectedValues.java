@@ -3,7 +3,6 @@ package org.folio.pact;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
-//import org.apache.commons.collections.MapUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 
+/*
+ * Author: Jonathan Johnson: https://github.com/javajon
+ */
 
 public class ExpectedValues {
   
