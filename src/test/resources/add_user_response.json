@@ -1,0 +1,16 @@
+{
+     "username" : "amy_cable",
+     "id": "1ad737b0-d847-11e6-bf26-cec0c9329933",
+     "externalSystemId": "amy_cable",
+    "barcode" : "1234567",
+     "active" : true,
+     "patronGroup" : "7791d69d-5ecf-4e51-b20d-3a746e5be969",
+     "proxyFor" : [ ],
+     "personal" : {
+      "lastName" : "Cable",
+      "firstName" : "Amy",
+      "email" : "amy_cable@user.org",
+      "addresses" : [ ],
+      "preferredContactTypeId" : "email"
+ }
+ }

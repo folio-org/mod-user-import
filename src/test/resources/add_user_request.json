@@ -1,0 +1,16 @@
+{
+        "id": "1ad737b0-d847-11e6-bf26-cec0c9329933",
+        "externalSystemId": "amy_cable",
+        "personal": {
+          "firstName": "Amy",
+          "lastName": "Cable",
+          "email": "amy_cable@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "1234567",
+        "username": "amy_cable",
+        "active": true,
+        "patronGroup": "7791d69d-5ecf-4e51-b20d-3a746e5be969"
+      }
+      
+      

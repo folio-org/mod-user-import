@@ -1,0 +1,28 @@
+{
+  "addressTypes" : [ {
+    "addressType" : "Returns",
+    "desc" : "Returns Address",
+    "id" : "187137e6-b3d3-4a72-882c-ea38b544f598"
+  }, {
+    "addressType" : "Claim",
+    "desc" : "Claim Address",
+    "id" : "5d4ca528-a91d-4351-bb62-8cde055c9c6b"
+  }, {
+    "addressType" : "Order",
+    "desc" : "Order Address",
+    "id" : "23848023-2009-4c48-bc6c-f058f2f04a92"
+  }, {
+    "addressType" : "Work",
+    "desc" : "Work Address",
+    "id" : "17f9bf55-2ec5-47de-9178-90d559e41e05"
+  }, {
+    "addressType" : "Home",
+    "desc" : "Home Address",
+    "id" : "088c7c5b-6572-44d2-86d3-6f0d72796980"
+  }, {
+    "addressType" : "Payment",
+    "desc" : "Payment Address",
+    "id" : "850f4014-2552-4847-96c2-6bc860ab3ca5"
+  } ],
+  "totalRecords" : 6
+}
