@@ -197,7 +197,7 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
+  protected Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
     Future<Map<String, String>> future = Future.future();
 
     String okapiURL = getOkapiUrl(okapiHeaders);
@@ -240,7 +240,7 @@ public class UserImportAPI implements UserImportResource {
     return addressTypeMap;
   }
 
-  private Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
+  protected Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
     Future<Map<String, String>> future = Future.future();
 
     String okapiURL = getOkapiUrl(okapiHeaders);
@@ -283,7 +283,7 @@ public class UserImportAPI implements UserImportResource {
     return patronGroupMap;
   }
 
-  private Future<Void> createNewUser(Map<String, String> okapiHeaders, User user) {
+  protected Future<Void> createNewUser(Map<String, String> okapiHeaders, User user) {
     Future<Void> future = Future.future();
 
     String okapiURL = getOkapiUrl(okapiHeaders);
