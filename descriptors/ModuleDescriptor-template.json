@@ -3,7 +3,7 @@
   "name": "User import",
   "provides": [
     {
-      "id": "mod-user-import",
+      "id": "user-import",
       "version": "1.0",
       "handlers": [
         {

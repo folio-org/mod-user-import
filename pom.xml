@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-user-import</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -92,12 +92,12 @@
     </snapshotRepository>
   </distributionManagement>
 
-<!--   <scm> -->
-<!--     <url>https://github.com/qultoltd/mod-user-import</url> -->
-<!--     <connection>scm:git:git://github.com:qultoltd/mod-user-import.git</connection> -->
-<!--     <developerConnection>scm:git:git@github.com:qultoltd/mod-user-import.git</developerConnection> -->
-<!--     <tag>v13.0.0</tag> -->
-<!--   </scm> -->
+   <scm>
+     <url>https://github.com/folio-org/mod-user-import</url>
+     <connection>scm:git:git://github.com/folio-org/mod-user-import.git</connection>
+     <developerConnection>scm:git:git@github.com:folio-org/mod-user-import.git</developerConnection>
+     <tag>HEAD</tag>
+   </scm>
 
   <build>
     <plugins>
