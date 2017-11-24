@@ -1,4 +1,4 @@
-package org.folio.rest.client;
+package org.folio.rest.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;

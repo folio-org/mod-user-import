@@ -1,4 +1,4 @@
-package org.folio.rest.client;
+package org.folio.rest.util;
 
 public interface UserImportAPIConstants {
 

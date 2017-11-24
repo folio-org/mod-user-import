@@ -1,6 +1,6 @@
-package org.folio.rest.client;
+package org.folio.rest.util;
 
-import static org.folio.rest.client.UserImportAPIConstants.*;
+import static org.folio.rest.util.UserImportAPIConstants.*;
 
 import java.util.HashMap;
 import java.util.Map;

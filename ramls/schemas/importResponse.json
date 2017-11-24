@@ -9,11 +9,21 @@
     "error": {
       "type": "string"
     },
-    "successfulRecords": {
+    "createdRecords": {
+      "type": "integer"
+    },
+    "updatedRecords": {
       "type": "integer"
     },
     "failedRecords": {
       "type": "integer"
+    },
+    "failedExternalSystemIds": {
+      "type": "array",
+      "id": "failedExternalSystemIds",
+      "items": {
+        "type": "string"
+      }
     },
     "totalRecords": {
       "type": "integer"

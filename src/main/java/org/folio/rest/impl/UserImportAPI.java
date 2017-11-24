@@ -1,10 +1,10 @@
 package org.folio.rest.impl;
 
-import static org.folio.rest.client.AddressTypeManager.*;
-import static org.folio.rest.client.HttpClientUtil.*;
-import static org.folio.rest.client.PatronGroupManager.*;
-import static org.folio.rest.client.UserDataUtil.*;
-import static org.folio.rest.client.UserImportAPIConstants.*;
+import static org.folio.rest.util.AddressTypeManager.*;
+import static org.folio.rest.util.HttpClientUtil.*;
+import static org.folio.rest.util.PatronGroupManager.*;
+import static org.folio.rest.util.UserDataUtil.*;
+import static org.folio.rest.util.UserImportAPIConstants.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -21,6 +21,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
+import org.folio.rest.util.SingleUserImportResponse;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -123,28 +124,12 @@ public class UserImportAPI implements UserImportResource {
 
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
-            ImportResponse compositeResponse = new ImportResponse();
-            int success = 0;
-            int failed = 0;
-            int total = 0;
-            for (Future currentFuture : futures) {
-              LOGGER.info("future: " + currentFuture);
-              if (currentFuture.succeeded() && currentFuture.result() instanceof ImportResponse) {
-                ImportResponse subResponse = (ImportResponse) currentFuture.result();
-                total += subResponse.getTotalRecords();
-                success += subResponse.getSuccessfulRecords();
-                failed += subResponse.getFailedRecords();
-              }
-            }
-            compositeResponse.setTotalRecords(total);
-            compositeResponse.setSuccessfulRecords(success);
-            compositeResponse.setFailedRecords(failed);
+            ImportResponse compositeResponse = processFutureResponses(futures);
 
             if (existingUserMap.isEmpty()) {
               compositeResponse.setMessage("Users were imported successfully.");
               future.complete(compositeResponse);
             } else {
-
               deactivateUsers(okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
                 compositeResponse.setMessage("Deactivated missing users.");
                 future.complete(compositeResponse);
@@ -198,24 +183,8 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
-        ImportResponse successResponse = new ImportResponse();
+        ImportResponse successResponse = processFutureResponses(futures);
         successResponse.setMessage("Users were imported successfully.");
-
-        int success = 0;
-        int failed = 0;
-        int totalRecords = 0;
-        for (Future currentFuture : futures) {
-          if (currentFuture.result() instanceof ImportResponse) {
-            ImportResponse currentResponse = (ImportResponse) currentFuture.result();
-            success += currentResponse.getSuccessfulRecords();
-            failed += currentResponse.getFailedRecords();
-            totalRecords += currentResponse.getTotalRecords();
-          }
-        }
-        successResponse.setSuccessfulRecords(success);
-        successResponse.setFailedRecords(failed);
-        successResponse.setTotalRecords(totalRecords);
-
         future.complete(successResponse);
       } else {
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
@@ -316,11 +285,11 @@ public class UserImportAPI implements UserImportResource {
         } else {
           user.setId(existingUsers.get(user.getExternalSystemId()).getId());
         }
-        Future<String> userUpdateResponse = updateUser(okapiHeaders, user);
+        Future<SingleUserImportResponse> userUpdateResponse = updateUser(okapiHeaders, user);
         futures.add(userUpdateResponse);
         existingUsers.remove(user.getExternalSystemId());
       } else {
-        Future<String> userCreationResponse = createNewUser(okapiHeaders, user);
+        Future<SingleUserImportResponse> userCreationResponse = createNewUser(okapiHeaders, user);
         futures.add(userCreationResponse);
       }
     }
@@ -330,20 +299,34 @@ public class UserImportAPI implements UserImportResource {
         ImportResponse successResponse = new ImportResponse();
         successResponse.setMessage("");
         successResponse.setTotalRecords(futures.size());
+        List<String> failedExternalSystemIds = new ArrayList<>();
         int created = 0;
         int updated = 0;
         int failed = 0;
         for (Future currentFuture : futures) {
-          if ("created".equals(currentFuture.result())) {
-            created++;
-          } else if ("updated".equals(currentFuture.result())) {
-            updated++;
-          } else {
-            failed++;
+          if (currentFuture.result() instanceof SingleUserImportResponse) {
+            SingleUserImportResponse resp = (SingleUserImportResponse) currentFuture.result();
+            switch (resp.getStatus()) {
+              case CREATED: {
+                created++;
+                break;
+              }
+              case UPDATED: {
+                updated++;
+                break;
+              }
+              case FAILED: {
+                failed++;
+                failedExternalSystemIds.add(resp.getExternalSystemId());
+                break;
+              }
+            }
           }
         }
-        successResponse.setSuccessfulRecords(created + updated);
+        successResponse.setCreatedRecords(created);
+        successResponse.setUpdatedRecords(updated);
         successResponse.setFailedRecords(failed);
+        successResponse.setFailedExternalSystemIds(failedExternalSystemIds);
 
         future.complete(successResponse);
       } else {
@@ -355,8 +338,8 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Future<String> updateUser(Map<String, String> okapiHeaders, final User user) {
-    Future<String> future = Future.future();
+  private Future<SingleUserImportResponse> updateUser(Map<String, String> okapiHeaders, final User user) {
+    Future<SingleUserImportResponse> future = Future.future();
 
     HttpClientInterface userUpdateClient = createClient(okapiHeaders);
     Map<String, String> headers = createHeaders(okapiHeaders, "text/plain", HTTP_HEADER_VALUE_APPLICATION_JSON);
@@ -372,13 +355,13 @@ public class UserImportAPI implements UserImportResource {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
             LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            future.fail(res.getError().toString());
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), res.getCode(), res.getError().toString()));
           } else {
             try {
-              future.complete("updated");
+              future.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
-              future.fail(e);
+              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, e.getMessage()));
             }
           }
         });
@@ -390,8 +373,8 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Future<String> createNewUser(Map<String, String> okapiHeaders, User user) {
-    Future<String> future = Future.future();
+  private Future<SingleUserImportResponse> createNewUser(Map<String, String> okapiHeaders, User user) {
+    Future<SingleUserImportResponse> future = Future.future();
 
     user.setId(UUID.randomUUID().toString());
 
@@ -408,18 +391,18 @@ public class UserImportAPI implements UserImportResource {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
             LOGGER.warn("Failed to create new user with externalSystemId: " + user.getExternalSystemId());
-            future.fail(userCreationResponse.getError().toString());
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), userCreationResponse.getCode(), userCreationResponse.getError().toString()));
           } else {
             try {
               addEmptyPermissionSetForUser(okapiHeaders, user).setHandler(futurePermissionHandler -> {
                 if (futurePermissionHandler.failed()) {
                   LOGGER.error("Failed to register permissions for user with externalSystemId: " + user.getExternalSystemId());
                 }
-                future.complete("created");
+                future.complete(SingleUserImportResponse.created(user.getExternalSystemId()));
               });
             } catch (Exception e) {
               LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
-              future.complete();
+              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, e.getMessage()));
             }
           }
         });
@@ -584,7 +567,7 @@ public class UserImportAPI implements UserImportResource {
     for (User user : existingUserMap.values()) {
       if (user.getActive()) {
         user.setActive(Boolean.FALSE);
-        Future<String> userDeactivateAsyncResult =
+        Future<SingleUserImportResponse> userDeactivateAsyncResult =
           updateUser(okapiHeaders, user);
         futures.add(userDeactivateAsyncResult);
       }
@@ -635,6 +618,32 @@ public class UserImportAPI implements UserImportResource {
     } else {
       return "";
     }
+  }
+
+  private ImportResponse processFutureResponses(List<Future> futures) {
+    ImportResponse response = new ImportResponse();
+
+    int created = 0;
+    int updated = 0;
+    int failed = 0;
+    int totalRecords = 0;
+    List<String> failedExternalSystemIds = new ArrayList<>();
+    for (Future currentFuture : futures) {
+      if (currentFuture.result() instanceof ImportResponse) {
+        ImportResponse currentResponse = (ImportResponse) currentFuture.result();
+        created += currentResponse.getCreatedRecords();
+        updated += currentResponse.getUpdatedRecords();
+        failed += currentResponse.getFailedRecords();
+        totalRecords += currentResponse.getTotalRecords();
+        failedExternalSystemIds.addAll(currentResponse.getFailedExternalSystemIds());
+      }
+    }
+    response.setCreatedRecords(created);
+    response.setUpdatedRecords(updated);
+    response.setFailedRecords(failed);
+    response.setTotalRecords(totalRecords);
+    response.setFailedExternalSystemIds(failedExternalSystemIds);
+    return response;
   }
 
 }

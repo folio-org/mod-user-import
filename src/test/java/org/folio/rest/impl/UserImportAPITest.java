@@ -112,7 +112,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -146,7 +147,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(10))
-      .body("successfulRecords", equalTo(10))
+      .body("createdRecords", equalTo(10))
+      .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -170,7 +172,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -206,7 +209,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Deactivated missing users."))
       .body("totalRecords", equalTo(10))
-      .body("successfulRecords", equalTo(10))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(10))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -242,7 +246,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -278,7 +283,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -304,7 +310,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -330,7 +337,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Users were imported successfully."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
@@ -356,7 +364,8 @@ public class UserImportAPITest {
       .then()
       .body("message", equalTo("Deactivated missing users."))
       .body("totalRecords", equalTo(1))
-      .body("successfulRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
