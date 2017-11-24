@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Import response",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    },
+    "successfulRecords": {
+      "type": "integer"
+    },
+    "failedRecords": {
+      "type": "integer"
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "totalRecords"
+  ]
+}

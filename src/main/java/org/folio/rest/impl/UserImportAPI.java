@@ -1,9 +1,14 @@
 package org.folio.rest.impl;
 
+import static org.folio.rest.client.AddressTypeManager.*;
+import static org.folio.rest.client.HttpClientUtil.*;
+import static org.folio.rest.client.PatronGroupManager.*;
+import static org.folio.rest.client.UserDataUtil.*;
+import static org.folio.rest.client.UserImportAPIConstants.*;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,11 +16,10 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
-import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 
 import com.google.common.base.Strings;
@@ -35,37 +39,16 @@ import io.vertx.ext.web.RoutingContext;
 
 public class UserImportAPI implements UserImportResource {
 
-  private static final String FAILED_TO_PROCESS_USER_SEARCH_RESPONSE = "Failed to process user search response.";
-  private static final String FAILED_TO_PROCESS_USERS = "Failed to process users.";
-  private static final String FAILED_TO_PROCESS_USER_SEARCH_RESULT = "Failed to process user search result.";
-  private static final String FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to add permissions for user with externalSystemId: {}";
-  private static final String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: {}";
-  private static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
-  private static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
-  private static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
-  private static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
-  private static final String HTTP_HEADER_ACCEPT = "Accept";
-  private static final String OKAPI_URL_HEADER = "X-Okapi-URL";
-  private static final String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
-  private static final String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
-
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
 
-  private static final Map<String, String> preferredContactTypeIds = new HashMap<>();
-
-  static {
-    preferredContactTypeIds.put("mail", "001");
-    preferredContactTypeIds.put("email", "002");
-    preferredContactTypeIds.put("text", "003");
-    preferredContactTypeIds.put("phone", "004");
-    preferredContactTypeIds.put("mobile", "005");
-  }
-
+  /*
+   * Fake endpoint. Workaround for raml-module-builder.
+   */
   @Override
   public void getUserImport(RoutingContext routingContext, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
     asyncResultHandler
-      .handle(Future.succeededFuture(GetUserImportResponse.withPlainOK("This is a fake endpoint.")));
+      .handle(Future.succeededFuture(GetUserImportResponse.withPlainBadRequest("This is a fake endpoint.")));
   }
 
   @Override
@@ -74,25 +57,28 @@ public class UserImportAPI implements UserImportResource {
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) throws Exception {
     if (userCollection.getTotalRecords() == 0) {
+      ImportResponse emptyResponse = new ImportResponse();
+      emptyResponse.setMessage("No users to import.");
+      emptyResponse.setTotalRecords(0);
       asyncResultHandler
-        .handle(Future.succeededFuture(PostUserImportResponse.withPlainOK("No users to import.")));
+        .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
     } else {
       importUsers(okapiHeaders, userCollection).setHandler(handler -> {
         if (handler.succeeded()) {
           asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withPlainOK(handler.result())));
+            .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
         } else {
           asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withPlainBadRequest(handler.result())));
+            .handle(Future.succeededFuture(PostUserImportResponse.withPlainBadRequest(handler.cause().getMessage())));
         }
 
       });
     }
   }
 
-  private Future<String> importUsers(Map<String, String> okapiHeaders, UserdataCollection userCollection) {
+  private Future<ImportResponse> importUsers(Map<String, String> okapiHeaders, UserdataCollection userCollection) {
 
-    Future<String> future = Future.future();
+    Future<ImportResponse> future = Future.future();
 
     getAddressTypes(okapiHeaders).setHandler(addressTypeResultHandler -> {
       if (addressTypeResultHandler.failed()) {
@@ -104,7 +90,8 @@ public class UserImportAPI implements UserImportResource {
           if (patronGroupResultHandler.succeeded()) {
 
             if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
-              processWithDeactivatingUsers(okapiHeaders, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result()).setHandler(future.completer());
+              processWithDeactivatingUsers(okapiHeaders, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result()).setHandler(
+                future.completer());
             } else {
               processUserImport(userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result(), okapiHeaders).setHandler(future.completer());
             }
@@ -119,9 +106,9 @@ public class UserImportAPI implements UserImportResource {
 
   }
 
-  private Future<String> processWithDeactivatingUsers(Map<String, String> okapiHeaders, UserdataCollection userCollection,
+  private Future<ImportResponse> processWithDeactivatingUsers(Map<String, String> okapiHeaders, UserdataCollection userCollection,
     Map<String, String> patronGroups, Map<String, String> addressTypes) {
-    Future<String> future = Future.future();
+    Future<ImportResponse> future = Future.future();
     listAllUsersWithExternalSystemId(okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
 
       if (handler.failed()) {
@@ -130,16 +117,38 @@ public class UserImportAPI implements UserImportResource {
       } else {
         LOGGER.info("response: " + handler.result());
         List<Map> existingUsers = handler.result();
-        Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
+        final Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
 
         List<Future> futures = processUsers(userCollection, addressTypes, patronGroups, existingUserMap, okapiHeaders);
 
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
+            ImportResponse compositeResponse = new ImportResponse();
+            int success = 0;
+            int failed = 0;
+            int total = 0;
+            for (Future currentFuture : futures) {
+              LOGGER.info("future: " + currentFuture);
+              if (currentFuture.succeeded() && currentFuture.result() instanceof ImportResponse) {
+                ImportResponse subResponse = (ImportResponse) currentFuture.result();
+                total += subResponse.getTotalRecords();
+                success += subResponse.getSuccessfulRecords();
+                failed += subResponse.getFailedRecords();
+              }
+            }
+            compositeResponse.setTotalRecords(total);
+            compositeResponse.setSuccessfulRecords(success);
+            compositeResponse.setFailedRecords(failed);
+
             if (existingUserMap.isEmpty()) {
-              future.complete("Users were imported successfully.");
+              compositeResponse.setMessage("Users were imported successfully.");
+              future.complete(compositeResponse);
             } else {
-              deactivateUsers(okapiHeaders, existingUserMap).setHandler(deactivateHandler -> future.complete("Deactivated missing users."));
+
+              deactivateUsers(okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
+                compositeResponse.setMessage("Deactivated missing users.");
+                future.complete(compositeResponse);
+              });
             }
           } else {
             future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
@@ -161,7 +170,7 @@ public class UserImportAPI implements UserImportResource {
     }
 
     for (List<User> currentPartition : userPartitions) {
-      Future<JsonObject> userSearchAsyncResult =
+      Future<ImportResponse> userSearchAsyncResult =
         processUserSearchResult(okapiHeaders, existingUserMap,
           currentPartition, patronGroups, addressTypes, updateOnlyPresentData,
           userCollection.getSourceType());
@@ -170,8 +179,8 @@ public class UserImportAPI implements UserImportResource {
     return futures;
   }
 
-  private Future<String> processUserImport(UserdataCollection userCollection, Map<String, String> patronGroups, Map<String, String> addressTypes, Map<String, String> okapiHeaders) {
-    Future<String> future = Future.future();
+  private Future<ImportResponse> processUserImport(UserdataCollection userCollection, Map<String, String> patronGroups, Map<String, String> addressTypes, Map<String, String> okapiHeaders) {
+    Future<ImportResponse> future = Future.future();
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
     List<Future> futures = new ArrayList<>();
@@ -181,7 +190,7 @@ public class UserImportAPI implements UserImportResource {
     }
 
     for (List<User> currentPartition : userPartitions) {
-      Future<String> userBatchProcessResponse =
+      Future<ImportResponse> userBatchProcessResponse =
         processUserBatch(okapiHeaders, currentPartition, patronGroups, addressTypes,
           updateOnlyPresentData, userCollection.getSourceType());
       futures.add(userBatchProcessResponse);
@@ -189,263 +198,36 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
-        future.complete("Users were imported successfully.");
-      } else {
-        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-      }
-    });
-    return future;
-  }
+        ImportResponse successResponse = new ImportResponse();
+        successResponse.setMessage("Users were imported successfully.");
 
-  private Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
-    Future<Map<String, String>> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    final String addressTypeQuery = UriBuilder.fromPath("/addresstypes").build().toString();
-
-    HttpClientInterface addressTypeClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-    addressTypeClient.setDefaultHeaders(headers);
-    try {
-      addressTypeClient.request(addressTypeQuery)
-        .whenComplete((addressTypeResponse, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(addressTypeResponse.getCode())) {
-            LOGGER.warn(FAILED_TO_LIST_ADDRESS_TYPES);
-            future.fail(addressTypeResponse.getError().toString());
-          } else {
-            JsonObject resultObject = addressTypeResponse.getBody();
-            JsonArray addressTypeArray = resultObject.getJsonArray("addressTypes");
-            Map<String, String> addressTypes = extractAddressTypes(addressTypeArray);
-            future.complete(addressTypes);
+        int success = 0;
+        int failed = 0;
+        int totalRecords = 0;
+        for (Future currentFuture : futures) {
+          if (currentFuture.result() instanceof ImportResponse) {
+            ImportResponse currentResponse = (ImportResponse) currentFuture.result();
+            success += currentResponse.getSuccessfulRecords();
+            failed += currentResponse.getFailedRecords();
+            totalRecords += currentResponse.getTotalRecords();
           }
-        });
-
-    } catch (Exception exc) {
-      LOGGER.warn("Failed to list address types", exc.getMessage());
-      future.fail(exc);
-    }
-    return future;
-  }
-
-  private Map<String, String> extractAddressTypes(JsonArray addressTypes) {
-    Map<String, String> addressTypeMap = new HashMap<>();
-    for (int i = 0; i < addressTypes.size(); i++) {
-      JsonObject addressType = addressTypes.getJsonObject(i);
-      addressTypeMap.put(addressType.getString("addressType"), addressType.getString("id"));
-    }
-    return addressTypeMap;
-  }
-
-  private Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
-    Future<Map<String, String>> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    final String patronGroupQuery = UriBuilder.fromPath("/groups").build().toString();
-
-    HttpClientInterface patronGroupClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-    patronGroupClient.setDefaultHeaders(headers);
-
-    try {
-      patronGroupClient.request(patronGroupQuery)
-        .whenComplete((patronGroupResponse, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(patronGroupResponse.getCode())) {
-            LOGGER.warn("Failed to list patron groups");
-            future.fail(patronGroupResponse.getError().toString());
-          } else {
-            JsonObject resultObject = patronGroupResponse.getBody();
-            JsonArray patronGroupArray = resultObject.getJsonArray("usergroups");
-            Map<String, String> patronGroups = extractPatronGroups(patronGroupArray);
-            future.complete(patronGroups);
-          }
-        });
-    } catch (Exception exc) {
-      LOGGER.warn("Failed to list patron groups", exc.getMessage());
-      future.fail(exc);
-    }
-    return future;
-  }
-
-  private Map<String, String> extractPatronGroups(JsonArray patronGroups) {
-    Map<String, String> patronGroupMap = new HashMap<>();
-    for (int i = 0; i < patronGroups.size(); i++) {
-      JsonObject patronGroup = patronGroups.getJsonObject(i);
-      patronGroupMap.put(patronGroup.getString("group"), patronGroup.getString("id"));
-    }
-    return patronGroupMap;
-  }
-
-  private Future<Void> createNewUser(Map<String, String> okapiHeaders, User user) {
-    Future<Void> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    user.setId(UUID.randomUUID().toString());
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-    headers.put(HTTP_HEADER_CONTENT_TYPE, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    final String userCreationQuery = UriBuilder.fromPath("/users").build().toString();
-
-    HttpClientInterface userCreationClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-
-    try {
-      userCreationClient.request(HttpMethod.POST, user, userCreationQuery, headers)
-        .whenComplete((userCreationResponse, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
-            LOGGER.warn("Failed to create new user with externalSystemId: {}", user.getExternalSystemId());
-            future.fail(userCreationResponse.getError().toString());
-          } else {
-            try {
-              addEmptyPermissionSetForUser(okapiHeaders, user).setHandler(futurePermissionHandler -> {
-                if (futurePermissionHandler.failed()) {
-                  LOGGER.error("Failed to register permissions for user with externalSystemId: {}", user.getExternalSystemId());
-                }
-                future.complete();
-              });
-            } catch (Exception e) {
-              LOGGER.warn("Failed to register permission for user with externalSystemId: {}", user.getExternalSystemId());
-              future.complete();
-            }
-          }
-        });
-    } catch (Exception exc) {
-      LOGGER.warn("Failed to create new user with externalSystemId: {}", user.getExternalSystemId(), exc.getMessage());
-      future.fail(exc);
-    }
-
-    return future;
-  }
-
-  private Future<Object> updateUser(Map<String, String> okapiHeaders, User user) {
-    Future<Object> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, "text/plain");
-    headers.put(HTTP_HEADER_CONTENT_TYPE, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    HttpClientInterface userUpdateClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-
-    try {
-      final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
-
-      userUpdateClient.request(HttpMethod.PUT, user, userUpdateQuery, headers)
-        .whenComplete((res, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
-            LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId());
-            future.fail(res.getError().toString());
-          } else {
-            try {
-              future.complete(user);
-            } catch (Exception e) {
-              LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId(), e.getMessage());
-              future.fail(e);
-            }
-          }
-        });
-    } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId(), exc.getMessage());
-      future.fail(exc);
-    }
-
-    return future;
-  }
-
-  private Future<JsonObject> addEmptyPermissionSetForUser(Map<String, String> okapiHeaders, User user) {
-    Future<JsonObject> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-    headers.put(HTTP_HEADER_CONTENT_TYPE, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    HttpClientInterface permissionsClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-    permissionsClient.setDefaultHeaders(headers);
-
-    try {
-      JsonObject object = new JsonObject();
-      object.put("userId", user.getId());
-      object.put("permissions", new JsonArray());
-
-      final String permissionAddQuery = UriBuilder.fromPath("/perms/users").build().toString();
-
-      permissionsClient.request(HttpMethod.POST, object, permissionAddQuery, headers)
-        .whenComplete((response, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
-            LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId());
-            future.fail(response.getError().toString());
-          } else {
-            try {
-              future.complete(response.getBody());
-            } catch (Exception e) {
-              LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId(), e.getMessage());
-              future.fail(e);
-            }
-          }
-        });
-    } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID, user.getExternalSystemId(), exc.getMessage());
-      future.fail(exc);
-    }
-    return future;
-  }
-
-  private Future<JsonObject> processUserSearchResult(Map<String, String> okapiHeaders,
-    Map<String, User> existingUsers, List<User> usersToImport, Map<String, String> patronGroups,
-    Map<String, String> addressTypes, Boolean updateOnlyPresentData, String sourceType) {
-    Future<JsonObject> future = Future.future();
-
-    List<Future> futures = new ArrayList<>();
-
-    for (User user : usersToImport) {
-      //TODO create statistics from number of created/updated + failed users
-      updateUserData(user, patronGroups, addressTypes, sourceType);
-      if (existingUsers.containsKey(user.getExternalSystemId())) {
-        if (updateOnlyPresentData) {
-          user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
-        } else {
-          user.setId(existingUsers.get(user.getExternalSystemId()).getId());
         }
-        Future<Object> userUpdateResponse = updateUser(okapiHeaders, user);
-        futures.add(userUpdateResponse);
-        existingUsers.remove(user.getExternalSystemId());
-      } else {
-        Future<Void> userCreationResponse = createNewUser(okapiHeaders, user);
-        futures.add(userCreationResponse);
-      }
-    }
+        successResponse.setSuccessfulRecords(success);
+        successResponse.setFailedRecords(failed);
+        successResponse.setTotalRecords(totalRecords);
 
-    CompositeFuture.all(futures).setHandler(ar -> {
-      if (ar.succeeded()) {
-        future.complete();
+        future.complete(successResponse);
       } else {
-        LOGGER.warn(FAILED_TO_IMPORT_USERS);
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
-
     return future;
   }
 
-  private Future<String> processUserBatch(Map<String, String> okapiHeaders,
+  private Future<ImportResponse> processUserBatch(Map<String, String> okapiHeaders,
     List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
     Boolean updateOnlyPresentData, String sourceType) {
-    Future<String> processFuture = Future.future();
+    Future<ImportResponse> processFuture = Future.future();
     listUsers(okapiHeaders, currentPartition, sourceType).setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
 
@@ -454,7 +236,7 @@ public class UserImportAPI implements UserImportResource {
         processUserSearchResult(okapiHeaders, existingUsers, currentPartition, patronGroups, addressTypes, updateOnlyPresentData, sourceType)
           .setHandler(response -> {
             if (response.succeeded()) {
-              processFuture.complete();
+              processFuture.complete(response.result());
             } else {
               LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
               processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
@@ -471,8 +253,6 @@ public class UserImportAPI implements UserImportResource {
 
   private Future<List<Map>> listUsers(Map<String, String> okapiHeaders, List<User> users, String sourceType) {
     Future<List<Map>> future = Future.future();
-
-    String okapiURL = getOkapiUrl(okapiHeaders);
 
     StringBuilder userQueryBuilder = new StringBuilder("(");
 
@@ -496,18 +276,17 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.warn("Could not encode request URL.");
     }
 
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
+    HttpClientInterface userSearchClient = createClientWithHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String userSearchQuery = generateUserSearchQuery(url, users.size() * 2, 0);
-    HttpClientInterface userSearchClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-    userSearchClient.setDefaultHeaders(headers);
 
     try {
       userSearchClient.request(userSearchQuery)
         .whenComplete((userSearchQueryResponse, ex) -> {
-          if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
+          if (ex != null) {
+            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            LOGGER.debug(ex.getMessage());
+            future.fail(ex.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
             future.fail(userSearchQueryResponse.getError().toString());
           } else {
@@ -522,79 +301,172 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private Map<String, User> extractExistingUsers(List<Map> existingUserList) {
-    Map<String, User> existingUsers = new HashMap<>();
-    for (Map existingUser : existingUserList) {
-      JsonObject user = JsonObject.mapFrom(existingUser);
-      User mappedUser = user.mapTo(User.class);
-      LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
-      existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
-    }
+  private Future<ImportResponse> processUserSearchResult(Map<String, String> okapiHeaders,
+    Map<String, User> existingUsers, List<User> usersToImport, Map<String, String> patronGroups,
+    Map<String, String> addressTypes, Boolean updateOnlyPresentData, String sourceType) {
+    Future<ImportResponse> future = Future.future();
 
-    return existingUsers;
-  }
+    List<Future> futures = new ArrayList<>();
 
-  private void updateUserData(User user, Map<String, String> patronGroups, Map<String, String> addressTypes,
-    String sourceType) {
-    if (!Strings.isNullOrEmpty(sourceType)) {
-      user.setExternalSystemId(sourceType + "_" + user.getExternalSystemId());
-    }
-    if (user.getPatronGroup() != null && patronGroups.containsKey(user.getPatronGroup())) {
-      user.setPatronGroup(patronGroups.get(user.getPatronGroup()));
-    }
-    if (user.getPersonal() == null) {
-      return;
-    }
-    if (user.getPersonal().getAddresses() != null
-      && !user.getPersonal().getAddresses().isEmpty()) {
-      for (Address address : user.getPersonal().getAddresses()) {
-        if (address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId())) {
-          address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
+    for (User user : usersToImport) {
+      updateUserData(user, patronGroups, addressTypes, sourceType);
+      if (existingUsers.containsKey(user.getExternalSystemId())) {
+        if (updateOnlyPresentData) {
+          user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
+        } else {
+          user.setId(existingUsers.get(user.getExternalSystemId()).getId());
         }
+        Future<String> userUpdateResponse = updateUser(okapiHeaders, user);
+        futures.add(userUpdateResponse);
+        existingUsers.remove(user.getExternalSystemId());
+      } else {
+        Future<String> userCreationResponse = createNewUser(okapiHeaders, user);
+        futures.add(userCreationResponse);
       }
     }
-    if (user.getPersonal().getPreferredContactTypeId() != null
-      && preferredContactTypeIds.containsKey(user.getPersonal().getPreferredContactTypeId().toLowerCase())) {
-      user.getPersonal()
-        .setPreferredContactTypeId(
-          preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
-    }
+
+    CompositeFuture.all(futures).setHandler(ar -> {
+      if (ar.succeeded()) {
+        ImportResponse successResponse = new ImportResponse();
+        successResponse.setMessage("");
+        successResponse.setTotalRecords(futures.size());
+        int created = 0;
+        int updated = 0;
+        int failed = 0;
+        for (Future currentFuture : futures) {
+          if ("created".equals(currentFuture.result())) {
+            created++;
+          } else if ("updated".equals(currentFuture.result())) {
+            updated++;
+          } else {
+            failed++;
+          }
+        }
+        successResponse.setSuccessfulRecords(created + updated);
+        successResponse.setFailedRecords(failed);
+
+        future.complete(successResponse);
+      } else {
+        LOGGER.warn(FAILED_TO_IMPORT_USERS);
+        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
+      }
+    });
+
+    return future;
   }
 
-  //TODO: fix for deep copy and not just addresses.
-  private User updateExistingUserWithIncomingFields(User user, User existingUser) {
-    JsonObject current = JsonObject.mapFrom(user);
-    JsonObject existing = JsonObject.mapFrom(existingUser);
+  private Future<String> updateUser(Map<String, String> okapiHeaders, final User user) {
+    Future<String> future = Future.future();
 
-    List<Address> addresses = null;
+    HttpClientInterface userUpdateClient = createClient(okapiHeaders);
+    Map<String, String> headers = createHeaders(okapiHeaders, "text/plain", HTTP_HEADER_VALUE_APPLICATION_JSON);
 
-    existing.mergeIn(current);
+    try {
+      final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
 
-    User response = existing.mapTo(User.class);
-
-    if (existingUser.getPersonal() != null) {
-      List<Address> currentAddresses = null;
-      List<Address> existingAddresses = existingUser.getPersonal().getAddresses();
-      if (user.getPersonal() != null) {
-        currentAddresses = user.getPersonal().getAddresses();
-      }
-      if (currentAddresses == null) {
-        addresses = existingAddresses;
-      } else {
-        Map<String, Address> addressMap = new HashMap<>();
-        existingAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
-        currentAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
-
-        addresses = new ArrayList<>();
-        addresses.addAll(addressMap.values());
-      }
+      userUpdateClient.request(HttpMethod.PUT, JsonObject.mapFrom(user), userUpdateQuery, headers)
+        .whenComplete((res, ex) -> {
+          if (ex != null) {
+            LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            LOGGER.debug(ex.getMessage());
+            future.fail(ex.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
+            LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            future.fail(res.getError().toString());
+          } else {
+            try {
+              future.complete("updated");
+            } catch (Exception e) {
+              LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
+              future.fail(e);
+            }
+          }
+        });
+    } catch (Exception exc) {
+      LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
     }
 
-    if (addresses != null) {
-      response.getPersonal().setAddresses(addresses);
+    return future;
+  }
+
+  private Future<String> createNewUser(Map<String, String> okapiHeaders, User user) {
+    Future<String> future = Future.future();
+
+    user.setId(UUID.randomUUID().toString());
+
+    HttpClientInterface userCreationClient = createClient(okapiHeaders);
+    final String userCreationQuery = UriBuilder.fromPath("/users").build().toString();
+    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
+
+    try {
+      userCreationClient.request(HttpMethod.POST, JsonObject.mapFrom(user), userCreationQuery, headers)
+        .whenComplete((userCreationResponse, ex) -> {
+          if (ex != null) {
+            LOGGER.error("Failed to create new user with externalSystemId: " + user.getExternalSystemId());
+            LOGGER.debug(ex.getMessage());
+            future.fail(ex.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
+            LOGGER.warn("Failed to create new user with externalSystemId: " + user.getExternalSystemId());
+            future.fail(userCreationResponse.getError().toString());
+          } else {
+            try {
+              addEmptyPermissionSetForUser(okapiHeaders, user).setHandler(futurePermissionHandler -> {
+                if (futurePermissionHandler.failed()) {
+                  LOGGER.error("Failed to register permissions for user with externalSystemId: " + user.getExternalSystemId());
+                }
+                future.complete("created");
+              });
+            } catch (Exception e) {
+              LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
+              future.complete();
+            }
+          }
+        });
+    } catch (Exception exc) {
+      LOGGER.warn("Failed to create new user with externalSystemId: " + user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
     }
 
-    return response;
+    return future;
+  }
+
+  private Future<JsonObject> addEmptyPermissionSetForUser(Map<String, String> okapiHeaders, User user) {
+    Future<JsonObject> future = Future.future();
+
+    HttpClientInterface permissionsClient = createClient(okapiHeaders);
+    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
+
+    try {
+      JsonObject object = new JsonObject();
+      object.put("userId", user.getId());
+      object.put("permissions", new JsonArray());
+
+      final String permissionAddQuery = UriBuilder.fromPath("/perms/users").build().toString();
+
+      permissionsClient.request(HttpMethod.POST, object, permissionAddQuery, headers)
+        .whenComplete((response, ex) -> {
+          if (ex != null) {
+            LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            LOGGER.debug(ex.getMessage());
+            future.fail(ex.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+            LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            future.fail(response.getError().toString());
+          } else {
+            try {
+              future.complete(response.getBody());
+            } catch (Exception e) {
+              LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
+              future.fail(e);
+            }
+          }
+        });
+    } catch (Exception exc) {
+      LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      future.fail(exc);
+    }
+    return future;
   }
 
   private Future<List<Map>> listAllUsersWithExternalSystemId(Map<String, String> okapiHeaders, String prefix) {
@@ -604,14 +476,8 @@ public class UserImportAPI implements UserImportResource {
 
     int limit = 5;
 
-    String okapiURL = getOkapiUrl(okapiHeaders);
-
-    Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    headers.put(HTTP_HEADER_ACCEPT, HTTP_HEADER_VALUE_APPLICATION_JSON);
-
-    HttpClientInterface userSearchClient = HttpClientFactory.getHttpClient(okapiURL, okapiHeaders.get(OKAPI_TENANT_HEADER));
-    userSearchClient.setDefaultHeaders(headers);
+    HttpClientInterface userSearchClient = createClient(okapiHeaders);
+    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
 
     try {
 
@@ -619,8 +485,11 @@ public class UserImportAPI implements UserImportResource {
         generateUserSearchQuery(url, limit, 0);
       userSearchClient.request(HttpMethod.GET, userSearchQuery, headers)
         .whenComplete((response, ex) -> {
-
-          if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+          if (ex != null) {
+            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            LOGGER.debug(ex.getMessage());
+            future.fail(ex.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
             future.fail(response.getError().toString());
           } else {
@@ -678,8 +547,11 @@ public class UserImportAPI implements UserImportResource {
       final String userSearchQuery = generateUserSearchQuery(url, limit, offset);
       userSearchClient.request(HttpMethod.GET, userSearchQuery, okapiHeaders)
         .whenComplete((subResponse, subEx) -> {
-
-          if (!org.folio.rest.tools.client.Response.isSuccess(subResponse.getCode())) {
+          if (subEx != null) {
+            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
+            LOGGER.debug(subEx.getMessage());
+            future.fail(subEx.getMessage());
+          } else if (!org.folio.rest.tools.client.Response.isSuccess(subResponse.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
             future.fail(subResponse.getError().toString());
           } else {
@@ -703,16 +575,6 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private String createUrl(String prefix) {
-    String url;
-    if (!Strings.isNullOrEmpty(prefix)) {
-      url = "externalSystemId=^" + prefix + "_*";
-    } else {
-      url = "externalSystemId<>''";
-    }
-    return url;
-  }
-
   private Future<Void> deactivateUsers(Map<String, String> okapiHeaders,
     Map<String, User> existingUserMap) {
     Future<Void> future = Future.future();
@@ -722,7 +584,7 @@ public class UserImportAPI implements UserImportResource {
     for (User user : existingUserMap.values()) {
       if (user.getActive()) {
         user.setActive(Boolean.FALSE);
-        Future<Object> userDeactivateAsyncResult =
+        Future<String> userDeactivateAsyncResult =
           updateUser(okapiHeaders, user);
         futures.add(userDeactivateAsyncResult);
       }
@@ -740,8 +602,14 @@ public class UserImportAPI implements UserImportResource {
     return future;
   }
 
-  private String getOkapiUrl(Map<String, String> okapiHeaders) {
-    return okapiHeaders.get(OKAPI_URL_HEADER);
+  private String createUrl(String prefix) {
+    String url;
+    if (!Strings.isNullOrEmpty(prefix)) {
+      url = "externalSystemId=^" + prefix + "_*";
+    } else {
+      url = "externalSystemId<>''";
+    }
+    return url;
   }
 
   private String generateUserSearchQuery(String query, int limit, int offset) {

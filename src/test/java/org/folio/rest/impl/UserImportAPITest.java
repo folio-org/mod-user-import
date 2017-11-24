@@ -69,7 +69,7 @@ public class UserImportAPITest {
       .get("/user-import")
       .then()
       .body(equalTo("This is a fake endpoint."))
-      .statusCode(200);
+      .statusCode(400);
   }
 
   @Test
@@ -87,7 +87,8 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("No users to import."))
+      .body("message", equalTo("No users to import."))
+      .body("totalRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -109,7 +110,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -140,7 +144,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(10))
+      .body("successfulRecords", equalTo(10))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -161,7 +168,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -194,7 +204,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Deactivated missing users."))
+      .body("message", equalTo("Deactivated missing users."))
+      .body("totalRecords", equalTo(10))
+      .body("successfulRecords", equalTo(10))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -227,7 +240,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -260,7 +276,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -283,7 +302,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -306,7 +328,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
@@ -329,7 +354,10 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Deactivated missing users."))
+      .body("message", equalTo("Deactivated missing users."))
+      .body("totalRecords", equalTo(1))
+      .body("successfulRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
