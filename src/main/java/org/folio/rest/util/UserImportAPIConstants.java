@@ -1,20 +1,25 @@
 package org.folio.rest.util;
 
-public interface UserImportAPIConstants {
+public class UserImportAPIConstants {
 
-  String FAILED_TO_PROCESS_USER_SEARCH_RESPONSE = "Failed to process user search response.";
-  String FAILED_TO_PROCESS_USERS = "Failed to process users.";
-  String FAILED_TO_PROCESS_USER_SEARCH_RESULT = "Failed to process user search result.";
-  String FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to add permissions for user with externalSystemId: ";
-  String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: ";
-  String FAILED_TO_IMPORT_USERS = "Failed to import users.";
-  String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
+  public static final String FAILED_TO_PROCESS_USER_SEARCH_RESPONSE = "Failed to process user search response.";
+  public static final String FAILED_TO_PROCESS_USERS = "Failed to process users.";
+  public static final String FAILED_TO_PROCESS_USER_SEARCH_RESULT = "Failed to process user search result.";
+  public static final String FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to add permissions for user with externalSystemId: ";
+  public static final String FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to create new user with externalSystemId: ";
+  public static final String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: ";
+  public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
+  public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
+  public static final String FAILED_TO_LIST_PATRON_GROUPS = "Failed to list patron groups.";
 
-  String HTTP_HEADER_CONTENT_TYPE = "Content-type";
-  String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
-  String HTTP_HEADER_ACCEPT = "Accept";
-  String OKAPI_URL_HEADER = "X-Okapi-URL";
-  String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
-  String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
+  public static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
+  public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
+  public static final String HTTP_HEADER_ACCEPT = "Accept";
+  public static final String OKAPI_URL_HEADER = "X-Okapi-URL";
+  public static final String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
+  public static final String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
 
+  private UserImportAPIConstants() {
+
+  }
 }

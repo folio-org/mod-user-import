@@ -16,9 +16,7 @@ public class HttpClientUtil {
   }
 
   public static HttpClientInterface createClient(Map<String, String> okapiHeaders) {
-
-    HttpClientInterface client = HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), okapiHeaders.get(OKAPI_TENANT_HEADER));
-    return client;
+    return HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), okapiHeaders.get(OKAPI_TENANT_HEADER));
   }
 
   public static HttpClientInterface createClientWithHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {

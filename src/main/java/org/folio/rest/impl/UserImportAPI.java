@@ -98,7 +98,8 @@ public class UserImportAPI implements UserImportResource {
             }
 
           } else {
-            future.fail("Failed to list patron groups." + extractErrorMessage(patronGroupResultHandler));
+            LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS);
+            future.fail(FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
           }
         });
       }
@@ -296,37 +297,7 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
-        ImportResponse successResponse = new ImportResponse();
-        successResponse.setMessage("");
-        successResponse.setTotalRecords(futures.size());
-        List<String> failedExternalSystemIds = new ArrayList<>();
-        int created = 0;
-        int updated = 0;
-        int failed = 0;
-        for (Future currentFuture : futures) {
-          if (currentFuture.result() instanceof SingleUserImportResponse) {
-            SingleUserImportResponse resp = (SingleUserImportResponse) currentFuture.result();
-            switch (resp.getStatus()) {
-              case CREATED: {
-                created++;
-                break;
-              }
-              case UPDATED: {
-                updated++;
-                break;
-              }
-              case FAILED: {
-                failed++;
-                failedExternalSystemIds.add(resp.getExternalSystemId());
-                break;
-              }
-            }
-          }
-        }
-        successResponse.setCreatedRecords(created);
-        successResponse.setUpdatedRecords(updated);
-        successResponse.setFailedRecords(failed);
-        successResponse.setFailedExternalSystemIds(failedExternalSystemIds);
+        ImportResponse successResponse = processSuccessfulImportResponse(futures);
 
         future.complete(successResponse);
       } else {
@@ -336,6 +307,41 @@ public class UserImportAPI implements UserImportResource {
     });
 
     return future;
+  }
+
+  private ImportResponse processSuccessfulImportResponse(List<Future> futures) {
+    ImportResponse successResponse = new ImportResponse();
+    successResponse.setMessage("");
+    successResponse.setTotalRecords(futures.size());
+    List<String> failedExternalSystemIds = new ArrayList<>();
+    int created = 0;
+    int updated = 0;
+    int failed = 0;
+    for (Future currentFuture : futures) {
+      if (currentFuture.result() instanceof SingleUserImportResponse) {
+        SingleUserImportResponse resp = (SingleUserImportResponse) currentFuture.result();
+        switch (resp.getStatus()) {
+          case CREATED: {
+            created++;
+            break;
+          }
+          case UPDATED: {
+            updated++;
+            break;
+          }
+          case FAILED: {
+            failed++;
+            failedExternalSystemIds.add(resp.getExternalSystemId());
+            break;
+          }
+        }
+      }
+    }
+    successResponse.setCreatedRecords(created);
+    successResponse.setUpdatedRecords(updated);
+    successResponse.setFailedRecords(failed);
+    successResponse.setFailedExternalSystemIds(failedExternalSystemIds);
+    return successResponse;
   }
 
   private Future<SingleUserImportResponse> updateUser(Map<String, String> okapiHeaders, final User user) {
@@ -386,12 +392,12 @@ public class UserImportAPI implements UserImportResource {
       userCreationClient.request(HttpMethod.POST, JsonObject.mapFrom(user), userCreationQuery, headers)
         .whenComplete((userCreationResponse, ex) -> {
           if (ex != null) {
-            LOGGER.error("Failed to create new user with externalSystemId: " + user.getExternalSystemId());
+            LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
             LOGGER.debug(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
-            LOGGER.warn("Failed to create new user with externalSystemId: " + user.getExternalSystemId());
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), userCreationResponse.getCode(), "Failed to create new user with externalSystemId: " + user.getExternalSystemId()));
+            LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           } else {
             try {
               addEmptyPermissionSetForUser(okapiHeaders, user).setHandler(futurePermissionHandler -> {
@@ -407,7 +413,7 @@ public class UserImportAPI implements UserImportResource {
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn("Failed to create new user with externalSystemId: " + user.getExternalSystemId(), exc.getMessage());
+      LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
 

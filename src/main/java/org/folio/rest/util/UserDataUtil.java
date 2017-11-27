@@ -70,7 +70,10 @@ public class UserDataUtil {
     }
   }
 
-  //TODO: fix for deep copy and not just addresses.
+  /*
+   * Currently this deep copy only works for addresses. 
+   * If more embedded fields will raise a need for this feature this function needs to be updated.
+   */
   public static User updateExistingUserWithIncomingFields(User user, User existingUser) {
     JsonObject current = JsonObject.mapFrom(user);
     JsonObject existing = JsonObject.mapFrom(existingUser);

@@ -33,11 +33,11 @@ public class PatronGroupManager {
       patronGroupClient.request(patronGroupQuery)
         .whenComplete((patronGroupResponse, ex) -> {
           if (ex != null) {
-            LOGGER.error("Failed to list patron groups");
+            LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS);
             LOGGER.debug(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(patronGroupResponse.getCode())) {
-            LOGGER.warn("Failed to list patron groups");
+            LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS);
             future.fail(patronGroupResponse.getError().toString());
           } else {
             JsonObject resultObject = patronGroupResponse.getBody();
@@ -47,7 +47,7 @@ public class PatronGroupManager {
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn("Failed to list patron groups", exc.getMessage());
+      LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS, exc.getMessage());
       future.fail(exc);
     }
     return future;
