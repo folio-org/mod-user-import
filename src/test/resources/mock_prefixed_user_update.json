@@ -73,6 +73,68 @@
       },
       "receivedPath": "",
       "sendData": {}
-    }    
-  ]
+    },
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%22test2_user2_update2%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [{
+          "id": "a3436a5f-707a-4005-804d-303220dd035b",
+          "externalSystemId": "test2_user2_update2",
+          "personal": {
+            "firstName": "User2",
+            "lastName": "Update2",
+            "email": "user2_update2@user.org",
+            "preferredContactTypeId": "email"
+          },
+          "barcode": "21222324",
+          "username": "user2_update2",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
+      },
+      "receivedPath": "",
+      "sendData": {
+      }
+    },
+    {
+      "url": "/users/a3436a5f-707a-4005-804d-303220dd035b",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "a3436a5f-707a-4005-804d-303220dd035b",
+        "proxyFor": [],
+        "externalSystemId": "test2_user2_update2",
+        "personal": {
+          "firstName": "User2",
+          "lastName": "Update2",
+          "email": "user2_update2@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "21222324",
+        "username": "user2_update2",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "user2_update2",
+        "personal": {
+          "firstName": "User2",
+          "lastName": "Update2",
+          "email": "user2_update2@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "21222324",
+        "username": "user2_update2",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    }
+    
+   ]
 }

@@ -1,0 +1,551 @@
+{
+  "mocks": [
+    {
+      "url": "/addressTypes",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "addressTypes": [
+          {
+            "addressType": "Returns",
+            "desc": "Returns Address",
+            "id": "71628bf4-1962-4dff-a8f2-11108ab532cc"
+          },
+          {
+            "addressType": "Claim",
+            "desc": "Claim Address",
+            "id": "16be835b-c0c7-4454-b1a1-6de1edb82fde"
+          },
+          {
+            "addressType": "Order",
+            "desc": "Order Address",
+            "id": "2f8a8728-00bc-4dda-ae27-b8648186fc27"
+          },
+          {
+            "addressType": "Work",
+            "desc": "Work Address",
+            "id": "9d4ec448-e43a-4528-b257-5e2b4bb4cf0c"
+          },
+          {
+            "addressType": "Home",
+            "desc": "Home Address",
+            "id": "cb9860de-adc2-453c-b449-2328a7a6e651"
+          },
+          {
+            "addressType": "Payment",
+            "desc": "Payment Address",
+            "id": "6c6e8b50-ea63-422b-b882-77ac33021813"
+          }
+        ],
+        "totalRecords": 6
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/groups",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "usergroups": [
+          {
+            "group": "undergrad",
+            "desc": "Undergraduate Student",
+            "id": "fd0f9901-2566-4287-bc3c-0cea42eb5963"
+          },
+          {
+            "group": "graduate",
+            "desc": "Graduate Student",
+            "id": "746f7123-193c-48b2-8154-cbc796ab1552"
+          },
+          {
+            "group": "faculty",
+            "desc": "Faculty Member",
+            "id": "c6f61a8d-a86a-4ba3-a112-51925e2f9353"
+          },
+          {
+            "group": "staff",
+            "desc": "Staff Member",
+            "id": "705e1d12-cf84-4d93-9c09-0337958c5cb2"
+          }
+        ],
+        "totalRecords": 4
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%2211_12%22%2Bor%2BexternalSystemId%3D%3D%2221_22%22%2Bor%2BexternalSystemId%3D%3D%2231_32%22%2Bor%2BexternalSystemId%3D%3D%2241_42%22%2Bor%2BexternalSystemId%3D%3D%2251_52%22%2Bor%2BexternalSystemId%3D%3D%2261_62%22%2Bor%2BexternalSystemId%3D%3D%2271_72%22%2Bor%2BexternalSystemId%3D%3D%2281_82%22%2Bor%2BexternalSystemId%3D%3D%2291_92%22%2Bor%2BexternalSystemId%3D%3D%22101_102%22%29&limit=20&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "d20c1940-6e46-4762-bbd4-637edb8d8dd3",
+        "proxyFor": [],
+        "externalSystemId": "11_12",
+        "personal": {
+          "firstName": "11",
+          "lastName": "12",
+          "email": "11_12@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "1",
+        "username": "11_12",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "11_12",
+        "personal": {
+          "firstName": "11",
+          "lastName": "12",
+          "email": "11_12@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "1",
+        "username": "11_12",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "d20c1940-6e46-4762-bbd4-637edb8d8dd3",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "b2b472f1-a5f2-45f3-b583-d9a67dd39723",
+        "proxyFor": [],
+        "externalSystemId": "21_22",
+        "personal": {
+          "firstName": "21",
+          "lastName": "22",
+          "email": "21_22@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "2",
+        "username": "21_22",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "21_22",
+        "personal": {
+          "firstName": "21",
+          "lastName": "22",
+          "email": "21_22@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "2",
+        "username": "21_22",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "b2b472f1-a5f2-45f3-b583-d9a67dd39723",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "bea0726e-c01b-473a-8787-8625348ed181",
+        "proxyFor": [],
+        "externalSystemId": "31_32",
+        "personal": {
+          "firstName": "31",
+          "lastName": "32",
+          "email": "31_32@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "3",
+        "username": "31_32",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "31_32",
+        "personal": {
+          "firstName": "31",
+          "lastName": "32",
+          "email": "31_32@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "3",
+        "username": "31_32",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "bea0726e-c01b-473a-8787-8625348ed181",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "3ba3f736-37b2-46ca-ae5e-8a6848d8a7f5",
+        "proxyFor": [],
+        "externalSystemId": "41_42",
+        "personal": {
+          "firstName": "41",
+          "lastName": "42",
+          "email": "41_42@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "4",
+        "username": "41_42",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "41_42",
+        "personal": {
+          "firstName": "41",
+          "lastName": "42",
+          "email": "41_42@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "4",
+        "username": "41_42",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "3ba3f736-37b2-46ca-ae5e-8a6848d8a7f5",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "7e7ad4d8-b38d-461e-ab49-6ea9841fe4cd",
+        "proxyFor": [],
+        "externalSystemId": "51_52",
+        "personal": {
+          "firstName": "51",
+          "lastName": "52",
+          "email": "51_52@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "5",
+        "username": "51_52",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "51_52",
+        "personal": {
+          "firstName": "51",
+          "lastName": "52",
+          "email": "51_52@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "5",
+        "username": "51_52",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "7e7ad4d8-b38d-461e-ab49-6ea9841fe4cd",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "86298aa4-04ad-4543-80ba-509fb5af756d",
+        "proxyFor": [],
+        "externalSystemId": "61_62",
+        "personal": {
+          "firstName": "61",
+          "lastName": "62",
+          "email": "61_62@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "6",
+        "username": "61_62",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "61_62",
+        "personal": {
+          "firstName": "61",
+          "lastName": "62",
+          "email": "61_62@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "6",
+        "username": "61_62",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "86298aa4-04ad-4543-80ba-509fb5af756d",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "9cb67dee-4fe2-401a-9a2b-1c5b9bf32dc6",
+        "proxyFor": [],
+        "externalSystemId": "71_72",
+        "personal": {
+          "firstName": "71",
+          "lastName": "72",
+          "email": "71_72@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "7",
+        "username": "71_72",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "71_72",
+        "personal": {
+          "firstName": "71",
+          "lastName": "72",
+          "email": "71_72@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "7",
+        "username": "71_72",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "9cb67dee-4fe2-401a-9a2b-1c5b9bf32dc6",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "6277f61f-d019-445b-a76d-85e65b2eb932",
+        "proxyFor": [],
+        "externalSystemId": "81_82",
+        "personal": {
+          "firstName": "81",
+          "lastName": "82",
+          "email": "81_82@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "8",
+        "username": "81_82",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "81_82",
+        "personal": {
+          "firstName": "81",
+          "lastName": "82",
+          "email": "81_82@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "8",
+        "username": "81_82",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "6277f61f-d019-445b-a76d-85e65b2eb932",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "d6aa3176-31ae-4fd8-ab5c-ef0d1d4ff9af",
+        "proxyFor": [],
+        "externalSystemId": "91_92",
+        "personal": {
+          "firstName": "91",
+          "lastName": "92",
+          "email": "91_92@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "9",
+        "username": "91_92",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "91_92",
+        "personal": {
+          "firstName": "91",
+          "lastName": "92",
+          "email": "91_92@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "9",
+        "username": "91_92",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "d6aa3176-31ae-4fd8-ab5c-ef0d1d4ff9af",
+        "permissions": []
+      }
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "b1234919-67ed-4d66-92fe-28c866cb334a",
+        "proxyFor": [],
+        "externalSystemId": "101_102",
+        "personal": {
+          "firstName": "101",
+          "lastName": "102",
+          "email": "101_102@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "10",
+        "username": "101_102",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "101_102",
+        "personal": {
+          "firstName": "101",
+          "lastName": "102",
+          "email": "101_102@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "10",
+        "username": "101_102",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "b1234919-67ed-4d66-92fe-28c866cb334a",
+        "permissions": []
+      }
+    }
+
+   ]
+}
