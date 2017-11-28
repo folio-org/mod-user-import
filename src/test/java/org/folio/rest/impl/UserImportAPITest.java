@@ -171,12 +171,66 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(1))
       .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserCreationAndPermissionError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation_with_permission_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserSearchError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_search_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .statusCode(500);
   }
 
   @Test
@@ -200,7 +254,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(0))
       .body("updatedRecords", equalTo(0))
@@ -242,7 +296,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(10))
       .body("createdRecords", equalTo(10))
       .body("updatedRecords", equalTo(0))
@@ -271,11 +325,40 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(0))
       .body("updatedRecords", equalTo(1))
       .body("failedRecords", equalTo(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_update_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("89101112", "User", "Update", "228f3e79-9ebf-47a4-acaa-e8ffdff81ace"));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(1))
       .statusCode(200);
   }
 
@@ -352,7 +435,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(0))
       .body("updatedRecords", equalTo(1))
@@ -393,7 +476,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(0))
       .body("updatedRecords", equalTo(1))
@@ -423,7 +506,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(1))
       .body("updatedRecords", equalTo(0))
@@ -453,7 +536,7 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body("message", equalTo("Users were imported successfully."))
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body("totalRecords", equalTo(1))
       .body("createdRecords", equalTo(0))
       .body("updatedRecords", equalTo(1))
@@ -490,6 +573,64 @@ public class UserImportAPITest {
       .body("updatedRecords", equalTo(0))
       .body("failedRecords", equalTo(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithNoNeedToDeactivate() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_no_need_to_deactivate.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("987654321", "User3", "Deactivate3", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true)
+      .withSourceType("test4");
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserSearchErrorWhenDeactivating() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_deactivate_search_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("987612345", "User4", "Deactivate4", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true)
+      .withSourceType("test5");
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .statusCode(500);
   }
 
   private User generateUser(String barcode, String firstName, String lastName, String id) {

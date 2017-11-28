@@ -128,7 +128,7 @@ public class UserImportAPI implements UserImportResource {
             ImportResponse compositeResponse = processFutureResponses(futures);
 
             if (existingUserMap.isEmpty()) {
-              compositeResponse.setMessage("Users were imported successfully.");
+              compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
               future.complete(compositeResponse);
             } else {
               deactivateUsers(okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
@@ -185,7 +185,7 @@ public class UserImportAPI implements UserImportResource {
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
         ImportResponse successResponse = processFutureResponses(futures);
-        successResponse.setMessage("Users were imported successfully.");
+        successResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
         future.complete(successResponse);
       } else {
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
@@ -258,7 +258,7 @@ public class UserImportAPI implements UserImportResource {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            future.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            future.fail("");
           } else {
             JsonObject resultObject = userSearchQueryResponse.getBody();
             future.complete(getUsersFromResult(resultObject));
@@ -480,7 +480,7 @@ public class UserImportAPI implements UserImportResource {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            future.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            future.fail("");
           } else {
             processAllUsersResult(future, response.getBody(), userSearchClient, okapiHeaders, url, limit);
           }
@@ -620,7 +620,7 @@ public class UserImportAPI implements UserImportResource {
 
   private String extractErrorMessage(AsyncResult asyncResult) {
     if (asyncResult.cause() != null && !Strings.isNullOrEmpty(asyncResult.cause().getMessage())) {
-      return "Error message: " + asyncResult.cause().getMessage();
+      return ERROR_MESSAGE + asyncResult.cause().getMessage();
     } else {
       return "";
     }

@@ -11,6 +11,8 @@ public class UserImportAPIConstants {
   public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
   public static final String FAILED_TO_LIST_PATRON_GROUPS = "Failed to list patron groups.";
+  public static final String ERROR_MESSAGE = " Error message: ";
+  public static final String USERS_WERE_IMPORTED_SUCCESSFULLY = "Users were imported successfully.";
 
   public static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
   public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
