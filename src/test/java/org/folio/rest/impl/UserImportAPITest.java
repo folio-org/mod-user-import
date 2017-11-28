@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.tools.client.test.HttpClientMock2;
+import org.folio.rest.util.UserImportAPIConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +61,10 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testFakeEndpoint() {
+  public void testFakeEndpoint() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_content.json");
 
     given()
       .header(TENANT_HEADER)
@@ -69,11 +74,14 @@ public class UserImportAPITest {
       .get("/user-import")
       .then()
       .body(equalTo("This is a fake endpoint."))
-      .statusCode(200);
+      .statusCode(400);
   }
 
   @Test
-  public void testImportWithoutUsers() {
+  public void testImportWithoutUsers() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_content.json");
 
     UserdataCollection collection = new UserdataCollection();
     collection.setUsers(new ArrayList<>());
@@ -87,12 +95,16 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("No users to import."))
+      .body("message", equalTo("No users to import."))
+      .body("totalRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserCreation() {
+  public void testImportWithAddressTypeResponseError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_address_types_error.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
@@ -109,12 +121,102 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithPatronGroupResponseError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_patron_groups_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithUserCreation() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithMoreUserCreation() {
+  public void testImportWithUserCreationError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("0000", "Error", "Error", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(1))
+      .statusCode(200);
+  }
+
+  /*
+   * This test does not work as expected because the user creation endpoint can only be mocked once in a JSON file.
+   * The solution could be to check the body of the input and decide if the response should be success or failure.
+   */
+  @Test
+  public void testImportWithMoreUserCreation() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_multiple_user_creation.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("1", "11", "12", null));
@@ -140,12 +242,20 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(10))
+      .body("createdRecords", equalTo(10))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserUpdate() {
+  public void testImportWithUserUpdate() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_update.json");
+
     List<User> users = new ArrayList<>();
     users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
 
@@ -161,12 +271,19 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithMoreUserUpdateAndDeactivation() {
+  public void testImportWithMoreUserUpdateAndDeactivation() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_update_and_deactivation.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("11", "111", "112", null));
@@ -194,12 +311,20 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Deactivated missing users."))
+      .body("message", equalTo("Deactivated missing users."))
+      .body("totalRecords", equalTo(10))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(10))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserAddressUpdate() {
+  public void testImportWithUserAddressUpdate() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_import_with_address_update.json");
+
     List<User> users = new ArrayList<>();
     User user = generateUser("30313233", "User", "Address", "2cbf64a1-5904-4748-ae77-3d0605e911e7");
     Address address = new Address()
@@ -227,12 +352,20 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserAddressRewrite() {
+  public void testImportWithUserAddressRewrite() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_import_with_address_rewrite.json");
+
     List<User> users = new ArrayList<>();
     User user = generateUser("34353637", "User2", "Address2", "da4106eb-ec94-49ce-8019-9cc89281091c");
     Address address = new Address();
@@ -260,12 +393,19 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithPrefixedUserCreation() {
+  public void testImportWithPrefixedUserCreation() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_prefixed_user_creation.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("17181920", "Test", "User", null));
@@ -283,12 +423,19 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithPrefixedUserUpdate() {
+  public void testImportWithPrefixedUserUpdate() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_prefixed_user_update.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("21222324", "User2", "Update2", "a3436a5f-707a-4005-804d-303220dd035b"));
@@ -306,12 +453,20 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Users were imported successfully."))
+      .body("message", equalTo("Users were imported successfully."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithDeactivateInSourceType() {
+  public void testImportWithDeactivateInSourceType() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_deactivate_in_source_type.json");
+
     List<User> users = new ArrayList<>();
     users.add(generateUser("2526272829", "User2", "Deactivate2", null));
 
@@ -329,7 +484,11 @@ public class UserImportAPITest {
       .body(collection)
       .post("/user-import")
       .then()
-      .body(equalTo("Deactivated missing users."))
+      .body("message", equalTo("Deactivated missing users."))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(1))
+      .body("updatedRecords", equalTo(0))
+      .body("failedRecords", equalTo(0))
       .statusCode(200);
   }
 

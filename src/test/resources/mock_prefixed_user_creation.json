@@ -73,6 +73,66 @@
       },
       "receivedPath": "",
       "sendData": {}
-    }    
-  ]
+    },
+    
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%22test_test_user%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "0b58f0d3-9202-47bd-9dfb-dcb5b0248d5a",
+        "proxyFor": [],
+        "externalSystemId": "test_user",
+        "personal": {
+          "firstName": "Test",
+          "lastName": "User",
+          "email": "test_user@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "17181920",
+        "username": "test_user",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "test_user",
+        "personal": {
+          "firstName": "Test",
+          "lastName": "User",
+          "email": "test_user@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "17181920",
+        "username": "test_user",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "0b58f0d3-9202-47bd-9dfb-dcb5b0248d5a",
+        "permissions": []
+      }
+    }
+    
+   ]
 }

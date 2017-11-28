@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Import response",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    },
+    "createdRecords": {
+      "type": "integer"
+    },
+    "updatedRecords": {
+      "type": "integer"
+    },
+    "failedRecords": {
+      "type": "integer"
+    },
+    "failedExternalSystemIds": {
+      "type": "array",
+      "id": "failedExternalSystemIds",
+      "items": {
+        "type": "string"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "totalRecords"
+  ]
+}

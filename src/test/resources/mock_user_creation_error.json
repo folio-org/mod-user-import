@@ -73,6 +73,39 @@
       },
       "receivedPath": "",
       "sendData": {}
-    }    
-  ]
+    },
+    
+    {
+      "url": "/users?query=%28externalSystemId%3D%3D%22error_error%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 500,
+      "receivedData": "Internal server error",
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "error_error",
+        "personal": {
+          "firstName": "Error",
+          "lastName": "Error",
+          "email": "error_error@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "0000",
+        "username": "error_error",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    }
+    
+   ]
 }

@@ -45,32 +45,8 @@
     {
       "url": "/groups",
       "method": "get",
-      "status": 200,
-      "receivedData": {
-        "usergroups": [
-          {
-            "group": "undergrad",
-            "desc": "Undergraduate Student",
-            "id": "fd0f9901-2566-4287-bc3c-0cea42eb5963"
-          },
-          {
-            "group": "graduate",
-            "desc": "Graduate Student",
-            "id": "746f7123-193c-48b2-8154-cbc796ab1552"
-          },
-          {
-            "group": "faculty",
-            "desc": "Faculty Member",
-            "id": "c6f61a8d-a86a-4ba3-a112-51925e2f9353"
-          },
-          {
-            "group": "staff",
-            "desc": "Staff Member",
-            "id": "705e1d12-cf84-4d93-9c09-0337958c5cb2"
-          }
-        ],
-        "totalRecords": 4
-      },
+      "status": 500,
+      "receivedData": "Internal server error",
       "receivedPath": "",
       "sendData": {}
     }    

@@ -10,11 +10,12 @@ documentation:
 schemas:
   - userdata.json: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
+  - importResponse: !include schemas/importResponse.json
 
 /user-import:
   get:
     responses:
-      200:
+      400:
         description: "Fake endpoint"
         body:
           text/plain:
@@ -27,11 +28,8 @@ schemas:
       200:
         description: "Return OK"
         body:
-          text/plain:
-      400:
-        description: "Bad request, possibly error in user data"
-        body:
-          text/plain:
+          application/json:
+            schema: importResponse
       500:
         description: "Internal server error"
         body:
