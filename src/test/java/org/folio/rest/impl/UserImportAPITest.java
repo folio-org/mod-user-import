@@ -444,6 +444,87 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithExistingUserAddress() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_import_with_existing_address.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("30313233", "User", "Address", "2cbf64a1-5904-4748-ae77-3d0605e911e7");
+    users.add(user);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withUpdateOnlyPresentFields(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserAddressAdd() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_import_with_address_add.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("30313233", "User", "Address", "2cbf64a1-5904-4748-ae77-3d0605e911e7");
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Home")
+      .withPrimaryAddress(Boolean.FALSE);
+
+    Address address2 = new Address()
+      .withAddressLine1("Test first line2")
+      .withCity("Test city2")
+      .withRegion("Test region2")
+      .withPostalCode("123452")
+      .withAddressTypeId("Home2")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    addresses.add(address2);
+    user.getPersonal().setAddresses(addresses);
+    users.add(user);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withUpdateOnlyPresentFields(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body("totalRecords", equalTo(1))
+      .body("createdRecords", equalTo(0))
+      .body("updatedRecords", equalTo(1))
+      .body("failedRecords", equalTo(0))
+      .statusCode(200);
+  }
+
+  @Test
   public void testImportWithUserAddressRewrite() throws IOException {
 
     HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
@@ -526,6 +607,7 @@ public class UserImportAPITest {
     UserdataCollection collection = new UserdataCollection()
       .withUsers(users)
       .withTotalRecords(1)
+      .withDeactivateMissingUsers(false)
       .withSourceType("test2");
 
     given()

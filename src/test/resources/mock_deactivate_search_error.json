@@ -78,7 +78,7 @@
     {
       "url": "/users?query=externalSystemId%3D%5Etest5_%2A&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
-      "status": 200,
+      "status": 500,
       "receivedData": "Internal server error.",
       "receivedPath": "",
       "sendData": {
