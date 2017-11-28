@@ -70,7 +70,7 @@ public class UserImportAPI implements UserImportResource {
             .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
         } else {
           asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withPlainBadRequest(handler.cause().getMessage())));
+            .handle(Future.succeededFuture(PostUserImportResponse.withPlainInternalServerError(handler.cause().getMessage())));
         }
 
       });
@@ -619,7 +619,7 @@ public class UserImportAPI implements UserImportResource {
   }
 
   private String extractErrorMessage(AsyncResult asyncResult) {
-    if (asyncResult.cause() != null && asyncResult.cause().getMessage() != null) {
+    if (asyncResult.cause() != null && !Strings.isNullOrEmpty(asyncResult.cause().getMessage())) {
       return "Error message: " + asyncResult.cause().getMessage();
     } else {
       return "";

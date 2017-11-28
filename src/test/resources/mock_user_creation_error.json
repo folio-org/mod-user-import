@@ -89,8 +89,8 @@
     {
       "url": "/users",
       "method": "post",
-      "status": 400,
-      "receivedData": "Unable to create user",
+      "status": 500,
+      "receivedData": "Internal server error",
       "receivedPath": "",
       "sendData": {
         "externalSystemId": "error_error",

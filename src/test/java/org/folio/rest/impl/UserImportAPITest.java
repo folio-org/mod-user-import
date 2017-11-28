@@ -13,6 +13,7 @@ import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.tools.client.test.HttpClientMock2;
+import org.folio.rest.util.UserImportAPIConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,6 +98,56 @@ public class UserImportAPITest {
       .body("message", equalTo("No users to import."))
       .body("totalRecords", equalTo(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithAddressTypeResponseError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_address_types_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithPatronGroupResponseError() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_patron_groups_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post("/user-import")
+      .then()
+      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .statusCode(500);
   }
 
   @Test

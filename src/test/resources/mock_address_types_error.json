@@ -1,0 +1,12 @@
+{
+  "mocks": [
+    {
+      "url": "/addressTypes",
+      "method": "get",
+      "status": 500,
+      "receivedData": "Internal server error",
+      "receivedPath": "",
+      "sendData": {}
+    } 
+  ]
+}

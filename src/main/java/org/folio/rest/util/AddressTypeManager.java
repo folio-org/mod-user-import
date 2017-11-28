@@ -38,7 +38,7 @@ public class AddressTypeManager {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(addressTypeResponse.getCode())) {
             LOGGER.warn(FAILED_TO_LIST_ADDRESS_TYPES);
-            future.fail(addressTypeResponse.getError().toString());
+            future.fail("");
           } else {
             JsonObject resultObject = addressTypeResponse.getBody();
             JsonArray addressTypeArray = resultObject.getJsonArray("addressTypes");

@@ -38,7 +38,7 @@ public class PatronGroupManager {
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(patronGroupResponse.getCode())) {
             LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS);
-            future.fail(patronGroupResponse.getError().toString());
+            future.fail("");
           } else {
             JsonObject resultObject = patronGroupResponse.getBody();
             JsonArray patronGroupArray = resultObject.getJsonArray("usergroups");
