@@ -96,7 +96,7 @@ The value can be the name of an existing patron group in the system. E.g. <code>
 The value can be the name of an existing address type in the system. E.g. <code>Home</code>, <code>Claim</code>, <code>Order</code>. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type. The available address types can be queried with a <code>GET</code> request to <code>{okapiUrl}/addresstypes</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user have to have a permission for retrieving address types (permission name: <code>users all</code>, permission code: <code>users.all</code>).
 
 ### preferredContactTypeId
-The value can be one of the following: <code>mail, <code>email</code>, <code>text</code>, <code>phone</code>, <code>mobile</code>.
+The value can be one of the following: <code>mail</code>, <code>email</code>, <code>text</code>, <code>phone</code>, <code>mobile</code>.
 
 ### deactivateMissingUsers
 This should be true if the users missing from the current import batch should be deactivated in FOLIO.
