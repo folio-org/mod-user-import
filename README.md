@@ -39,6 +39,16 @@ Body:
 <code>{exampleImport}</code>
 </pre>
 
+3. The response of the import will be:
+<pre><code>{
+    "message": {message stating that the import was successful or failed or the users were deactivated (in case of successful import and deactivateMissingUsers=true)},
+    "createdRecords": {number of newly created users},
+    "updatedRecords": {number of updated users},
+    "failedRecords": {number of users failed to create/update},
+    "failedExternalSystemIds": [{a list of users that were failed to create/update}],
+    "totalRecords": {number of total records processed by the user import}
+}</code></pre>
+
 The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The default <code>tenantName</code> is <code>diku</code>. An <code>exampleImport</code> can be found in the next section.
 
 ## Example import request
