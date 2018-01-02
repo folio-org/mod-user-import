@@ -52,9 +52,7 @@ Body:
 The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The default <code>tenantName</code> is <code>diku</code>. An <code>exampleImport</code> can be found in the next section.
 
 ## Example import request
-
-<pre><code>
-{
+<pre><code>{
   "users": [{
     "username": "somebody012",
     "externalSystemId": "somebody012",
@@ -92,13 +90,13 @@ The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The def
 </code></pre>
 
 ### patronGroup
-The value can be the name of an existing patron group in the system. E.g. faculty, staff, undergrad, graduate. The import module will match the patron group names for the patron group ids.
+The value can be the name of an existing patron group in the system. E.g. <code>faculty</code>, <code>staff</code>, <code>undergrad</code>, <code>graduate</code>. The import module will match the patron group names and replace with the patron group ids. The currently available patron groups can be listed using a <code>GET</code> request for <code>{okapiUrl}/groups</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user have to have a permission for retrieving patron groups (permission name: <code>users all</code>, permission code: <code>users.all</code>).
 
 ### addressTypeId
-The value can be the name of an existing address type in the system. E.g. Home, Claim, Order. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type.
+The value can be the name of an existing address type in the system. E.g. <code>Home</code>, <code>Claim</code>, <code>Order</code>. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type. The available address types can be queried with a <code>GET</code> request to <code>{okapiUrl}/addresstypes</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user have to have a permission for retrieving address types (permission name: <code>users all</code>, permission code: <code>users.all</code>).
 
 ### preferredContactTypeId
-The value can be one of the following: mail, email, text, phone, mobile.
+The value can be one of the following: <code>mail, <code>email</code>, <code>text</code>, <code>phone</code>, <code>mobile</code>.
 
 ### deactivateMissingUsers
 This should be true if the users missing from the current import batch should be deactivated in FOLIO.
