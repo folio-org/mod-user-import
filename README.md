@@ -10,10 +10,49 @@ This module is responsible for importing new or already existing users into FOLI
 Currently the module contains one endpoint:
 POST /user-import
 
-## Example import request
+## How to use
 
-<pre><code>
-{
+1. Login with a user who has permission for importing users (permission name: <code>User import</code>, permission code: <code>user-import.all</code>). This can be done by sending the following request to FOLIO:
+<pre>URL: <code>{okapiUrl}/authn/login</code>
+Headers:
+<code>
+  x-okapi-tenant: {tenantName}
+  Content-Type: application/json
+</code>
+Body:
+<code>
+  {
+    "username": "username",
+    "password": "password"
+  }
+</code></pre>
+
+2. The login request will return a header in the response which have to be used for authentication in the following request. The authentication token is returned in the <code>x-okapi-token</code> header (use as <code>okapiToken</code>). The user import request can be sent in the following format:
+<pre>URL: <code>{okapiUrl}/user-import</code>
+Headers:
+<code>
+  x-okapi-tenant: {tenantName}
+  Content-Type: application/json
+  x-okapi-token: {okapiToken}
+</code>
+Body:
+<code>{exampleImport}</code>
+</pre>
+
+3. The response of the import will be:
+<pre><code>{
+    "message": {message stating that the import was successful or failed or the users were deactivated (in case of successful import and deactivateMissingUsers=true)},
+    "createdRecords": {number of newly created users},
+    "updatedRecords": {number of updated users},
+    "failedRecords": {number of users failed to create/update},
+    "failedExternalSystemIds": [{a list of users that were failed to create/update}],
+    "totalRecords": {number of total records processed by the user import}
+}</code></pre>
+
+The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The default <code>tenantName</code> is <code>diku</code>. An <code>exampleImport</code> can be found in the next section.
+
+## Example import request
+<pre><code>{
   "users": [{
     "username": "somebody012",
     "externalSystemId": "somebody012",
@@ -46,18 +85,18 @@ POST /user-import
   "totalRecords": 1,
   "deactivateMissingUsers": false,
   "updateOnlyPresentFields": false,
-  "sourceType": "test_"
+  "sourceType": "test"
 }
 </code></pre>
 
 ### patronGroup
-The value can be the name of an existing patron group in the system. E.g. faculty, staff, undergrad, graduate. The import module will match the patron group names for the patron group ids.
+The value can be the name of an existing patron group in the system. E.g. <code>faculty</code>, <code>staff</code>, <code>undergrad</code>, <code>graduate</code>. The import module will match the patron group names and replace with the patron group ids. The currently available patron groups can be listed using a <code>GET</code> request for <code>{okapiUrl}/groups</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user have to have a permission for retrieving patron groups (permission name: <code>users all</code>, permission code: <code>users.all</code>).
 
 ### addressTypeId
-The value can be the name of an existing address type in the system. E.g. Home, Claim, Order. The import module will match the address type names for the address type ids.
+The value can be the name of an existing address type in the system. E.g. <code>Home</code>, <code>Claim</code>, <code>Order</code>. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type. The available address types can be queried with a <code>GET</code> request to <code>{okapiUrl}/addresstypes</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user have to have a permission for retrieving address types (permission name: <code>users all</code>, permission code: <code>users.all</code>).
 
 ### preferredContactTypeId
-The value can be one of the following: mail, email, text, phone, mobile.
+The value can be one of the following: <code>mail</code>, <code>email</code>, <code>text</code>, <code>phone</code>, <code>mobile</code>.
 
 ### deactivateMissingUsers
 This should be true if the users missing from the current import batch should be deactivated in FOLIO.
@@ -66,4 +105,4 @@ This should be true if the users missing from the current import batch should be
 This should be true if only the fields present in the import should be updated. E.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved.
 
 ### sourceType
-A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated.
+A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore. E.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
