@@ -74,7 +74,7 @@
       "receivedPath": "",
       "sendData": {}
     },
-    
+
     {
       "url": "/users?query=externalSystemId%3D%5Etest5_%2A&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -84,6 +84,6 @@
       "sendData": {
       }
     }
-    
+
    ]
 }

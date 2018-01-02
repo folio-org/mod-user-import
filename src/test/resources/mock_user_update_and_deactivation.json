@@ -74,7 +74,7 @@
       "receivedPath": "",
       "sendData": {}
     },
-    
+
     {
       "url": "/users?query=externalSystemId%3C%3E%27%27&limit=5&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
