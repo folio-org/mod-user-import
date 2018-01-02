@@ -71,7 +71,7 @@ public class UserDataUtil {
   }
 
   /*
-   * Currently this deep copy only works for addresses. 
+   * Currently this deep copy only works for addresses.
    * If more embedded fields will raise a need for this feature this function needs to be updated.
    */
   public static User updateExistingUserWithIncomingFields(User user, User existingUser) {

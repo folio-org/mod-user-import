@@ -74,7 +74,7 @@
       "receivedPath": "",
       "sendData": {}
     },
-    
+
     {
       "url": "/users?query=%28externalSystemId%3D%3D%22user_address%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
@@ -154,6 +154,6 @@
         "patronGroup": "undergrad"
       }
     }
-    
+
    ]
 }
