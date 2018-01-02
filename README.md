@@ -10,6 +10,37 @@ This module is responsible for importing new or already existing users into FOLI
 Currently the module contains one endpoint:
 POST /user-import
 
+## How to use
+
+1. Login with a user who has permission for importing users (permission name: <code>User import</code>, permission code: <code>user-import.all</code>). This can be done by sending the following request to FOLIO:
+<pre>URL: <code>{okapiUrl}/authn/login</code>
+Headers:
+<code>
+  x-okapi-tenant: {tenantName}
+  Content-Type: application/json
+</code>
+Body:
+<code>
+  {
+    "username": "username",
+    "password": "password"
+  }
+</code></pre>
+
+2. The login request will return a header in the response which have to be used for authentication in the following request. The authentication token is returned in the <code>x-okapi-token</code> header (use as <code>okapiToken</code>). The user import request can be sent in the following format:
+<pre>URL: <code>{okapiUrl}/user-import</code>
+Headers:
+<code>
+  x-okapi-tenant: {tenantName}
+  Content-Type: application/json
+  x-okapi-token: {okapiToken}
+</code>
+Body:
+<code>{exampleImport}</code>
+</pre>
+
+The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The default <code>tenantName</code> is <code>diku</code>. An <code>exampleImport</code> can be found in the next section.
+
 ## Example import request
 
 <pre><code>
@@ -46,7 +77,7 @@ POST /user-import
   "totalRecords": 1,
   "deactivateMissingUsers": false,
   "updateOnlyPresentFields": false,
-  "sourceType": "test_"
+  "sourceType": "test"
 }
 </code></pre>
 
@@ -54,7 +85,7 @@ POST /user-import
 The value can be the name of an existing patron group in the system. E.g. faculty, staff, undergrad, graduate. The import module will match the patron group names for the patron group ids.
 
 ### addressTypeId
-The value can be the name of an existing address type in the system. E.g. Home, Claim, Order. The import module will match the address type names for the address type ids.
+The value can be the name of an existing address type in the system. E.g. Home, Claim, Order. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type.
 
 ### preferredContactTypeId
 The value can be one of the following: mail, email, text, phone, mobile.
@@ -66,4 +97,4 @@ This should be true if the users missing from the current import batch should be
 This should be true if only the fields present in the import should be updated. E.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved.
 
 ### sourceType
-A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated.
+A prefix for the externalSystemId to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the externalSystemId with an underscore. E.g. if the user's externalSystemId is somebody012 and the sourceType is test, the user's externalSystemId will be test_somebody012.
