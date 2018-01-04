@@ -83,7 +83,7 @@ public class UserImportAPI implements UserImportResource {
 
     getAddressTypes(okapiHeaders).setHandler(addressTypeResultHandler -> {
       if (addressTypeResultHandler.failed()) {
-        LOGGER.warn(FAILED_TO_LIST_ADDRESS_TYPES);
+        LOGGER.error(FAILED_TO_LIST_ADDRESS_TYPES);
         future.fail(FAILED_TO_LIST_ADDRESS_TYPES + extractErrorMessage(addressTypeResultHandler));
       } else {
         getPatronGroups(okapiHeaders).setHandler(patronGroupResultHandler -> {
@@ -98,7 +98,7 @@ public class UserImportAPI implements UserImportResource {
             }
 
           } else {
-            LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS);
+            LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS);
             future.fail(FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
           }
         });
@@ -114,7 +114,7 @@ public class UserImportAPI implements UserImportResource {
     listAllUsersWithExternalSystemId(okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
 
       if (handler.failed()) {
-        LOGGER.warn("Failed to list users with externalSystemId (and specific sourceType)");
+        LOGGER.error("Failed to list users with externalSystemId (and specific sourceType)");
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(handler));
       } else {
         LOGGER.info("response: " + handler.result());
@@ -208,13 +208,13 @@ public class UserImportAPI implements UserImportResource {
             if (response.succeeded()) {
               processFuture.complete(response.result());
             } else {
-              LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+              LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
               processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
             }
           });
 
       } else {
-        LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+        LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
         processFuture.fail(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
       }
     });
@@ -254,10 +254,13 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((userSearchQueryResponse, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            LOGGER.debug(ex.getMessage());
+            LOGGER.error(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
-            LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            if (userSearchQueryResponse.getError() != null) {
+              LOGGER.error(userSearchQueryResponse.getError());
+            }
             future.fail("");
           } else {
             JsonObject resultObject = userSearchQueryResponse.getBody();
@@ -265,7 +268,7 @@ public class UserImportAPI implements UserImportResource {
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn("Failed to process user search result", exc.getMessage());
+      LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT, exc.getMessage());
       future.fail(exc);
     }
     return future;
@@ -301,7 +304,7 @@ public class UserImportAPI implements UserImportResource {
 
         future.complete(successResponse);
       } else {
-        LOGGER.warn(FAILED_TO_IMPORT_USERS);
+        LOGGER.error(FAILED_TO_IMPORT_USERS);
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
@@ -357,10 +360,13 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((res, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.debug(ex.getMessage());
+            LOGGER.error(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
             LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            if (res.getError() != null) {
+              LOGGER.warn(res.getError());
+            }
             future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           } else {
             try {
@@ -372,7 +378,7 @@ public class UserImportAPI implements UserImportResource {
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
 
@@ -393,10 +399,13 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((userCreationResponse, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.debug(ex.getMessage());
+            LOGGER.error(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
             LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            if (userCreationResponse.getError() != null) {
+              LOGGER.warn(userCreationResponse.getError());
+            }
             future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           } else {
             try {
@@ -413,7 +422,7 @@ public class UserImportAPI implements UserImportResource {
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
 
@@ -437,22 +446,25 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((response, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.debug(ex.getMessage());
+            LOGGER.error(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
-            LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            if (response.getError() != null) {
+              LOGGER.error(response.getError());
+            }
             future.fail(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
           } else {
             try {
               future.complete(response.getBody());
             } catch (Exception e) {
-              LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
+              LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
               future.fail(e);
             }
           }
         });
     } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
     return future;
@@ -476,10 +488,13 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((response, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            LOGGER.debug(ex.getMessage());
+            LOGGER.error(ex.getMessage());
             future.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
             LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            if (response.getError() != null) {
+              LOGGER.error(response.getError());
+            }
             future.fail("");
           } else {
             processAllUsersResult(future, response.getBody(), userSearchClient, okapiHeaders, url, limit);
@@ -487,7 +502,7 @@ public class UserImportAPI implements UserImportResource {
 
         });
     } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_PROCESS_USERS, exc.getMessage());
+      LOGGER.error(FAILED_TO_PROCESS_USERS, exc.getMessage());
       future.fail(exc);
     }
     return future;
@@ -516,7 +531,7 @@ public class UserImportAPI implements UserImportResource {
           if (ar.succeeded()) {
             future.complete(existingUserList);
           } else {
-            LOGGER.warn(FAILED_TO_PROCESS_USERS);
+            LOGGER.error(FAILED_TO_PROCESS_USERS);
             future.fail(FAILED_TO_PROCESS_USERS + extractErrorMessage(ar));
           }
         });
@@ -538,10 +553,13 @@ public class UserImportAPI implements UserImportResource {
         .whenComplete((subResponse, subEx) -> {
           if (subEx != null) {
             LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
-            LOGGER.debug(subEx.getMessage());
+            LOGGER.error(subEx.getMessage());
             future.fail(subEx.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(subResponse.getCode())) {
-            LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
+            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
+            if (subResponse.getError() != null) {
+              LOGGER.error(subResponse.getError());
+            }
             future.fail(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
           } else {
             try {
@@ -549,7 +567,7 @@ public class UserImportAPI implements UserImportResource {
               existingUserList.addAll(users);
               future.complete();
             } catch (Exception e) {
-              LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, e.getMessage());
+              LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, e.getMessage());
               future.fail(e);
             }
           }
@@ -557,7 +575,7 @@ public class UserImportAPI implements UserImportResource {
         });
 
     } catch (Exception exc) {
-      LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
+      LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
       future.fail(exc);
     }
 
@@ -583,7 +601,7 @@ public class UserImportAPI implements UserImportResource {
       if (ar.succeeded()) {
         future.complete();
       } else {
-        LOGGER.warn("Failed to deactivate users.");
+        LOGGER.error("Failed to deactivate users.");
         future.fail("Failed to deactivate users." + extractErrorMessage(ar));
       }
     });
