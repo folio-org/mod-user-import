@@ -76,7 +76,7 @@
     },
 
     {
-      "url": "/users?query=%28externalSystemId%3D%3D%22test2_user2_update2%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%3D%28test2_user2_update2%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {

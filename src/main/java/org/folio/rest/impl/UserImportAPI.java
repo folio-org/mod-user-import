@@ -6,8 +6,6 @@ import static org.folio.rest.util.PatronGroupManager.*;
 import static org.folio.rest.util.UserDataUtil.*;
 import static org.folio.rest.util.UserImportAPIConstants.*;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -224,14 +222,13 @@ public class UserImportAPI implements UserImportResource {
   private Future<List<Map>> listUsers(Map<String, String> okapiHeaders, List<User> users, String sourceType) {
     Future<List<Map>> future = Future.future();
 
-    StringBuilder userQueryBuilder = new StringBuilder("(");
-
+    StringBuilder userQueryBuilder = new StringBuilder("");
+    userQueryBuilder.append("externalSystemId==(");
     for (int i = 0; i < users.size(); i++) {
-      userQueryBuilder.append("externalSystemId==\"");
       if (!Strings.isNullOrEmpty(sourceType)) {
         userQueryBuilder.append(sourceType).append("_");
       }
-      userQueryBuilder.append(users.get(i).getExternalSystemId()).append("\"");
+      userQueryBuilder.append(users.get(i).getExternalSystemId());
       if (i < users.size() - 1) {
         userQueryBuilder.append(" or ");
       } else {
@@ -240,11 +237,6 @@ public class UserImportAPI implements UserImportResource {
     }
 
     String url = userQueryBuilder.toString();
-    try {
-      url = URLEncoder.encode(url, "UTF-8");
-    } catch (UnsupportedEncodingException exc) {
-      LOGGER.warn("Could not encode request URL.");
-    }
 
     HttpClientInterface userSearchClient = createClientWithHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String userSearchQuery = generateUserSearchQuery(url, users.size() * 2, 0);
