@@ -76,7 +76,7 @@
     },
 
     {
-      "url": "/users?query=externalSystemId%3D%5Etest3_%2A&limit=5&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%5Etest3_%2A&limit=10&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {

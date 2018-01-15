@@ -30,6 +30,14 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
 
+  private static final String USER_IMPORT = "/user-import";
+  private static final String FAILED_EXTERNAL_SYSTEM_IDS = "failedExternalSystemIds";
+  private static final String FAILED_RECORDS = "failedRecords";
+  private static final String UPDATED_RECORDS = "updatedRecords";
+  private static final String CREATED_RECORDS = "createdRecords";
+  private static final String TOTAL_RECORDS = "totalRecords";
+  private static final String ERROR = "error";
+  private static final String MESSAGE = "message";
   private static final Header TENANT_HEADER = new Header("X-Okapi-Tenant", "import-test");
   private static final Header TOKEN_HEADER = new Header("X-Okapi-Token", "import-test");
   private static final Header OKAPI_URL_HEADER = new Header("X-Okapi-Url", "http://localhost:9130");
@@ -71,7 +79,7 @@ public class UserImportAPITest {
       .header(TOKEN_HEADER)
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
-      .get("/user-import")
+      .get(USER_IMPORT)
       .then()
       .body(equalTo("This is a fake endpoint."))
       .statusCode(400);
@@ -93,10 +101,10 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo("No users to import."))
-      .body("totalRecords", equalTo(0))
+      .body(MESSAGE, equalTo("No users to import."))
+      .body(TOTAL_RECORDS, equalTo(0))
       .statusCode(200);
   }
 
@@ -119,9 +127,16 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(500);
   }
 
@@ -144,9 +159,16 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body(equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(500);
   }
 
@@ -169,14 +191,106 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(1))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserWithoutExternalSystemId() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation_without_externalsystemid.json");
+
+    List<User> users = new ArrayList<>();
+    User testUser = generateUser("1234567", "Amy", "Cabble", null);
+    testUser.setExternalSystemId(null);
+    users.add(testUser);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body("errors.parameters", hasSize(1))
+      .statusCode(422);
+  }
+
+  /*
+   * This test does not reflect real-time environment currently.
+   */
+  //  @Test
+  public void testImportWithUserWithEmptyExternalSystemId() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation_with_empty_externalsystemid.json");
+
+    List<User> users = new ArrayList<>();
+    User testUser = generateUser("1234567", "Amy", "Cabble", null);
+    testUser.setExternalSystemId("");
+    users.add(testUser);
+    users.add(testUser);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(2))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(testUser.getExternalSystemId()))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserWithoutUsername() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation.json");
+
+    List<User> users = new ArrayList<>();
+    User testUser = generateUser("1234567", "Amy", "Cabble", null);
+    testUser.setUsername(null);
+    users.add(testUser);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body("errors.parameters", hasSize(1))
+      .statusCode(422);
   }
 
   @Test
@@ -198,13 +312,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(1))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -227,9 +342,16 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body(equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + " "))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(500);
   }
 
@@ -252,13 +374,15 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(1))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(200);
   }
 
@@ -294,13 +418,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(10))
-      .body("createdRecords", equalTo(10))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(10))
+      .body(CREATED_RECORDS, equalTo(10))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -323,13 +448,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -352,13 +478,15 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(1))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(200);
   }
 
@@ -392,13 +520,65 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo("Deactivated missing users."))
-      .body("totalRecords", equalTo(10))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(10))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo("Deactivated missing users."))
+      .body(TOTAL_RECORDS, equalTo(10))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(10))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithMoreUserUpdate() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_more_user_update.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("11", "111", "112", null));
+    users.add(generateUser("12", "121", "122", null));
+    users.add(generateUser("13", "131", "132", null));
+    users.add(generateUser("14", "141", "142", null));
+    users.add(generateUser("15", "151", "152", null));
+    users.add(generateUser("16", "161", "162", null));
+    users.add(generateUser("17", "171", "172", null));
+    users.add(generateUser("18", "181", "182", null));
+    users.add(generateUser("19", "191", "192", null));
+    users.add(generateUser("110", "1101", "1102", null));
+    users.add(generateUser("11x", "111x", "112x", null));
+    users.add(generateUser("12x", "121x", "122x", null));
+    users.add(generateUser("13x", "131x", "132x", null));
+    users.add(generateUser("14x", "141x", "142x", null));
+    users.add(generateUser("15x", "151x", "152x", null));
+    users.add(generateUser("16x", "161x", "162x", null));
+    users.add(generateUser("17x", "171x", "172x", null));
+    users.add(generateUser("18x", "181x", "182x", null));
+    users.add(generateUser("19x", "191x", "192x", null));
+    users.add(generateUser("110x", "1101x", "1102x", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(10)
+      .withDeactivateMissingUsers(true)
+      .withUpdateOnlyPresentFields(false);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(20))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(20))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -433,13 +613,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -464,13 +645,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -514,13 +696,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -555,13 +738,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -585,13 +769,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(1))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -616,13 +801,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(0))
-      .body("updatedRecords", equalTo(1))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -647,13 +833,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo("Deactivated missing users."))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(1))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo("Deactivated missing users."))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -678,13 +865,14 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body("message", equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body("totalRecords", equalTo(1))
-      .body("createdRecords", equalTo(1))
-      .body("updatedRecords", equalTo(0))
-      .body("failedRecords", equalTo(0))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
       .statusCode(200);
   }
 
@@ -709,10 +897,49 @@ public class UserImportAPITest {
       .header(OKAPI_URL_HEADER)
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
-      .post("/user-import")
+      .post(USER_IMPORT)
       .then()
-      .body(equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
       .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithUserCreationErrorWhenDeactivating() throws IOException {
+
+    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock.setMockJsonContent("mock_user_creation_error_when_deactivating.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("0000", "Error", "Error", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY + " " + UserImportAPIConstants.USER_DEACTIVATION_SKIPPED))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
+      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .statusCode(200);
   }
 
   private User generateUser(String barcode, String firstName, String lastName, String id) {

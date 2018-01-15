@@ -5,26 +5,11 @@ import static org.folio.rest.util.UserImportAPIConstants.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.folio.rest.tools.client.HttpClientFactory;
-import org.folio.rest.tools.client.interfaces.HttpClientInterface;
-
 import com.google.common.base.Strings;
 
 public class HttpClientUtil {
 
   private HttpClientUtil() {
-  }
-
-  public static HttpClientInterface createClient(Map<String, String> okapiHeaders) {
-    return HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), okapiHeaders.get(OKAPI_TENANT_HEADER));
-  }
-
-  public static HttpClientInterface createClientWithHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
-    Map<String, String> headers = createHeaders(okapiHeaders, accept, contentType);
-
-    HttpClientInterface client = createClient(okapiHeaders);
-    client.setDefaultHeaders(headers);
-    return client;
   }
 
   public static Map<String, String> createHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
@@ -39,7 +24,7 @@ public class HttpClientUtil {
     return headers;
   }
 
-  private static String getOkapiUrl(Map<String, String> okapiHeaders) {
+  public static String getOkapiUrl(Map<String, String> okapiHeaders) {
     return okapiHeaders.get(OKAPI_URL_HEADER);
   }
 }

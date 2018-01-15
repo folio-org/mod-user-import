@@ -1,6 +1,5 @@
 package org.folio.rest.util;
 
-import static org.folio.rest.util.HttpClientUtil.*;
 import static org.folio.rest.util.UserImportAPIConstants.*;
 
 import java.util.HashMap;
@@ -23,14 +22,14 @@ public class AddressTypeManager {
 
   }
 
-  public static Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
+  public static Future<Map<String, String>> getAddressTypes(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
     Future<Map<String, String>> future = Future.future();
 
-    HttpClientInterface addressTypeClient = createClientWithHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
+    Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String addressTypeQuery = UriBuilder.fromPath("/addresstypes").build().toString();
 
     try {
-      addressTypeClient.request(addressTypeQuery)
+      httpClient.request(addressTypeQuery, headers)
         .whenComplete((addressTypeResponse, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_LIST_ADDRESS_TYPES);
