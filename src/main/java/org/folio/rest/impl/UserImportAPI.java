@@ -18,6 +18,7 @@ import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
+import org.folio.rest.model.UserImportData;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 import org.folio.rest.util.SingleUserImportResponse;
@@ -98,12 +99,15 @@ public class UserImportAPI implements UserImportResource {
         getPatronGroups(httpClient, okapiHeaders).setHandler(patronGroupResultHandler -> {
 
           if (patronGroupResultHandler.succeeded()) {
+            UserImportData userImportData = new UserImportData(userCollection);
+            userImportData.setAddressTypes(addressTypeResultHandler.result());
+            userImportData.setPatronGroups(patronGroupResultHandler.result());
 
-            if (userCollection.getDeactivateMissingUsers() != null && userCollection.getDeactivateMissingUsers()) {
-              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result()).setHandler(
+            if (userImportData.getDeactivateMissingUsers()) {
+              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, userImportData).setHandler(
                 future.completer());
             } else {
-              startImport(httpClient, userCollection, patronGroupResultHandler.result(), addressTypeResultHandler.result(), okapiHeaders).setHandler(future.completer());
+              startImport(httpClient, userCollection, userImportData, okapiHeaders).setHandler(future.completer());
             }
 
           } else {
@@ -122,7 +126,7 @@ public class UserImportAPI implements UserImportResource {
    * Start importing users if deactivation is needed. In this case all users should be queried to be able to tell which ones need to be deactivated after the import.
    */
   private Future<ImportResponse> startImportWithDeactivatingUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataCollection userCollection,
-    Map<String, String> patronGroups, Map<String, String> addressTypes) {
+    UserImportData userImportData) {
     Future<ImportResponse> future = Future.future();
     listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
 
@@ -134,7 +138,7 @@ public class UserImportAPI implements UserImportResource {
         List<Map> existingUsers = handler.result();
         final Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
 
-        List<Future> futures = processAllUsersInPartitions(httpClient, userCollection, addressTypes, patronGroups, existingUserMap, okapiHeaders);
+        List<Future> futures = processAllUsersInPartitions(httpClient, userCollection, userImportData, existingUserMap, okapiHeaders);
 
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
@@ -167,20 +171,14 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Create partitions from all users, process them and return the list of Futures of the partition processing.
    */
-  private List<Future> processAllUsersInPartitions(HttpClientInterface httpClient, UserdataCollection userCollection, Map<String, String> addressTypes, Map<String, String> patronGroups, Map<String, User> existingUserMap, Map<String, String> okapiHeaders) {
+  private List<Future> processAllUsersInPartitions(HttpClientInterface httpClient, UserdataCollection userCollection, UserImportData userImportData, Map<String, User> existingUserMap, Map<String, String> okapiHeaders) {
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
     List<Future> futures = new ArrayList<>();
-
-    Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
-    if (updateOnlyPresentData == null) {
-      updateOnlyPresentData = Boolean.FALSE;
-    }
 
     for (List<User> currentPartition : userPartitions) {
       Future<ImportResponse> userSearchAsyncResult =
         processUserSearchResult(httpClient, okapiHeaders, existingUserMap,
-          currentPartition, patronGroups, addressTypes, updateOnlyPresentData,
-          userCollection.getSourceType());
+          currentPartition, userImportData);
       futures.add(userSearchAsyncResult);
     }
     return futures;
@@ -189,20 +187,15 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Start user import. Partition and process users in batches of 10.
    */
-  private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataCollection userCollection, Map<String, String> patronGroups, Map<String, String> addressTypes, Map<String, String> okapiHeaders) {
+  private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataCollection userCollection, UserImportData userImportData, Map<String, String> okapiHeaders) {
     Future<ImportResponse> future = Future.future();
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
     List<Future> futures = new ArrayList<>();
-    Boolean updateOnlyPresentData = userCollection.getUpdateOnlyPresentFields();
-    if (updateOnlyPresentData == null) {
-      updateOnlyPresentData = Boolean.FALSE;
-    }
 
     for (List<User> currentPartition : userPartitions) {
       Future<ImportResponse> userBatchProcessResponse =
-        processUserBatch(httpClient, okapiHeaders, currentPartition, patronGroups, addressTypes,
-          updateOnlyPresentData, userCollection.getSourceType());
+        processUserBatch(httpClient, okapiHeaders, currentPartition, userImportData);
       futures.add(userBatchProcessResponse);
     }
 
@@ -224,15 +217,14 @@ public class UserImportAPI implements UserImportResource {
    * @param userSearchClient 
    */
   private Future<ImportResponse> processUserBatch(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
-    List<User> currentPartition, Map<String, String> patronGroups, Map<String, String> addressTypes,
-    Boolean updateOnlyPresentData, String sourceType) {
+    List<User> currentPartition, UserImportData userImportData) {
     Future<ImportResponse> processFuture = Future.future();
-    listUsers(httpClient, currentPartition, sourceType).setHandler(userSearchAsyncResponse -> {
+    listUsers(httpClient, currentPartition, userImportData.getSourceType()).setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
 
         Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
 
-        processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, patronGroups, addressTypes, updateOnlyPresentData, sourceType)
+        processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
           .setHandler(response -> {
             if (response.succeeded()) {
               processFuture.complete(response.result());
@@ -311,16 +303,15 @@ public class UserImportAPI implements UserImportResource {
    * Process batch of users. Decide if current user exists, if it does, updates it, otherwise creates a new one.
    */
   private Future<ImportResponse> processUserSearchResult(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
-    Map<String, User> existingUsers, List<User> usersToImport, Map<String, String> patronGroups,
-    Map<String, String> addressTypes, Boolean updateOnlyPresentData, String sourceType) {
+    Map<String, User> existingUsers, List<User> usersToImport, UserImportData userImportData) {
     Future<ImportResponse> future = Future.future();
 
     List<Future> futures = new ArrayList<>();
 
     for (User user : usersToImport) {
-      updateUserData(user, patronGroups, addressTypes, sourceType);
+      updateUserData(user, userImportData);
       if (existingUsers.containsKey(user.getExternalSystemId())) {
-        if (updateOnlyPresentData) {
+        if (userImportData.getUpdateOnlyPresentFields()) {
           user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
         } else {
           user.setId(existingUsers.get(user.getExternalSystemId()).getId());

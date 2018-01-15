@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.model.UserImportData;
 
 import com.google.common.base.Strings;
 
@@ -43,13 +44,12 @@ public class UserDataUtil {
     return existingUsers;
   }
 
-  public static void updateUserData(User user, Map<String, String> patronGroups, Map<String, String> addressTypes,
-    String sourceType) {
-    if (!Strings.isNullOrEmpty(sourceType)) {
-      user.setExternalSystemId(sourceType + "_" + user.getExternalSystemId());
+  public static void updateUserData(User user, UserImportData userImportData) {
+    if (!Strings.isNullOrEmpty(userImportData.getSourceType())) {
+      user.setExternalSystemId(userImportData.getSourceType() + "_" + user.getExternalSystemId());
     }
-    if (user.getPatronGroup() != null && patronGroups.containsKey(user.getPatronGroup())) {
-      user.setPatronGroup(patronGroups.get(user.getPatronGroup()));
+    if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
+      user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
     }
     if (user.getPersonal() == null) {
       return;
@@ -57,8 +57,8 @@ public class UserDataUtil {
     if (user.getPersonal().getAddresses() != null
       && !user.getPersonal().getAddresses().isEmpty()) {
       for (Address address : user.getPersonal().getAddresses()) {
-        if (address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId())) {
-          address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
+        if (address.getAddressTypeId() != null && userImportData.getAddressTypes().containsKey(address.getAddressTypeId())) {
+          address.setAddressTypeId(userImportData.getAddressTypes().get(address.getAddressTypeId()));
         }
       }
     }
