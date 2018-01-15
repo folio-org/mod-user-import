@@ -14,6 +14,7 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
+import org.folio.rest.jaxrs.model.FailedUser;
 import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
@@ -345,7 +346,7 @@ public class UserImportAPI implements UserImportResource {
     ImportResponse successResponse = new ImportResponse();
     successResponse.setMessage("");
     successResponse.setTotalRecords(futures.size());
-    List<String> failedExternalSystemIds = new ArrayList<>();
+    List<FailedUser> failedUsers = new ArrayList<>();
     int created = 0;
     int updated = 0;
     int failed = 0;
@@ -358,7 +359,7 @@ public class UserImportAPI implements UserImportResource {
           updated++;
         } else if (resp.getStatus() == UserRecordImportStatus.FAILED) {
           failed++;
-          failedExternalSystemIds.add(resp.getExternalSystemId());
+          failedUsers.add(new FailedUser().withExternalSystemId(resp.getExternalSystemId()).withUsername(resp.getUsername()).withErrorMessage(resp.getErrorMessage()));
         }
       }
     }
@@ -366,7 +367,7 @@ public class UserImportAPI implements UserImportResource {
     successResponse.setCreatedRecords(created);
     successResponse.setUpdatedRecords(updated);
     successResponse.setFailedRecords(failed);
-    successResponse.setFailedExternalSystemIds(failedExternalSystemIds);
+    successResponse.setFailedUsers(failedUsers);
     return successResponse;
   }
 
@@ -392,19 +393,19 @@ public class UserImportAPI implements UserImportResource {
             if (res.getError() != null) {
               LOGGER.warn(res.getError());
             }
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           } else {
             try {
               future.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
-              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, e.getMessage()));
+              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, exc.getMessage()));
+      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
 
     return future;
@@ -427,13 +428,13 @@ public class UserImportAPI implements UserImportResource {
           if (ex != null) {
             LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
             LOGGER.error(ex.getMessage());
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, ex.getMessage()));
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, ex.getMessage()));
           } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
             LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
             if (userCreationResponse.getError() != null) {
               LOGGER.warn(userCreationResponse.getError());
             }
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
+            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           } else {
             try {
               addEmptyPermissionSetForUser(httpClient, okapiHeaders, user).setHandler(futurePermissionHandler -> {
@@ -444,13 +445,13 @@ public class UserImportAPI implements UserImportResource {
               });
             } catch (Exception e) {
               LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
-              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, e.getMessage()));
+              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), -1, exc.getMessage()));
+      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
 
     return future;
@@ -711,8 +712,7 @@ public class UserImportAPI implements UserImportResource {
     int updated = 0;
     int failed = 0;
     int totalRecords = 0;
-    List<String> failedExternalSystemIds = new ArrayList<>();
-    StringBuilder errorBuilder = new StringBuilder();
+    List<FailedUser> failedUsers = new ArrayList<>();
     for (Future currentFuture : futures) {
       if (currentFuture.result() instanceof ImportResponse) {
         ImportResponse currentResponse = (ImportResponse) currentFuture.result();
@@ -720,20 +720,14 @@ public class UserImportAPI implements UserImportResource {
         updated += currentResponse.getUpdatedRecords();
         failed += currentResponse.getFailedRecords();
         totalRecords += currentResponse.getTotalRecords();
-        failedExternalSystemIds.addAll(currentResponse.getFailedExternalSystemIds());
-        if (currentResponse.getError() != null) {
-          errorBuilder.append(currentResponse.getError() + " ");
-        }
+        failedUsers.addAll(currentResponse.getFailedUsers());
       }
-    }
-    if (!errorBuilder.toString().isEmpty()) {
-      response.setError(errorBuilder.toString());
     }
     response.setCreatedRecords(created);
     response.setUpdatedRecords(updated);
     response.setFailedRecords(failed);
     response.setTotalRecords(totalRecords);
-    response.setFailedExternalSystemIds(failedExternalSystemIds);
+    response.setFailedUsers(failedUsers);
     return response;
   }
 
@@ -745,9 +739,13 @@ public class UserImportAPI implements UserImportResource {
    */
   private ImportResponse processErrorResponse(UserdataCollection userCollection, String errorMessage) {
     ImportResponse failureResponse = new ImportResponse();
-    List<String> failedExternalSystemIds = new ArrayList<>();
+    List<FailedUser> failedUsers = new ArrayList<>();
     for (User user : userCollection.getUsers()) {
-      failedExternalSystemIds.add(user.getExternalSystemId());
+      FailedUser failedUser = new FailedUser()
+        .withExternalSystemId(user.getExternalSystemId())
+        .withUsername(user.getUsername())
+        .withErrorMessage(errorMessage);
+      failedUsers.add(failedUser);
     }
     failureResponse.setMessage(FAILED_TO_IMPORT_USERS);
     failureResponse.setError(errorMessage);
@@ -755,7 +753,7 @@ public class UserImportAPI implements UserImportResource {
     failureResponse.setCreatedRecords(0);
     failureResponse.setUpdatedRecords(0);
     failureResponse.setFailedRecords(userCollection.getTotalRecords());
-    failureResponse.setFailedExternalSystemIds(failedExternalSystemIds);
+    failureResponse.setFailedUsers(failedUsers);
     return failureResponse;
   }
 

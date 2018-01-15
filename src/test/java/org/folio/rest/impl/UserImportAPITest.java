@@ -31,11 +31,15 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 public class UserImportAPITest {
 
   private static final String USER_IMPORT = "/user-import";
-  private static final String FAILED_EXTERNAL_SYSTEM_IDS = "failedExternalSystemIds";
+  private static final String FAILED_USERS = "failedUsers";
   private static final String FAILED_RECORDS = "failedRecords";
   private static final String UPDATED_RECORDS = "updatedRecords";
   private static final String CREATED_RECORDS = "createdRecords";
   private static final String TOTAL_RECORDS = "totalRecords";
+  private static final String EXTERNAL_SYSTEM_ID = "externalSystemId";
+  private static final String USERNAME = "username";
+  private static final String USER_ERROR_MESSAGE = "errorMessage";
+
   private static final String ERROR = "error";
   private static final String MESSAGE = "message";
   private static final Header TENANT_HEADER = new Header("X-Okapi-Tenant", "import-test");
@@ -135,8 +139,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
 
@@ -167,8 +173,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
 
@@ -198,7 +206,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -261,8 +269,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(testUser.getExternalSystemId()))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(testUser.getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(testUser.getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + testUser.getExternalSystemId()))
       .statusCode(200);
   }
 
@@ -319,7 +329,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -345,14 +355,15 @@ public class UserImportAPITest {
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + " "))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
-      .statusCode(500);
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(FAILED_USERS, hasSize(1))
+      .statusCode(200);
   }
 
   @Test
@@ -381,8 +392,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
 
@@ -425,7 +438,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(10))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -455,7 +468,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -485,8 +498,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
 
@@ -527,7 +542,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(10))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -578,7 +593,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(20))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -620,7 +635,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -652,7 +667,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -703,7 +718,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -745,7 +760,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -776,7 +791,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -808,7 +823,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -840,7 +855,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -872,7 +887,7 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(1))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(0))
+      .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
   }
 
@@ -905,8 +920,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
 
@@ -937,8 +954,10 @@ public class UserImportAPITest {
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasItem(users.get(0).getExternalSystemId()))
-      .body(FAILED_EXTERNAL_SYSTEM_IDS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
 

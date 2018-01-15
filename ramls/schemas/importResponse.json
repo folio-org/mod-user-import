@@ -18,11 +18,12 @@
     "failedRecords": {
       "type": "integer"
     },
-    "failedExternalSystemIds": {
+    "failedUsers": {
       "type": "array",
-      "id": "failedExternalSystemIds",
+      "id": "failedUsers",
       "items": {
-        "type": "string"
+        "type": "object",
+        "$ref": "failedUserdata.json"
       }
     },
     "totalRecords": {
