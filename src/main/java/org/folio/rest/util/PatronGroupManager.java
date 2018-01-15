@@ -1,6 +1,5 @@
 package org.folio.rest.util;
 
-import static org.folio.rest.util.HttpClientUtil.*;
 import static org.folio.rest.util.UserImportAPIConstants.*;
 
 import java.util.HashMap;
@@ -23,14 +22,14 @@ public class PatronGroupManager {
 
   }
 
-  public static Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
+  public static Future<Map<String, String>> getPatronGroups(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
     Future<Map<String, String>> future = Future.future();
 
-    HttpClientInterface patronGroupClient = createClientWithHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
+    Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String patronGroupQuery = UriBuilder.fromPath("/groups").build().toString();
 
     try {
-      patronGroupClient.request(patronGroupQuery)
+      httpClient.request(patronGroupQuery, headers)
         .whenComplete((patronGroupResponse, ex) -> {
           if (ex != null) {
             LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS);

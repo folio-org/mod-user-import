@@ -123,6 +123,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "username"
+    "username",
+    "externalSystemId"
   ]
 }

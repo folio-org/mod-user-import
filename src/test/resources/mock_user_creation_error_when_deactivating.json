@@ -76,61 +76,47 @@
     },
 
     {
-      "url": "/users?query=externalSystemId%3D%5Etest4_%2A&limit=10&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3C%3E%27%27&limit=10&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {
-        "users": [],
-        "totalRecords": 0
+        "users": [{
+          "id": "fdc61b69-f936-40ef-b115-194100d8ea57",
+          "externalSystemId": "user2_old2",
+          "personal": {
+            "firstName": "User2",
+            "lastName": "Old2",
+            "email": "user2_old2@user.org",
+            "preferredContactTypeId": "email"
+          },
+          "barcode": "30313233",
+          "username": "user2_old2",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
       },
       "receivedPath": "",
-      "sendData": {
-      }
+      "sendData": {}
     },
     {
       "url": "/users",
       "method": "post",
-      "status": 201,
-      "receivedData": {
-        "id": "340dc4c5-557f-42f4-94ce-3e448bd54f44",
-        "proxyFor": [],
-        "externalSystemId": "user3_deactivate3",
-        "personal": {
-          "firstName": "User3",
-          "lastName": "Deactivate3",
-          "email": "user3_deactivate3@user.org",
-          "preferredContactTypeId": "email",
-          "addresses": []
-        },
-        "barcode": "987654321",
-        "username": "user3_deactivate3",
-        "active": true,
-        "patronGroup": "undergrad"
-      },
+      "status": 500,
+      "receivedData": "Internal server error",
       "receivedPath": "",
       "sendData": {
-        "externalSystemId": "test4_user3_deactivate3",
+        "externalSystemId": "error_error",
         "personal": {
-          "firstName": "User3",
-          "lastName": "Deactivate3",
-          "email": "user3_deactivate3@user.org",
+          "firstName": "Error",
+          "lastName": "Error",
+          "email": "error_error@user.org",
           "preferredContactTypeId": "email"
         },
-        "barcode": "987654321",
-        "username": "user3_deactivate3",
+        "barcode": "0000",
+        "username": "error_error",
         "active": true,
         "patronGroup": "undergrad"
-      }
-    },
-    {
-      "url": "/perms/users",
-      "method": "post",
-      "status": 201,
-      "receivedData": {},
-      "receivedPath": "",
-      "sendData": {
-        "userId": "340dc4c5-557f-42f4-94ce-3e448bd54f44",
-        "permissions": []
       }
     }
 

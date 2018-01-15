@@ -74,9 +74,8 @@
       "receivedPath": "",
       "sendData": {}
     },
-
     {
-      "url": "/users?query=externalSystemId%3D%5Etest4_%2A&limit=10&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%3D%28+or+%29&limit=4&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {
@@ -84,40 +83,39 @@
         "totalRecords": 0
       },
       "receivedPath": "",
-      "sendData": {
-      }
+      "sendData": {}
     },
     {
       "url": "/users",
       "method": "post",
       "status": 201,
       "receivedData": {
-        "id": "340dc4c5-557f-42f4-94ce-3e448bd54f44",
+        "id": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
         "proxyFor": [],
-        "externalSystemId": "user3_deactivate3",
+        "externalSystemId": "amy_cabble",
         "personal": {
-          "firstName": "User3",
-          "lastName": "Deactivate3",
-          "email": "user3_deactivate3@user.org",
+          "firstName": "Amy",
+          "lastName": "Cabble",
+          "email": "amy_cabble@user.org",
           "preferredContactTypeId": "email",
           "addresses": []
         },
-        "barcode": "987654321",
-        "username": "user3_deactivate3",
+        "barcode": "1234567",
+        "username": "amy_cabble",
         "active": true,
         "patronGroup": "undergrad"
       },
       "receivedPath": "",
       "sendData": {
-        "externalSystemId": "test4_user3_deactivate3",
+        "externalSystemId": "amy_cabble",
         "personal": {
-          "firstName": "User3",
-          "lastName": "Deactivate3",
-          "email": "user3_deactivate3@user.org",
+          "firstName": "Amy",
+          "lastName": "Cabble",
+          "email": "amy_cabble@user.org",
           "preferredContactTypeId": "email"
         },
-        "barcode": "987654321",
-        "username": "user3_deactivate3",
+        "barcode": "1234567",
+        "username": "amy_cabble",
         "active": true,
         "patronGroup": "undergrad"
       }
@@ -129,10 +127,9 @@
       "receivedData": {},
       "receivedPath": "",
       "sendData": {
-        "userId": "340dc4c5-557f-42f4-94ce-3e448bd54f44",
+        "userId": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
         "permissions": []
       }
     }
-
    ]
 }
