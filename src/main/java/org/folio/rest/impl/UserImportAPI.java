@@ -257,8 +257,7 @@ public class UserImportAPI implements UserImportResource {
   private Future<List<Map>> listUsers(HttpClientInterface userSearchClient, List<User> users, String sourceType) {
     Future<List<Map>> future = Future.future();
 
-    StringBuilder userQueryBuilder = new StringBuilder("");
-    userQueryBuilder.append("externalSystemId==(");
+    StringBuilder userQueryBuilder = new StringBuilder("externalSystemId==(");
     for (int i = 0; i < users.size(); i++) {
       if (!Strings.isNullOrEmpty(sourceType)) {
         userQueryBuilder.append(sourceType).append("_");
@@ -278,19 +277,11 @@ public class UserImportAPI implements UserImportResource {
     try {
       userSearchClient.request(userSearchQuery)
         .whenComplete((userSearchQueryResponse, ex) -> {
-          if (ex != null) {
-            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            LOGGER.error(ex.getMessage());
-            future.fail(ex.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(userSearchQueryResponse.getCode())) {
-            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            if (userSearchQueryResponse.getError() != null) {
-              LOGGER.error(userSearchQueryResponse.getError());
-            }
-            future.fail("");
-          } else {
+          if (isSuccess(userSearchQueryResponse, ex)) {
             JsonObject resultObject = userSearchQueryResponse.getBody();
             future.complete(getUsersFromResult(resultObject));
+          } else {
+            errorManagement(userSearchQueryResponse, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESULT);
           }
         });
     } catch (Exception exc) {
@@ -357,7 +348,7 @@ public class UserImportAPI implements UserImportResource {
           created++;
         } else if (resp.getStatus() == UserRecordImportStatus.UPDATED) {
           updated++;
-        } else if (resp.getStatus() == UserRecordImportStatus.FAILED) {
+        } else {
           failed++;
           failedUsers.add(new FailedUser().withExternalSystemId(resp.getExternalSystemId()).withUsername(resp.getUsername()).withErrorMessage(resp.getErrorMessage()));
         }
@@ -384,26 +375,21 @@ public class UserImportAPI implements UserImportResource {
 
       httpClient.request(HttpMethod.PUT, JsonObject.mapFrom(user), userUpdateQuery, headers)
         .whenComplete((res, ex) -> {
-          if (ex != null) {
-            LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.error(ex.getMessage());
-            future.fail(ex.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(res.getCode())) {
-            LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            if (res.getError() != null) {
-              LOGGER.warn(res.getError());
-            }
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
-          } else {
+          if (isSuccess(res, ex)) {
             try {
               future.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
               future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
+          } else {
+            errorManagement(res, ex, future, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
+              SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           }
         });
-    } catch (Exception exc) {
+    } catch (
+
+    Exception exc) {
       LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
@@ -425,17 +411,7 @@ public class UserImportAPI implements UserImportResource {
     try {
       httpClient.request(HttpMethod.POST, JsonObject.mapFrom(user), userCreationQuery, headers)
         .whenComplete((userCreationResponse, ex) -> {
-          if (ex != null) {
-            LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.error(ex.getMessage());
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, ex.getMessage()));
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(userCreationResponse.getCode())) {
-            LOGGER.warn(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            if (userCreationResponse.getError() != null) {
-              LOGGER.warn(userCreationResponse.getError());
-            }
-            future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
-          } else {
+          if (isSuccess(userCreationResponse, ex)) {
             try {
               addEmptyPermissionSetForUser(httpClient, okapiHeaders, user).setHandler(futurePermissionHandler -> {
                 if (futurePermissionHandler.failed()) {
@@ -447,6 +423,9 @@ public class UserImportAPI implements UserImportResource {
               LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
               future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
+          } else {
+            errorManagement(userCreationResponse, ex, future, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
+              SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           }
         });
     } catch (Exception exc) {
@@ -471,23 +450,15 @@ public class UserImportAPI implements UserImportResource {
 
       httpClient.request(HttpMethod.POST, object, permissionAddQuery, headers)
         .whenComplete((response, ex) -> {
-          if (ex != null) {
-            LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            LOGGER.error(ex.getMessage());
-            future.fail(ex.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
-            LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-            if (response.getError() != null) {
-              LOGGER.error(response.getError());
-            }
-            future.fail(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
-          } else {
+          if (isSuccess(response, ex)) {
             try {
               future.complete(response.getBody());
             } catch (Exception e) {
               LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
               future.fail(e);
             }
+          } else {
+            errorManagement(response, ex, future, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
           }
         });
     } catch (Exception exc) {
@@ -511,9 +482,7 @@ public class UserImportAPI implements UserImportResource {
     }
 
     final String query = queryBuilder.toString();
-
     int limit = 10;
-
     Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
 
     try {
@@ -521,20 +490,11 @@ public class UserImportAPI implements UserImportResource {
       final String userSearchQuery = generateUserSearchQuery(query, limit, 0);
       httpClient.request(HttpMethod.GET, userSearchQuery, headers)
         .whenComplete((response, ex) -> {
-          if (ex != null) {
-            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            LOGGER.error(ex.getMessage());
-            future.fail(ex.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
-            LOGGER.warn(FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-            if (response.getError() != null) {
-              LOGGER.error(response.getError());
-            }
-            future.fail("");
-          } else {
+          if (isSuccess(response, ex)) {
             listAllUsers(future, response.getBody(), httpClient, okapiHeaders, query, limit);
+          } else {
+            errorManagement(response, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESULT);
           }
-
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_PROCESS_USERS, exc.getMessage());
@@ -593,17 +553,7 @@ public class UserImportAPI implements UserImportResource {
       final String userSearchQuery = generateUserSearchQuery(query, limit, offset);
       userSearchClient.request(HttpMethod.GET, userSearchQuery, okapiHeaders)
         .whenComplete((subResponse, subEx) -> {
-          if (subEx != null) {
-            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
-            LOGGER.error(subEx.getMessage());
-            future.fail(subEx.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(subResponse.getCode())) {
-            LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
-            if (subResponse.getError() != null) {
-              LOGGER.error(subResponse.getError());
-            }
-            future.fail(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
-          } else {
+          if (isSuccess(subResponse, subEx)) {
             try {
               List<Map> users = getUsersFromResult(subResponse.getBody());
               existingUserList.addAll(users);
@@ -612,8 +562,9 @@ public class UserImportAPI implements UserImportResource {
               LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, e.getMessage());
               future.fail(e);
             }
+          } else {
+            errorManagement(subResponse, subEx, future, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
           }
-
         });
 
     } catch (Exception exc) {
@@ -755,6 +706,34 @@ public class UserImportAPI implements UserImportResource {
     failureResponse.setFailedRecords(userCollection.getTotalRecords());
     failureResponse.setFailedUsers(failedUsers);
     return failureResponse;
+  }
+
+  private boolean isSuccess(org.folio.rest.tools.client.Response response, Throwable ex) {
+    return ex == null && org.folio.rest.tools.client.Response.isSuccess(response.getCode());
+  }
+
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage) {
+    errorManagement(response, ex, future, errorMessage, null);
+  }
+
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage, T completeObj) {
+    if (ex != null) {
+      LOGGER.error(errorMessage);
+      LOGGER.error(ex.getMessage());
+      future.fail(ex.getMessage());
+    } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+      LOGGER.error(errorMessage);
+      StringBuilder errorBuilder = new StringBuilder(errorMessage);
+      if (response.getError() != null) {
+        errorBuilder.append(" " + response.getError().toString());
+        LOGGER.error(response.getError());
+      }
+      if (completeObj == null) {
+        future.fail(errorBuilder.toString());
+      } else {
+        future.complete(completeObj);
+      }
+    }
   }
 
 }

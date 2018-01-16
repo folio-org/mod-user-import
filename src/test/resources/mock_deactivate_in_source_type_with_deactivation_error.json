@@ -93,22 +93,8 @@
           "username": "user2_old2",
           "active": true,
           "patronGroup": "undergrad"
-        },
-        {
-          "id": "fdc61b69-f936-40ef-b115-194100d8ea57",
-          "externalSystemId": "user2_inactive",
-          "personal": {
-            "firstName": "User2",
-            "lastName": "Inactive",
-            "email": "user2_inactive@user.org",
-            "preferredContactTypeId": "email"
-          },
-          "barcode": "30313233",
-          "username": "user2_inactive",
-          "active": false,
-          "patronGroup": "undergrad"
         }],
-        "totalRecords": 2
+        "totalRecords": 1
       },
       "receivedPath": "",
       "sendData": {
@@ -117,23 +103,8 @@
     {
       "url": "/users/fdc61b69-f936-40ef-b115-194100d8ea57",
       "method": "put",
-      "status": 204,
-      "receivedData": {
-        "id": "fdc61b69-f936-40ef-b115-194100d8ea57",
-        "proxyFor": [],
-        "externalSystemId": "user2_old2",
-        "personal": {
-          "firstName": "User2",
-          "lastName": "Old2",
-          "email": "user2_old2@user.org",
-          "preferredContactTypeId": "email",
-          "addresses": []
-        },
-        "barcode": "30313233",
-        "username": "user2_old2",
-        "active": false,
-        "patronGroup": "undergrad"
-      },
+      "status": 500,
+      "receivedData": "Internal server error",
       "receivedPath": "",
       "sendData": {
         "externalSystemId": "user2_old2",

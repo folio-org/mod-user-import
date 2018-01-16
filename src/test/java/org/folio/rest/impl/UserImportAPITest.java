@@ -49,6 +49,7 @@ public class UserImportAPITest {
 
   public static final int PORT = 8081;
   private Vertx vertx;
+  private HttpClientMock2 mock;
 
   @Before
   public void setUp(TestContext context) throws Exception {
@@ -65,6 +66,8 @@ public class UserImportAPITest {
     RestAssured.port = PORT;
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
+    mock = new HttpClientMock2("http://localhost:9130", "diku");
+
   }
 
   @After
@@ -75,7 +78,6 @@ public class UserImportAPITest {
   @Test
   public void testFakeEndpoint() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_content.json");
 
     given()
@@ -92,7 +94,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithoutUsers() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_content.json");
 
     UserdataCollection collection = new UserdataCollection();
@@ -115,7 +116,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithAddressTypeResponseError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_address_types_error.json");
 
     List<User> users = new ArrayList<>();
@@ -149,7 +149,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithPatronGroupResponseError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_patron_groups_error.json");
 
     List<User> users = new ArrayList<>();
@@ -183,7 +182,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserCreation() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation.json");
 
     List<User> users = new ArrayList<>();
@@ -213,7 +211,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserWithoutExternalSystemId() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation_without_externalsystemid.json");
 
     List<User> users = new ArrayList<>();
@@ -243,7 +240,6 @@ public class UserImportAPITest {
   //  @Test
   public void testImportWithUserWithEmptyExternalSystemId() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation_with_empty_externalsystemid.json");
 
     List<User> users = new ArrayList<>();
@@ -279,7 +275,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserWithoutUsername() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation.json");
 
     List<User> users = new ArrayList<>();
@@ -306,7 +301,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserCreationAndPermissionError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation_with_permission_error.json");
 
     List<User> users = new ArrayList<>();
@@ -336,7 +330,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserSearchError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_search_error.json");
 
     List<User> users = new ArrayList<>();
@@ -361,7 +354,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -369,7 +362,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserCreationError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation_error.json");
 
     List<User> users = new ArrayList<>();
@@ -406,7 +398,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithMoreUserCreation() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_multiple_user_creation.json");
 
     List<User> users = new ArrayList<>();
@@ -445,7 +436,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserUpdate() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_update.json");
 
     List<User> users = new ArrayList<>();
@@ -475,7 +465,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserUpdateError() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_update_error.json");
 
     List<User> users = new ArrayList<>();
@@ -508,7 +497,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithMoreUserUpdateAndDeactivation() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_update_and_deactivation.json");
 
     List<User> users = new ArrayList<>();
@@ -549,7 +537,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithMoreUserUpdate() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_more_user_update.json");
 
     List<User> users = new ArrayList<>();
@@ -600,7 +587,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserAddressUpdate() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_import_with_address_update.json");
 
     List<User> users = new ArrayList<>();
@@ -642,7 +628,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithExistingUserAddress() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_import_with_existing_address.json");
 
     List<User> users = new ArrayList<>();
@@ -674,7 +659,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserAddressAdd() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_import_with_address_add.json");
 
     List<User> users = new ArrayList<>();
@@ -725,7 +709,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserAddressRewrite() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_import_with_address_rewrite.json");
 
     List<User> users = new ArrayList<>();
@@ -767,7 +750,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithPrefixedUserCreation() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_prefixed_user_creation.json");
 
     List<User> users = new ArrayList<>();
@@ -798,7 +780,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithPrefixedUserUpdate() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_prefixed_user_update.json");
 
     List<User> users = new ArrayList<>();
@@ -830,8 +811,38 @@ public class UserImportAPITest {
   @Test
   public void testImportWithDeactivateInSourceType() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_deactivate_in_source_type.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("2526272829", "User2", "Deactivate2", null));
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true)
+      .withSourceType("test3");
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo("Deactivated missing users."))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithDeactivateInSourceTypeWithDeactivationError() throws IOException {
+
+    mock.setMockJsonContent("mock_deactivate_in_source_type_with_deactivation_error.json");
 
     List<User> users = new ArrayList<>();
     users.add(generateUser("2526272829", "User2", "Deactivate2", null));
@@ -862,7 +873,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithNoNeedToDeactivate() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_no_need_to_deactivate.json");
 
     List<User> users = new ArrayList<>();
@@ -894,7 +904,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserSearchErrorWhenDeactivating() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_deactivate_search_error.json");
 
     List<User> users = new ArrayList<>();
@@ -915,14 +924,14 @@ public class UserImportAPITest {
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
@@ -930,7 +939,6 @@ public class UserImportAPITest {
   @Test
   public void testImportWithUserCreationErrorWhenDeactivating() throws IOException {
 
-    HttpClientMock2 mock = new HttpClientMock2("http://localhost:9130", "diku");
     mock.setMockJsonContent("mock_user_creation_error_when_deactivating.json");
 
     List<User> users = new ArrayList<>();
