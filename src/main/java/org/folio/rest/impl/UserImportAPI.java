@@ -63,9 +63,9 @@ public class UserImportAPI implements UserImportResource {
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) throws Exception {
     if (userCollection.getTotalRecords() == 0) {
-      ImportResponse emptyResponse = new ImportResponse();
-      emptyResponse.setMessage("No users to import.");
-      emptyResponse.setTotalRecords(0);
+      ImportResponse emptyResponse = new ImportResponse()
+        .withMessage("No users to import.")
+        .withTotalRecords(0);
       asyncResultHandler
         .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
     } else {
@@ -281,11 +281,11 @@ public class UserImportAPI implements UserImportResource {
             JsonObject resultObject = userSearchQueryResponse.getBody();
             future.complete(getUsersFromResult(resultObject));
           } else {
-            errorManagement(userSearchQueryResponse, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            errorManagement(userSearchQueryResponse, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
           }
         });
     } catch (Exception exc) {
-      LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT, exc.getMessage());
+      LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
       future.fail(exc);
     }
     return future;
@@ -334,9 +334,6 @@ public class UserImportAPI implements UserImportResource {
    * Aggregate SingleUserImportResponses to an ImportResponse.
    */
   private ImportResponse processSuccessfulImportResponse(List<Future> futures) {
-    ImportResponse successResponse = new ImportResponse();
-    successResponse.setMessage("");
-    successResponse.setTotalRecords(futures.size());
     List<FailedUser> failedUsers = new ArrayList<>();
     int created = 0;
     int updated = 0;
@@ -354,12 +351,13 @@ public class UserImportAPI implements UserImportResource {
         }
       }
     }
-
-    successResponse.setCreatedRecords(created);
-    successResponse.setUpdatedRecords(updated);
-    successResponse.setFailedRecords(failed);
-    successResponse.setFailedUsers(failedUsers);
-    return successResponse;
+    return new ImportResponse()
+      .withMessage("")
+      .withTotalRecords(futures.size())
+      .withCreatedRecords(created)
+      .withUpdatedRecords(updated)
+      .withFailedRecords(failed)
+      .withFailedUsers(failedUsers);
   }
 
   /**
@@ -657,8 +655,6 @@ public class UserImportAPI implements UserImportResource {
    * @return the aggregated ImportResponse
    */
   private ImportResponse processFutureResponses(List<Future> futures) {
-    ImportResponse response = new ImportResponse();
-
     int created = 0;
     int updated = 0;
     int failed = 0;
@@ -674,12 +670,11 @@ public class UserImportAPI implements UserImportResource {
         failedUsers.addAll(currentResponse.getFailedUsers());
       }
     }
-    response.setCreatedRecords(created);
-    response.setUpdatedRecords(updated);
-    response.setFailedRecords(failed);
-    response.setTotalRecords(totalRecords);
-    response.setFailedUsers(failedUsers);
-    return response;
+    return new ImportResponse().withCreatedRecords(created)
+      .withUpdatedRecords(updated)
+      .withFailedRecords(failed)
+      .withTotalRecords(totalRecords)
+      .withFailedUsers(failedUsers);
   }
 
   /**
@@ -689,7 +684,6 @@ public class UserImportAPI implements UserImportResource {
    * @return the assembled ImportResponse object
    */
   private ImportResponse processErrorResponse(UserdataCollection userCollection, String errorMessage) {
-    ImportResponse failureResponse = new ImportResponse();
     List<FailedUser> failedUsers = new ArrayList<>();
     for (User user : userCollection.getUsers()) {
       FailedUser failedUser = new FailedUser()
@@ -698,14 +692,14 @@ public class UserImportAPI implements UserImportResource {
         .withErrorMessage(errorMessage);
       failedUsers.add(failedUser);
     }
-    failureResponse.setMessage(FAILED_TO_IMPORT_USERS);
-    failureResponse.setError(errorMessage);
-    failureResponse.setTotalRecords(userCollection.getTotalRecords());
-    failureResponse.setCreatedRecords(0);
-    failureResponse.setUpdatedRecords(0);
-    failureResponse.setFailedRecords(userCollection.getTotalRecords());
-    failureResponse.setFailedUsers(failedUsers);
-    return failureResponse;
+    return new ImportResponse()
+      .withMessage(FAILED_TO_IMPORT_USERS)
+      .withError(errorMessage)
+      .withTotalRecords(userCollection.getTotalRecords())
+      .withCreatedRecords(0)
+      .withUpdatedRecords(0)
+      .withFailedRecords(userCollection.getTotalRecords())
+      .withFailedUsers(failedUsers);
   }
 
   private boolean isSuccess(org.folio.rest.tools.client.Response response, Throwable ex) {

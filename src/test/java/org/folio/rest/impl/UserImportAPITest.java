@@ -354,7 +354,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
