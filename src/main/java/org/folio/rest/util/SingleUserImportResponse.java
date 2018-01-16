@@ -3,6 +3,7 @@ package org.folio.rest.util;
 public class SingleUserImportResponse {
 
   private String externalSystemId;
+  private String username;
   private UserRecordImportStatus status;
   private String errorMessage;
   private int errorCode;
@@ -24,9 +25,10 @@ public class SingleUserImportResponse {
     return response;
   }
 
-  public static SingleUserImportResponse failed(String externalSystemId, int errorCode, String errorMessage) {
+  public static SingleUserImportResponse failed(String externalSystemId, String username, int errorCode, String errorMessage) {
     SingleUserImportResponse response = new SingleUserImportResponse();
     response.externalSystemId = externalSystemId;
+    response.username = username;
     response.status = UserRecordImportStatus.FAILED;
     response.errorCode = errorCode;
     response.errorMessage = errorMessage;
@@ -35,6 +37,10 @@ public class SingleUserImportResponse {
 
   public String getExternalSystemId() {
     return externalSystemId;
+  }
+
+  public String getUsername() {
+    return username;
   }
 
   public UserRecordImportStatus getStatus() {

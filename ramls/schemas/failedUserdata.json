@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Failed User Schema",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string"
+    },
+    "externalSystemId": {
+      "type": "string"
+    },
+    "errorMessage": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "username",
+    "externalSystemId"
+  ]
+}
