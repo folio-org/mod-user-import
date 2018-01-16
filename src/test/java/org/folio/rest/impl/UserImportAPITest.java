@@ -209,6 +209,71 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithUserCreationWithoutPersonalData() throws IOException {
+
+    mock.setMockJsonContent("mock_user_creation_without_personal_data.json");
+
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setPersonal(null);
+    List<User> users = new ArrayList<>();
+    users.add(user);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserCreationWithNonExistingPatronGroup() throws IOException {
+
+    mock.setMockJsonContent("mock_user_creation_with_non_existing_patron_group.json");
+
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setPatronGroup("nonExistingTestPatronGroup");
+    List<User> users = new ArrayList<>();
+    users.add(user);
+
+    UserdataCollection collection = new UserdataCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .statusCode(200);
+  }
+
+  @Test
   public void testImportWithUserWithoutExternalSystemId() throws IOException {
 
     mock.setMockJsonContent("mock_user_creation_without_externalsystemid.json");
