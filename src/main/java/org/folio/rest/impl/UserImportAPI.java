@@ -143,6 +143,7 @@ public class UserImportAPI implements UserImportResource {
 
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
+            LOGGER.info("Processing user search result.");
             ImportResponse compositeResponse = processFutureResponses(futures);
 
             if (existingUserMap.isEmpty()) {
@@ -202,6 +203,7 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
+        LOGGER.info("Aggregating user import result.");
         ImportResponse successResponse = processFutureResponses(futures);
         successResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
         future.complete(successResponse);
@@ -319,6 +321,7 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
+        LOGGER.info("User creation and update has finished for the current batch.");
         ImportResponse successResponse = processSuccessfulImportResponse(futures);
         future.complete(successResponse);
       } else {
@@ -385,9 +388,7 @@ public class UserImportAPI implements UserImportResource {
               SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           }
         });
-    } catch (
-
-    Exception exc) {
+    } catch (Exception exc) {
       LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
@@ -526,6 +527,7 @@ public class UserImportAPI implements UserImportResource {
 
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
+            LOGGER.info("Listed all users.");
             future.complete(existingUserList);
           } else {
             LOGGER.error(FAILED_TO_PROCESS_USERS);
@@ -597,6 +599,7 @@ public class UserImportAPI implements UserImportResource {
 
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
+        LOGGER.info("Deactivated missing users.");
         future.complete();
       } else {
         LOGGER.error("Failed to deactivate users.");
@@ -715,7 +718,7 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(errorMessage);
       LOGGER.error(ex.getMessage());
       future.fail(ex.getMessage());
-    } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+    } else {
       LOGGER.error(errorMessage);
       StringBuilder errorBuilder = new StringBuilder(errorMessage);
       if (response.getError() != null) {
