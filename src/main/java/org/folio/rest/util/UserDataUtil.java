@@ -50,23 +50,30 @@ public class UserDataUtil {
     }
     if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
       user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
+    } else {
+      user.setPatronGroup(null);
     }
     if (user.getPersonal() == null) {
       return;
     }
     if (user.getPersonal().getAddresses() != null
       && !user.getPersonal().getAddresses().isEmpty()) {
+      List<Address> updatedAddresses = new ArrayList<>();
       for (Address address : user.getPersonal().getAddresses()) {
         if (address.getAddressTypeId() != null && userImportData.getAddressTypes().containsKey(address.getAddressTypeId())) {
           address.setAddressTypeId(userImportData.getAddressTypes().get(address.getAddressTypeId()));
+          updatedAddresses.add(address);
         }
       }
+      user.getPersonal().setAddresses(updatedAddresses);
     }
     if (user.getPersonal().getPreferredContactTypeId() != null
       && preferredContactTypeIds.containsKey(user.getPersonal().getPreferredContactTypeId().toLowerCase())) {
       user.getPersonal()
         .setPreferredContactTypeId(
           preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
+    } else {
+      user.getPersonal().setPreferredContactTypeId(null);
     }
   }
 
