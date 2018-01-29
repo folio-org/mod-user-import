@@ -8,10 +8,11 @@ documentation:
     content: This documents the API calls that can be made to import users into the system
 
 schemas:
-  - userdata.json: !include schemas/userdata.json
-  - userdataCollection: !include schemas/userdataCollection.json
+  - userdataimport.json: !include schemas/userdataimport.json
+  - userdataimportCollection: !include schemas/userdataimportCollection.json
   - failedUserdata.json: !include schemas/failedUserdata.json
   - importResponse: !include schemas/importResponse.json
+  - metadata.schema: !include schemas/metadata.schema
 
 /user-import:
   get:
@@ -23,7 +24,7 @@ schemas:
   post:
     body:
       application/json:
-        schema: userdataCollection
+        schema: userdataimportCollection
     description: Create or update a list of users
     responses:
       200:

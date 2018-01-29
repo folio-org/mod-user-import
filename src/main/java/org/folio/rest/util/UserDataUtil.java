@@ -36,9 +36,13 @@ public class UserDataUtil {
     Map<String, User> existingUsers = new HashMap<>();
     for (Map existingUser : existingUserList) {
       JsonObject user = JsonObject.mapFrom(existingUser);
-      User mappedUser = user.mapTo(User.class);
-      LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
-      existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
+      try {
+        User mappedUser = user.mapTo(User.class);
+        LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
+        existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
+      } catch (Exception ex) {
+        LOGGER.error("Failed to map user ", user);
+      }
     }
 
     return existingUsers;

@@ -28,6 +28,7 @@
       "type": "object"
     },
     "proxyFor": {
+      "description": "Deprecated",
       "type": "array",
       "items": {
         "type": "string"
@@ -119,6 +120,10 @@
     "updatedDate": {
       "type": "string",
       "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "$ref": "metadata.schema"
     }
   },
   "additionalProperties": false,

@@ -17,7 +17,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.folio.rest.jaxrs.model.FailedUser;
 import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataCollection;
+import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.tools.client.HttpClientFactory;
@@ -58,7 +58,7 @@ public class UserImportAPI implements UserImportResource {
    * User import entry point.
    */
   @Override
-  public void postUserImport(UserdataCollection userCollection, RoutingContext routingContext,
+  public void postUserImport(UserdataimportCollection userCollection, RoutingContext routingContext,
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) throws Exception {
@@ -87,7 +87,7 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Start user import by getting address types and patron groups from the system.
    */
-  private Future<ImportResponse> startUserImport(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataCollection userCollection) {
+  private Future<ImportResponse> startUserImport(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataimportCollection userCollection) {
 
     Future<ImportResponse> future = Future.future();
 
@@ -126,7 +126,7 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Start importing users if deactivation is needed. In this case all users should be queried to be able to tell which ones need to be deactivated after the import.
    */
-  private Future<ImportResponse> startImportWithDeactivatingUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataCollection userCollection,
+  private Future<ImportResponse> startImportWithDeactivatingUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataimportCollection userCollection,
     UserImportData userImportData) {
     Future<ImportResponse> future = Future.future();
     listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
@@ -173,7 +173,7 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Create partitions from all users, process them and return the list of Futures of the partition processing.
    */
-  private List<Future> processAllUsersInPartitions(HttpClientInterface httpClient, UserdataCollection userCollection, UserImportData userImportData, Map<String, User> existingUserMap, Map<String, String> okapiHeaders) {
+  private List<Future> processAllUsersInPartitions(HttpClientInterface httpClient, UserdataimportCollection userCollection, UserImportData userImportData, Map<String, User> existingUserMap, Map<String, String> okapiHeaders) {
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
     List<Future> futures = new ArrayList<>();
 
@@ -189,7 +189,7 @@ public class UserImportAPI implements UserImportResource {
   /**
    * Start user import. Partition and process users in batches of 10.
    */
-  private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataCollection userCollection, UserImportData userImportData, Map<String, String> okapiHeaders) {
+  private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataimportCollection userCollection, UserImportData userImportData, Map<String, String> okapiHeaders) {
     Future<ImportResponse> future = Future.future();
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
@@ -233,7 +233,7 @@ public class UserImportAPI implements UserImportResource {
               processFuture.complete(response.result());
             } else {
               LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-              UserdataCollection userCollection = new UserdataCollection();
+              UserdataimportCollection userCollection = new UserdataimportCollection();
               userCollection.setTotalRecords(currentPartition.size());
               userCollection.setUsers(currentPartition);
               ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
@@ -243,7 +243,7 @@ public class UserImportAPI implements UserImportResource {
 
       } else {
         LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
-        UserdataCollection userCollection = new UserdataCollection();
+        UserdataimportCollection userCollection = new UserdataimportCollection();
         userCollection.setTotalRecords(currentPartition.size());
         userCollection.setUsers(currentPartition);
         ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
@@ -686,7 +686,7 @@ public class UserImportAPI implements UserImportResource {
    * @param errorMessage the reason of the failure
    * @return the assembled ImportResponse object
    */
-  private ImportResponse processErrorResponse(UserdataCollection userCollection, String errorMessage) {
+  private ImportResponse processErrorResponse(UserdataimportCollection userCollection, String errorMessage) {
     List<FailedUser> failedUsers = new ArrayList<>();
     for (User user : userCollection.getUsers()) {
       FailedUser failedUser = new FailedUser()
