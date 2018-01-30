@@ -19,7 +19,6 @@ public class AddressTypeManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(AddressTypeManager.class);
 
   private AddressTypeManager() {
-
   }
 
   public static Future<Map<String, String>> getAddressTypes(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {

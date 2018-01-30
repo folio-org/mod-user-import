@@ -8,6 +8,7 @@ import java.util.Map;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
+import org.folio.rest.model.UserMappingFailedException;
 
 import com.google.common.base.Strings;
 
@@ -32,13 +33,18 @@ public class UserDataUtil {
   private UserDataUtil() {
   }
 
-  public static Map<String, User> extractExistingUsers(List<Map> existingUserList) {
+  public static Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
     Map<String, User> existingUsers = new HashMap<>();
     for (Map existingUser : existingUserList) {
       JsonObject user = JsonObject.mapFrom(existingUser);
-      User mappedUser = user.mapTo(User.class);
-      LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
-      existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
+      try {
+        User mappedUser = user.mapTo(User.class);
+        LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
+        existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
+      } catch (Exception ex) {
+        LOGGER.error("Failed to map user ", user);
+        throw new UserMappingFailedException("Failed to map user " + user.toString());
+      }
     }
 
     return existingUsers;
@@ -50,23 +56,30 @@ public class UserDataUtil {
     }
     if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
       user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
+    } else {
+      user.setPatronGroup(null);
     }
     if (user.getPersonal() == null) {
       return;
     }
     if (user.getPersonal().getAddresses() != null
       && !user.getPersonal().getAddresses().isEmpty()) {
+      List<Address> updatedAddresses = new ArrayList<>();
       for (Address address : user.getPersonal().getAddresses()) {
         if (address.getAddressTypeId() != null && userImportData.getAddressTypes().containsKey(address.getAddressTypeId())) {
           address.setAddressTypeId(userImportData.getAddressTypes().get(address.getAddressTypeId()));
+          updatedAddresses.add(address);
         }
       }
+      user.getPersonal().setAddresses(updatedAddresses);
     }
     if (user.getPersonal().getPreferredContactTypeId() != null
       && preferredContactTypeIds.containsKey(user.getPersonal().getPreferredContactTypeId().toLowerCase())) {
       user.getPersonal()
         .setPreferredContactTypeId(
           preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
+    } else {
+      user.getPersonal().setPreferredContactTypeId(null);
     }
   }
 

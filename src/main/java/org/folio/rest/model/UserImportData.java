@@ -2,7 +2,7 @@ package org.folio.rest.model;
 
 import java.util.Map;
 
-import org.folio.rest.jaxrs.model.UserdataCollection;
+import org.folio.rest.jaxrs.model.UserdataimportCollection;
 
 public class UserImportData {
 
@@ -16,7 +16,7 @@ public class UserImportData {
 
   private Map<String, String> addressTypes;
 
-  public UserImportData(UserdataCollection userdataCollection) {
+  public UserImportData(UserdataimportCollection userdataCollection) {
     this.deactivateMissingUsers = userdataCollection.getDeactivateMissingUsers();
     if (this.deactivateMissingUsers == null) {
       this.deactivateMissingUsers = Boolean.FALSE;

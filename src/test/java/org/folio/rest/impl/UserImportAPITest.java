@@ -11,7 +11,7 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataCollection;
+import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.tools.client.test.HttpClientMock2;
 import org.folio.rest.util.UserImportAPIConstants;
 import org.junit.After;
@@ -96,7 +96,7 @@ public class UserImportAPITest {
 
     mock.setMockJsonContent("mock_content.json");
 
-    UserdataCollection collection = new UserdataCollection();
+    UserdataimportCollection collection = new UserdataimportCollection();
     collection.setUsers(new ArrayList<>());
     collection.setTotalRecords(0);
 
@@ -121,7 +121,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -154,7 +154,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -187,7 +187,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -209,6 +209,71 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithUserCreationWithoutPersonalData() throws IOException {
+
+    mock.setMockJsonContent("mock_user_creation_without_personal_data.json");
+
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setPersonal(null);
+    List<User> users = new ArrayList<>();
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserCreationWithNonExistingPatronGroup() throws IOException {
+
+    mock.setMockJsonContent("mock_user_creation_with_non_existing_patron_group.json");
+
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setPatronGroup("nonExistingTestPatronGroup");
+    List<User> users = new ArrayList<>();
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .statusCode(200);
+  }
+
+  @Test
   public void testImportWithUserWithoutExternalSystemId() throws IOException {
 
     mock.setMockJsonContent("mock_user_creation_without_externalsystemid.json");
@@ -218,7 +283,7 @@ public class UserImportAPITest {
     testUser.setExternalSystemId(null);
     users.add(testUser);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -248,7 +313,7 @@ public class UserImportAPITest {
     users.add(testUser);
     users.add(testUser);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -282,7 +347,7 @@ public class UserImportAPITest {
     testUser.setUsername(null);
     users.add(testUser);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -306,7 +371,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -335,7 +400,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("1234567", "Amy", "Cabble", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -354,7 +419,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -367,7 +432,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("0000", "Error", "Error", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -412,7 +477,7 @@ public class UserImportAPITest {
     users.add(generateUser("9", "91", "92", null));
     users.add(generateUser("10", "101", "102", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(10);
 
@@ -441,7 +506,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -463,6 +528,75 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithUserUpdateAndWrongSchemaInUserSearchResult() throws IOException {
+
+    mock.setMockJsonContent("mock_user_update_with_wrong_user_schema_in_search_result.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(false);
+
+    StringBuilder resultMessageBuilder = new StringBuilder(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+    resultMessageBuilder.append(UserImportAPIConstants.USER_SCHEMA_MISMATCH);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(resultMessageBuilder.toString()))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateAndWrongSchemaInUserSearchResultWithDeactivation() throws IOException {
+
+    mock.setMockJsonContent("mock_user_update_with_wrong_user_schema_in_search_result_with_deactivation.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.USER_SCHEMA_MISMATCH))
+      .statusCode(500);
+  }
+
+  @Test
   public void testImportWithUserUpdateError() throws IOException {
 
     mock.setMockJsonContent("mock_user_update_error.json");
@@ -470,7 +604,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("89101112", "User", "Update", "228f3e79-9ebf-47a4-acaa-e8ffdff81ace"));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1);
 
@@ -511,7 +645,7 @@ public class UserImportAPITest {
     users.add(generateUser("19", "191", "192", null));
     users.add(generateUser("110", "1101", "1102", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(10)
       .withDeactivateMissingUsers(true)
@@ -561,7 +695,7 @@ public class UserImportAPITest {
     users.add(generateUser("19x", "191x", "192x", null));
     users.add(generateUser("110x", "1101x", "1102x", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(10)
       .withDeactivateMissingUsers(true)
@@ -603,7 +737,7 @@ public class UserImportAPITest {
     user.getPersonal().setAddresses(addresses);
     users.add(user);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withUpdateOnlyPresentFields(true);
@@ -634,7 +768,7 @@ public class UserImportAPITest {
     User user = generateUser("30313233", "User", "Address", "2cbf64a1-5904-4748-ae77-3d0605e911e7");
     users.add(user);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withUpdateOnlyPresentFields(true);
@@ -684,7 +818,7 @@ public class UserImportAPITest {
     user.getPersonal().setAddresses(addresses);
     users.add(user);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withUpdateOnlyPresentFields(true);
@@ -725,7 +859,7 @@ public class UserImportAPITest {
     user.getPersonal().setAddresses(addresses);
     users.add(user);
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withUpdateOnlyPresentFields(false);
@@ -755,7 +889,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("17181920", "Test", "User", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withSourceType("test");
@@ -785,7 +919,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("21222324", "User2", "Update2", "a3436a5f-707a-4005-804d-303220dd035b"));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(false)
@@ -816,7 +950,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("2526272829", "User2", "Deactivate2", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(true)
@@ -847,7 +981,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("2526272829", "User2", "Deactivate2", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(true)
@@ -878,7 +1012,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("987654321", "User3", "Deactivate3", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(true)
@@ -909,7 +1043,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("987612345", "User4", "Deactivate4", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(true)
@@ -944,7 +1078,7 @@ public class UserImportAPITest {
     List<User> users = new ArrayList<>();
     users.add(generateUser("0000", "Error", "Error", null));
 
-    UserdataCollection collection = new UserdataCollection()
+    UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withTotalRecords(1)
       .withDeactivateMissingUsers(true);

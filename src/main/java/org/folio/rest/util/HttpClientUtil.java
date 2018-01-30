@@ -15,9 +15,7 @@ public class HttpClientUtil {
   public static Map<String, String> createHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
     Map<String, String> headers = new HashMap<>();
     headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    if (!Strings.isNullOrEmpty(accept)) {
-      headers.put(HTTP_HEADER_ACCEPT, accept);
-    }
+    headers.put(HTTP_HEADER_ACCEPT, accept);
     if (!Strings.isNullOrEmpty(contentType)) {
       headers.put(HTTP_HEADER_CONTENT_TYPE, contentType);
     }
