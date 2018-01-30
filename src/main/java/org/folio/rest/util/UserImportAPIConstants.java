@@ -14,6 +14,7 @@ public class UserImportAPIConstants {
   public static final String ERROR_MESSAGE = " Error message: ";
   public static final String USERS_WERE_IMPORTED_SUCCESSFULLY = "Users were imported successfully.";
   public static final String USER_DEACTIVATION_SKIPPED = "Users were not deactivated because of import failures.";
+  public static final String USER_SCHEMA_MISMATCH = "Failed to map existing users. This could be caused by schema mismatch.";
 
   public static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
   public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";

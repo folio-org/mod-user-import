@@ -8,6 +8,7 @@ import java.util.Map;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
+import org.folio.rest.model.UserMappingFailedException;
 
 import com.google.common.base.Strings;
 
@@ -32,7 +33,7 @@ public class UserDataUtil {
   private UserDataUtil() {
   }
 
-  public static Map<String, User> extractExistingUsers(List<Map> existingUserList) {
+  public static Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
     Map<String, User> existingUsers = new HashMap<>();
     for (Map existingUser : existingUserList) {
       JsonObject user = JsonObject.mapFrom(existingUser);
@@ -42,6 +43,7 @@ public class UserDataUtil {
         existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
       } catch (Exception ex) {
         LOGGER.error("Failed to map user ", user);
+        throw new UserMappingFailedException("Failed to map user " + user.toString());
       }
     }
 

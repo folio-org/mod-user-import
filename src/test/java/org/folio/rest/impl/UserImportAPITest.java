@@ -528,6 +528,75 @@ public class UserImportAPITest {
   }
 
   @Test
+  public void testImportWithUserUpdateAndWrongSchemaInUserSearchResult() throws IOException {
+
+    mock.setMockJsonContent("mock_user_update_with_wrong_user_schema_in_search_result.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(false);
+
+    StringBuilder resultMessageBuilder = new StringBuilder(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+    resultMessageBuilder.append(UserImportAPIConstants.USER_SCHEMA_MISMATCH);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(resultMessageBuilder.toString()))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateAndWrongSchemaInUserSearchResultWithDeactivation() throws IOException {
+
+    mock.setMockJsonContent("mock_user_update_with_wrong_user_schema_in_search_result_with_deactivation.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withDeactivateMissingUsers(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.USER_SCHEMA_MISMATCH))
+      .statusCode(500);
+  }
+
+  @Test
   public void testImportWithUserUpdateError() throws IOException {
 
     mock.setMockJsonContent("mock_user_update_error.json");

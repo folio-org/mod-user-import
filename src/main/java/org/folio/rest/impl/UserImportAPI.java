@@ -20,6 +20,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.jaxrs.resource.UserImportResource;
 import org.folio.rest.model.UserImportData;
+import org.folio.rest.model.UserMappingFailedException;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 import org.folio.rest.util.SingleUserImportResponse;
@@ -137,34 +138,38 @@ public class UserImportAPI implements UserImportResource {
         future.complete(userListingFailureResponse);
       } else {
         List<Map> existingUsers = handler.result();
-        final Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
+        try {
+          final Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
 
-        List<Future> futures = processAllUsersInPartitions(httpClient, userCollection, userImportData, existingUserMap, okapiHeaders);
+          List<Future> futures = processAllUsersInPartitions(httpClient, userCollection, userImportData, existingUserMap, okapiHeaders);
 
-        CompositeFuture.all(futures).setHandler(ar -> {
-          if (ar.succeeded()) {
-            LOGGER.info("Processing user search result.");
-            ImportResponse compositeResponse = processFutureResponses(futures);
+          CompositeFuture.all(futures).setHandler(ar -> {
+            if (ar.succeeded()) {
+              LOGGER.info("Processing user search result.");
+              ImportResponse compositeResponse = processFutureResponses(futures);
 
-            if (existingUserMap.isEmpty()) {
-              compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
-              future.complete(compositeResponse);
-            } else if (compositeResponse.getFailedRecords() > 0) {
-              LOGGER.warn("Failed to import all users, skipping deactivation.");
-              compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
-              future.complete(compositeResponse);
-            } else {
-              deactivateUsers(httpClient, okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
-                compositeResponse.setMessage("Deactivated missing users.");
+              if (existingUserMap.isEmpty()) {
+                compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
                 future.complete(compositeResponse);
-              });
+              } else if (compositeResponse.getFailedRecords() > 0) {
+                LOGGER.warn("Failed to import all users, skipping deactivation.");
+                compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
+                future.complete(compositeResponse);
+              } else {
+                deactivateUsers(httpClient, okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
+                  compositeResponse.setMessage("Deactivated missing users.");
+                  future.complete(compositeResponse);
+                });
+              }
+            } else {
+              ImportResponse userProcessFailureResponse = processErrorResponse(userCollection, FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
+              future.complete(userProcessFailureResponse);
             }
-          } else {
-            ImportResponse userProcessFailureResponse = processErrorResponse(userCollection, FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-            future.complete(userProcessFailureResponse);
-          }
-        });
-
+          });
+        } catch (UserMappingFailedException exc) {
+          ImportResponse userMappingFailureResponse = processErrorResponse(userCollection, USER_SCHEMA_MISMATCH);
+          future.complete(userMappingFailureResponse);
+        }
       }
     });
     return future;
@@ -224,22 +229,29 @@ public class UserImportAPI implements UserImportResource {
     Future<ImportResponse> processFuture = Future.future();
     listUsers(httpClient, currentPartition, userImportData.getSourceType()).setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
+        try {
+          Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
 
-        Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
-
-        processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
-          .setHandler(response -> {
-            if (response.succeeded()) {
-              processFuture.complete(response.result());
-            } else {
-              LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-              UserdataimportCollection userCollection = new UserdataimportCollection();
-              userCollection.setTotalRecords(currentPartition.size());
-              userCollection.setUsers(currentPartition);
-              ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-              processFuture.complete(userSearchFailureResponse);
-            }
-          });
+          processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
+            .setHandler(response -> {
+              if (response.succeeded()) {
+                processFuture.complete(response.result());
+              } else {
+                LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
+                UserdataimportCollection userCollection = new UserdataimportCollection();
+                userCollection.setTotalRecords(currentPartition.size());
+                userCollection.setUsers(currentPartition);
+                ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
+                processFuture.complete(userSearchFailureResponse);
+              }
+            });
+        } catch (UserMappingFailedException exc) {
+          UserdataimportCollection userCollection = new UserdataimportCollection();
+          userCollection.setTotalRecords(currentPartition.size());
+          userCollection.setUsers(currentPartition);
+          ImportResponse userMappingFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + USER_SCHEMA_MISMATCH);
+          processFuture.complete(userMappingFailureResponse);
+        }
 
       } else {
         LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
