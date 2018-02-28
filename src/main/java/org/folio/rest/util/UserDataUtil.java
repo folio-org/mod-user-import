@@ -39,7 +39,7 @@ public class UserDataUtil {
       JsonObject user = JsonObject.mapFrom(existingUser);
       try {
         User mappedUser = user.mapTo(User.class);
-        LOGGER.info("The external system id of the user is: " + mappedUser.getExternalSystemId());
+        LOGGER.trace("The external system id of the user is: " + mappedUser.getExternalSystemId());
         existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
       } catch (Exception ex) {
         LOGGER.error("Failed to map user ", user);
