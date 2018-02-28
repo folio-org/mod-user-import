@@ -44,6 +44,8 @@ import io.vertx.ext.web.RoutingContext;
 public class UserImportAPI implements UserImportResource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
+  private static final int CONN_TO = 5000;
+  private static final int IDLE_TO = 10000;
 
   /*
    * Fake endpoint. Workaround for raml-module-builder.
@@ -71,7 +73,7 @@ public class UserImportAPI implements UserImportResource {
         .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
     } else {
 
-      HttpClientInterface httpClient = HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), okapiHeaders.get(OKAPI_TENANT_HEADER));
+      HttpClientInterface httpClient = HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER), true, CONN_TO, IDLE_TO,false,30L);
       startUserImport(httpClient, okapiHeaders, userCollection).setHandler(handler -> {
         if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
           asyncResultHandler
@@ -222,7 +224,7 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Process a batch of users. Extract existing users from the user list and process the result (create non-existing, update existing users).
-   * @param userSearchClient 
+   * @param userSearchClient
    */
   private Future<ImportResponse> processUserBatch(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     List<User> currentPartition, UserImportData userImportData) {
