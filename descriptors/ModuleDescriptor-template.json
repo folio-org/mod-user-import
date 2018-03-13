@@ -61,5 +61,12 @@
       "id": "users",
       "version": "14.0"
     }
-  ]
+  ],
+  "launchDescriptor": {
+    "dockerImage": "${artifactId}:${version}",
+    "dockerArgs": {
+      "HostConfig": { "PortBindings": { "8081/tcp":  [{ "HostPort": "%p" }] } } 
+    },
+    "dockerPull" : false
+  }
 }
