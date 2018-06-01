@@ -1,3 +1,7 @@
+## 3.1.0
+
+* Support `users` interface 15.0 (which removes `meta` object from proxy relationship, MODUSERS-75)
+
 ## 3.0.0
  * Update readme with usage information
  * Improve logging
