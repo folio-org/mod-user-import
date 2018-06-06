@@ -416,7 +416,9 @@ public class UserImportAPI implements UserImportResource {
   private Future<SingleUserImportResponse> createNewUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, User user) {
     Future<SingleUserImportResponse> future = Future.future();
 
-    user.setId(UUID.randomUUID().toString());
+    if (user.getId() == null) {
+    	user.setId(UUID.randomUUID().toString());
+	}
 
     final String userCreationQuery = UriBuilder.fromPath("/users").build().toString();
     Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
