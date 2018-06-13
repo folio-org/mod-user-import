@@ -5,6 +5,8 @@ Copyright (C) 2017-2018 The Open Library Foundation
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
+## Introduction
+
 This module is responsible for importing new or already existing users into FOLIO.
 
 Currently the module contains one endpoint:
@@ -106,3 +108,15 @@ This should be true if only the fields present in the import should be updated, 
 
 ### sourceType
 A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore, e.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
+
+## Additional information
+
+### Issue tracker
+
+See project [MODUIMP](https://issues.folio.org/browse/MODUIMP)
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
+
+### Other documentation
+
+Other [modules](https://dev.folio.org/source-code/#server-side) are described,
+with further FOLIO Developer documentation at [dev.folio.org](https://dev.folio.org/)
