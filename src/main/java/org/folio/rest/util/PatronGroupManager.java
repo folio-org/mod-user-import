@@ -26,7 +26,7 @@ public class PatronGroupManager {
     Future<Map<String, String>> future = Future.future();
 
     Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
-    final String patronGroupQuery = UriBuilder.fromPath("/groups?limit=2147483647").build().toString();
+    final String patronGroupQuery = UriBuilder.fromPath("/groups").queryParam("limit",  "2147483647").build().toString();
 
     try {
       httpClient.request(patronGroupQuery, headers)
