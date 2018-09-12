@@ -43,7 +43,7 @@
       "sendData": {}
     },
     {
-      "url": "/groups",
+      "url": "/groups?limit=2147483647",
       "method": "get",
       "status": 500,
       "receivedData": "Internal server error",
