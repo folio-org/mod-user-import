@@ -124,6 +124,10 @@
     "metadata": {
       "type": "object",
       "$ref": "metadata.schema"
+    },
+    "tags": {
+      "type": "object",
+      "$ref": "tags.schema"
     }
   },
   "additionalProperties": false,
