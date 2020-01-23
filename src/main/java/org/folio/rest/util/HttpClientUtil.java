@@ -19,6 +19,7 @@ public class HttpClientUtil {
     if (!Strings.isNullOrEmpty(contentType)) {
       headers.put(HTTP_HEADER_CONTENT_TYPE, contentType);
     }
+    okapiHeaders.computeIfPresent(OKAPI_MODULE_ID_HEADER, headers::put);
     return headers;
   }
 

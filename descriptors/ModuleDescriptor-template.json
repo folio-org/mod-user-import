@@ -24,13 +24,15 @@
             "user-import.add"
           ],
           "modulePermissions": [
-            "users.collection.get",
             "addresstypes.collection.get",
+            "perms.users.item.post",
+            "user-settings.custom-fields.collection.get",
+            "user-settings.custom-fields.collection.put",
             "usergroups.collection.get",
+            "users.collection.get",
             "users.item.get",
             "users.item.post",
-            "users.item.put",
-            "perms.users.item.post"
+            "users.item.put"
           ]
         }
       ]
