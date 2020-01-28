@@ -5,6 +5,7 @@ import static org.folio.rest.util.HttpClientUtil.createHeaders;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_GET_USER_MODULE_ID;
 import static org.folio.rest.util.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
+import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
 import static org.folio.rest.util.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.util.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.util.UserImportAPIConstants.USERS_INTERFACE_NAME;
@@ -23,6 +24,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
+
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
@@ -40,13 +43,14 @@ public final class CustomFieldsManager {
     Future<Void> future = Future.future();
     Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(userCollection);
 
+    Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
     if (customFieldsOptions.isEmpty()) {
       future.complete();
     } else {
-      OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, okapiHeaders, vertx)
-        .compose(moduleIds -> updateHeaders(moduleIds, okapiHeaders))
-        .compose(o -> requestCustomFieldsDefinitions(httpClient, okapiHeaders))
-        .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, okapiHeaders))
+      OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, vertx)
+        .compose(moduleIds -> updateHeaders(moduleIds, headers))
+        .compose(o -> requestCustomFieldsDefinitions(httpClient, headers))
+        .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, headers))
         .setHandler(o -> {
           if (o.succeeded()) {
             future.complete();
@@ -58,6 +62,7 @@ public final class CustomFieldsManager {
     return future;
   }
 
+  @SuppressWarnings("unchecked")
   private static Map<String, Set<String>> getCustomFieldsOptions(UserdataimportCollection userCollection) {
     Map<String, Set<String>> customFieldsOptions = new HashMap<>();
     List<CustomFields> customFields = userCollection.getUsers()
@@ -68,7 +73,11 @@ public final class CustomFieldsManager {
     for (CustomFields customField : customFields) {
       customField.getAdditionalProperties().forEach((s, o) -> {
         Set<String> options = customFieldsOptions.computeIfAbsent(s, s1 -> new HashSet<>());
-        options.add((String) o);
+        if (o instanceof String) {
+          options.add((String) o);
+        } else if (o instanceof List) {
+          options.addAll((List<String>) o);
+        }
       });
     }
     return customFieldsOptions;
@@ -100,7 +109,7 @@ public final class CustomFieldsManager {
     boolean isUpdated = updateCfOptions(cfCollection, customFieldsOptions);
     if (isUpdated) {
       Map<String, String> headers =
-        createHeaders(okapiHeaders, null, HTTP_HEADER_VALUE_APPLICATION_JSON);
+        createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       try {
         client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
           .whenComplete((response, ex) -> proceedResponse(future, response, ex, r -> null));
