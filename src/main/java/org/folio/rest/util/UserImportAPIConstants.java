@@ -13,6 +13,7 @@ public class UserImportAPIConstants {
   public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
   public static final String FAILED_TO_LIST_PATRON_GROUPS = "Failed to list patron groups.";
+  public static final String FAILED_TO_GET_USER_MODULE_ID = "Interface 'users' must be provided only by one module";
   public static final String ERROR_MESSAGE = " Error message: ";
   public static final String USERS_WERE_IMPORTED_SUCCESSFULLY = "Users were imported successfully.";
   public static final String USER_DEACTIVATION_SKIPPED = "Users were not deactivated because of import failures.";
@@ -29,6 +30,9 @@ public class UserImportAPIConstants {
 
   public static final String PUT_CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
   public static final String GET_CUSTOM_FIELDS_ENDPOINT = "/custom-fields?offset=0&limit=" + Integer.MAX_VALUE;
+  public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
+  public static final String USERS_INTERFACE_NAME = "users";
+
 
   private UserImportAPIConstants() {
 

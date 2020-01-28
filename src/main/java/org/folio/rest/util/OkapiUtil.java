@@ -1,13 +1,12 @@
 package org.folio.rest.util;
 
 import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
+import static org.folio.rest.util.UserImportAPIConstants.GET_MODULE_ID_ENDPOINT;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.ws.rs.core.UriBuilder;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -27,11 +26,7 @@ public final class OkapiUtil {
                                                                   Vertx vertx) {
     Future<List<String>> future = Future.future();
     OkapiClient okapiClient = new OkapiClient(getOkapiUrl(okapiHeaders), vertx, okapiHeaders);
-    String requestUri = UriBuilder.fromPath("/_/proxy/tenants/")
-      .segment(TenantTool.tenantId(okapiHeaders))
-      .segment("modules")
-      .queryParam("provide", interfaceName)
-      .build().toString();
+    String requestUri = String.format(GET_MODULE_ID_ENDPOINT, TenantTool.tenantId(okapiHeaders), interfaceName);
     okapiClient.get(requestUri, response -> {
       AsyncResult<List<String>> asyncResult = response.map(s -> extractModuleIds(response.result()));
       completeFutureWithResult(future, asyncResult);
@@ -41,7 +36,7 @@ public final class OkapiUtil {
 
   private static List<String> extractModuleIds(String json) {
     JsonArray jsonArray = new JsonArray(json);
-    return IntStream.of(0, jsonArray.size() - 1)
+    return IntStream.range(0, jsonArray.size())
       .mapToObj(jsonArray::getJsonObject)
       .map(o -> o.getString("id"))
       .distinct()

@@ -10,6 +10,7 @@ import static org.folio.rest.util.UserDataUtil.updateUserData;
 import static org.folio.rest.util.UserImportAPIConstants.ERROR_MESSAGE;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_GET_USER_MODULE_ID;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_IMPORT_USERS;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS;
@@ -20,6 +21,7 @@ import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_UPDATE_USER_W
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.util.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.util.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.util.UserImportAPIConstants.USERS_INTERFACE_NAME;
 import static org.folio.rest.util.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
 import static org.folio.rest.util.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
 import static org.folio.rest.util.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
@@ -58,6 +60,7 @@ import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 import org.folio.rest.util.CustomFieldsManager;
 import org.folio.rest.util.OkapiUtil;
 import org.folio.rest.util.SingleUserImportResponse;
+import org.folio.rest.util.UserImportAPIConstants;
 import org.folio.rest.util.UserRecordImportStatus;
 
 public class UserImportAPI implements UserImportResource {
@@ -94,18 +97,9 @@ public class UserImportAPI implements UserImportResource {
       HttpClientInterface httpClient = HttpClientFactory
         .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER),
           true, CONN_TO, IDLE_TO,false,30L);
-      OkapiUtil.getModulesProvidingInterface("users", okapiHeaders, vertxContext.owner())
-        .compose(moduleIds -> {
-          if (moduleIds.size() != 1) {
-            asyncResultHandler.handle(Future.succeededFuture(PostUserImportResponse.withJsonInternalServerError(
-              processErrorResponse(userCollection, "interface 'custom-fields' must be provided by one module"))));
-            return Future.failedFuture("interface 'custom-fields' must be provided by one module");
-          } else {
-            okapiHeaders.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
-            return CustomFieldsManager.checkAndUpdateCustomFields(httpClient, okapiHeaders, userCollection);
-          }
-        })
+      CustomFieldsManager.checkAndUpdateCustomFields(httpClient, okapiHeaders, userCollection, vertxContext.owner())
         .compose(o -> startUserImport(httpClient, okapiHeaders, userCollection))
+        .otherwise(throwable -> processErrorResponse(userCollection, throwable.getMessage()))
         .setHandler(handler -> {
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
