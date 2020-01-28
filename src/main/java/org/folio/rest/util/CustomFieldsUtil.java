@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -24,23 +25,29 @@ public final class CustomFieldsUtil {
     throw new UnsupportedOperationException("Util class");
   }
 
-  public static void updateCfOptions(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions) {
+  public static boolean updateCfOptions(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions) {
     cfCollection.remove(CF_TOTAL_RECORDS_KEY);
     JsonArray cfArray = getCfArray(cfCollection);
+
+    AtomicBoolean isUpdated = new AtomicBoolean(false);
     jsonObjectsStream(cfArray, cfArray::getJsonObject)
-      .forEach(cfObject -> updateCfObjectOptions(cfObject, customFieldsOptions));
+      .forEach(cfObject -> isUpdated.compareAndSet(false, updateCfObjectOptions(cfObject, customFieldsOptions)));
+    return isUpdated.get();
   }
 
-  private static void updateCfObjectOptions(JsonObject cfObject, Map<String, Set<String>> customFieldsOptions) {
+  private static boolean updateCfObjectOptions(JsonObject cfObject, Map<String, Set<String>> customFieldsOptions) {
+    boolean isUpdated = false;
     Set<String> expectedOptions = getExpectedOptions(cfObject, customFieldsOptions);
     if (isNotEmpty(expectedOptions) && isNotEmptyJsonObject(cfObject.getJsonObject(CF_SELECT_FIELD_KEY))) {
       JsonArray cfOptionsArray = getCfOptionsArray(cfObject);
       jsonObjectsStream(cfOptionsArray, isNotNull(cfOptionsArray) ? cfOptionsArray::getString : null)
         .forEach(v -> expectedOptions.removeIf(s -> s.equalsIgnoreCase(v)));
       if (isNotNull(cfOptionsArray) && isNotEmpty(expectedOptions)) {
+        isUpdated = true;
         expectedOptions.forEach(cfOptionsArray::add);
       }
     }
+    return isUpdated;
   }
 
   private static JsonArray getCfOptionsArray(JsonObject cfObject) {

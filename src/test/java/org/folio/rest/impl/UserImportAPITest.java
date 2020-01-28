@@ -1,51 +1,51 @@
 package org.folio.rest.impl;
 
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+
+import static org.folio.TestUtils.CREATED_RECORDS;
+import static org.folio.TestUtils.ERROR;
+import static org.folio.TestUtils.EXTERNAL_SYSTEM_ID;
+import static org.folio.TestUtils.FAILED_RECORDS;
+import static org.folio.TestUtils.FAILED_USERS;
+import static org.folio.TestUtils.JSON_CONTENT_TYPE_HEADER;
+import static org.folio.TestUtils.MESSAGE;
+import static org.folio.TestUtils.OKAPI_URL_HEADER;
+import static org.folio.TestUtils.TENANT_HEADER;
+import static org.folio.TestUtils.TOKEN_HEADER;
+import static org.folio.TestUtils.TOTAL_RECORDS;
+import static org.folio.TestUtils.UPDATED_RECORDS;
+import static org.folio.TestUtils.USERNAME;
+import static org.folio.TestUtils.USER_ERROR_MESSAGE;
+import static org.folio.TestUtils.USER_IMPORT;
+import static org.folio.TestUtils.generateUser;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.folio.rest.RestVerticle;
-import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.Personal;
-import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataimportCollection;
-import org.folio.rest.tools.client.test.HttpClientMock2;
-import org.folio.rest.util.UserImportAPIConstants;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import io.restassured.RestAssured;
-import io.restassured.http.Header;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.folio.rest.RestVerticle;
+import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.UserdataimportCollection;
+import org.folio.rest.tools.client.test.HttpClientMock2;
+import org.folio.rest.util.UserImportAPIConstants;
+
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
-
-  private static final String USER_IMPORT = "/user-import";
-  private static final String FAILED_USERS = "failedUsers";
-  private static final String FAILED_RECORDS = "failedRecords";
-  private static final String UPDATED_RECORDS = "updatedRecords";
-  private static final String CREATED_RECORDS = "createdRecords";
-  private static final String TOTAL_RECORDS = "totalRecords";
-  private static final String EXTERNAL_SYSTEM_ID = "externalSystemId";
-  private static final String USERNAME = "username";
-  private static final String USER_ERROR_MESSAGE = "errorMessage";
-
-  private static final String ERROR = "error";
-  private static final String MESSAGE = "message";
-  private static final Header TENANT_HEADER = new Header("X-Okapi-Tenant", "import-test");
-  private static final Header TOKEN_HEADER = new Header("X-Okapi-Token", "import-test");
-  private static final Header OKAPI_URL_HEADER = new Header("X-Okapi-Url", "http://localhost:9130");
-  private static final Header JSON_CONTENT_TYPE_HEADER = new Header("Content-Type", "application/json");
 
   public static final int PORT = 8081;
   private Vertx vertx;
@@ -269,7 +269,8 @@ public class UserImportAPITest {
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .statusCode(200);
   }
 
@@ -333,7 +334,8 @@ public class UserImportAPITest {
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(testUser.getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(testUser.getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + testUser.getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + testUser.getExternalSystemId()))
       .statusCode(200);
   }
 
@@ -419,7 +421,9 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE
+          + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -451,7 +455,8 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -623,7 +628,8 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        equalTo(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -1058,14 +1064,17 @@ public class UserImportAPITest {
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE
+        + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE
+          + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
@@ -1091,35 +1100,17 @@ public class UserImportAPITest {
       .body(collection)
       .post(USER_IMPORT)
       .then()
-      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY + " " + UserImportAPIConstants.USER_DEACTIVATION_SKIPPED))
+      .body(MESSAGE, equalTo(
+        UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY + " " + UserImportAPIConstants.USER_DEACTIVATION_SKIPPED))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
-  }
-
-  private User generateUser(String barcode, String firstName, String lastName, String id) {
-    String username = firstName.toLowerCase() + "_" + lastName.toLowerCase();
-    User user = new User();
-    if (id != null) {
-      user.setId(id);
-    }
-    user.setBarcode(barcode);
-    user.setExternalSystemId(username);
-    user.setUsername(username);
-    user.setActive(true);
-    user.setPatronGroup("undergrad");
-    Personal personal = new Personal();
-    personal.setFirstName(firstName);
-    personal.setLastName(lastName);
-    personal.setEmail(username + "@user.org");
-    personal.setPreferredContactTypeId("email");
-    user.setPersonal(personal);
-    return user;
   }
 }

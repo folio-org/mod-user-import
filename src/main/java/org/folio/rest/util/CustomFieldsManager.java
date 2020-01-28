@@ -44,14 +44,8 @@ public final class CustomFieldsManager {
       future.complete();
     } else {
       OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, okapiHeaders, vertx)
-        .compose(moduleIds -> {
-          if (moduleIds.size() != 1) {
-            return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
-          } else {
-            okapiHeaders.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
-            return requestCustomFieldsDefinitions(httpClient, okapiHeaders);
-          }
-        })
+        .compose(moduleIds -> updateHeaders(moduleIds, okapiHeaders))
+        .compose(o -> requestCustomFieldsDefinitions(httpClient, okapiHeaders))
         .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, okapiHeaders))
         .setHandler(o -> {
           if (o.succeeded()) {
@@ -80,6 +74,15 @@ public final class CustomFieldsManager {
     return customFieldsOptions;
   }
 
+  private static Future<Void> updateHeaders(List<String> moduleIds, Map<String, String> headers) {
+    if (moduleIds.size() != 1) {
+      return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
+    } else {
+      headers.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
+      return Future.succeededFuture();
+    }
+  }
+
   private static Future<JsonObject> requestCustomFieldsDefinitions(HttpClientInterface client, Map<String, String> headers) {
     Future<JsonObject> future = Future.future();
     try {
@@ -94,14 +97,18 @@ public final class CustomFieldsManager {
   private static Future<Void> updateCF(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions,
                                        HttpClientInterface client, Map<String, String> okapiHeaders) {
     Future<Void> future = Future.future();
-    updateCfOptions(cfCollection, customFieldsOptions);
-    Map<String, String> headers =
-      createHeaders(okapiHeaders, null, HTTP_HEADER_VALUE_APPLICATION_JSON);
-    try {
-      client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
-        .whenComplete((response, ex) -> proceedResponse(future, response, ex, r -> null));
-    } catch (Exception e) {
-      future.fail(e);
+    boolean isUpdated = updateCfOptions(cfCollection, customFieldsOptions);
+    if (isUpdated) {
+      Map<String, String> headers =
+        createHeaders(okapiHeaders, null, HTTP_HEADER_VALUE_APPLICATION_JSON);
+      try {
+        client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
+          .whenComplete((response, ex) -> proceedResponse(future, response, ex, r -> null));
+      } catch (Exception e) {
+        future.fail(e);
+      }
+    } else {
+      future.complete();
     }
     return future;
   }
