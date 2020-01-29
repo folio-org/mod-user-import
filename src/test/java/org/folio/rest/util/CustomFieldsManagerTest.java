@@ -18,11 +18,13 @@ import static org.folio.TestUtils.TENANT_HEADER;
 import static org.folio.TestUtils.TOKEN_HEADER;
 import static org.folio.TestUtils.TOTAL_RECORDS;
 import static org.folio.TestUtils.UPDATED_RECORDS;
+import static org.folio.TestUtils.USER_ERROR_MESSAGE;
 import static org.folio.TestUtils.USER_IMPORT;
 import static org.folio.TestUtils.generateUser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -149,6 +151,102 @@ public class CustomFieldsManagerTest {
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithMultiFieldOptions() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_multi_custom_fields.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1",
+        Arrays.asList("Development", "Design")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .content(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithFieldOptionsWithNullValues() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_custom_fields_with_null_values.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1",
+        Arrays.asList("Development", "Design")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .content(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithCustomFieldOptionsWithFailedGet() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_custom_fields_failed_get.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1",
+        Arrays.asList("Development", "Design")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo("Error code: 400"))
+      .statusCode(500);
   }
 
   private String getWiremockUrl() {

@@ -138,7 +138,7 @@ public final class CustomFieldsManager {
     } else if (response.getException() != null) {
       future.fail(response.getException());
     } else if (isFailedResponseCode(response)) {
-      String failureMessage = response.getError() != null ? response.getError().encode() : "Error code" + response.getCode();
+      String failureMessage = response.getError() != null ? response.getError().encode() : "Error code: " + response.getCode();
       future.fail(failureMessage);
     } else {
       future.complete(function.apply(response));
