@@ -2,10 +2,13 @@ package org.folio.rest.util;
 
 import static org.folio.rest.util.CustomFieldsUtil.updateCfOptions;
 import static org.folio.rest.util.HttpClientUtil.createHeaders;
+import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
+import static org.folio.rest.util.UserImportAPIConstants.CONN_TO;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_GET_USER_MODULE_ID;
 import static org.folio.rest.util.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
+import static org.folio.rest.util.UserImportAPIConstants.IDLE_TO;
 import static org.folio.rest.util.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.util.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.util.UserImportAPIConstants.USERS_INTERFACE_NAME;
@@ -29,8 +32,10 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
+import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.Response;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
+import org.folio.rest.tools.utils.TenantTool;
 
 public final class CustomFieldsManager {
 
@@ -38,12 +43,15 @@ public final class CustomFieldsManager {
     throw new UnsupportedOperationException("Util class");
   }
 
-  public static Future<Void> checkAndUpdateCustomFields(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
+  public static Future<Void> checkAndUpdateCustomFields(Map<String, String> okapiHeaders,
                                                         UserdataimportCollection userCollection, Vertx vertx) {
     Future<Void> future = Future.future();
     Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(userCollection);
 
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
+    HttpClientInterface httpClient = HttpClientFactory
+      .getHttpClient(getOkapiUrl(okapiHeaders), -1, TenantTool.tenantId(headers),
+        true, CONN_TO, IDLE_TO, false, 30L);
     if (customFieldsOptions.isEmpty()) {
       future.complete();
     } else {
@@ -52,6 +60,7 @@ public final class CustomFieldsManager {
         .compose(o -> requestCustomFieldsDefinitions(httpClient, headers))
         .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, headers))
         .setHandler(o -> {
+          httpClient.closeClient();
           if (o.succeeded()) {
             future.complete();
           } else {

@@ -33,6 +33,8 @@ public class UserImportAPIConstants {
   public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
   public static final String USERS_INTERFACE_NAME = "users";
 
+  public static final int CONN_TO = 5000;
+  public static final int IDLE_TO = 10000;
 
   private UserImportAPIConstants() {
 
