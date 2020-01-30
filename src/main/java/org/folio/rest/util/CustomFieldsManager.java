@@ -105,7 +105,7 @@ public final class CustomFieldsManager {
     Future<JsonObject> future = Future.future();
     try {
       client.request(GET_CUSTOM_FIELDS_ENDPOINT, headers)
-        .whenComplete((response, ex) -> proceedResponse(future, response, ex, Response::getBody));
+        .whenComplete((response, ex) -> processResponse(future, response, ex, Response::getBody));
     } catch (Exception e) {
       future.fail(e);
     }
@@ -121,7 +121,7 @@ public final class CustomFieldsManager {
         createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       try {
         client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
-          .whenComplete((response, ex) -> proceedResponse(future, response, ex, r -> null));
+          .whenComplete((response, ex) -> processResponse(future, response, ex, r -> null));
       } catch (Exception e) {
         future.fail(e);
       }
@@ -131,8 +131,8 @@ public final class CustomFieldsManager {
     return future;
   }
 
-  private static <T> void proceedResponse(Future<T> future, Response response, Throwable ex,
-                                          Function<Response, T> function) {
+  private static <T> void processResponse(Future<T> future, Response response, Throwable ex,
+                                          Function<Response, T> completeFunction) {
     if (ex != null) {
       future.fail(ex);
     } else if (response.getException() != null) {
@@ -141,7 +141,7 @@ public final class CustomFieldsManager {
       String failureMessage = response.getError() != null ? response.getError().encode() : "Error code: " + response.getCode();
       future.fail(failureMessage);
     } else {
-      future.complete(function.apply(response));
+      future.complete(completeFunction.apply(response));
     }
   }
 
