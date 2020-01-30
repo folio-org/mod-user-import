@@ -14,21 +14,19 @@ import static org.folio.rest.util.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPO
 import static org.folio.rest.util.UserImportAPIConstants.USERS_INTERFACE_NAME;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
-import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import org.folio.rest.jaxrs.model.CustomFields;
@@ -74,22 +72,24 @@ public final class CustomFieldsManager {
 
   @SuppressWarnings("unchecked")
   private static Map<String, Set<String>> getCustomFieldsOptions(UserdataimportCollection userCollection) {
-    Collector<Object, Set<String>, Set<String>> optionValuesCollector = Collector.of(HashSet::new, (set, value) -> {
-      if (value instanceof String) {
-        set.add((String) value);
-      } else if (value instanceof List) {
-        set.addAll((List<String>) value);
-      }
-    }, (set1, set2) -> SetUtils.union(set1, set2).toSet());
-
-    return userCollection.getUsers()
+    Map<String, Set<String>> customFieldsOptions = new HashMap<>();
+    userCollection.getUsers()
       .stream()
       .map(User::getCustomFields)
       .filter(Objects::nonNull)
       .map(CustomFields::getAdditionalProperties)
       .map(Map::entrySet)
       .flatMap(Collection::stream)
-      .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, optionValuesCollector)));
+      .forEach(entry -> {
+        Set<String> options = customFieldsOptions.computeIfAbsent(entry.getKey(), s1 -> new HashSet<>());
+        Object value = entry.getValue();
+        if (value instanceof String) {
+          options.add((String) value);
+        } else if (value instanceof List) {
+          options.addAll((List<String>) value);
+        }
+      });
+    return customFieldsOptions;
   }
 
   private static Future<Void> updateHeaders(List<String> moduleIds, Map<String, String> headers) {
