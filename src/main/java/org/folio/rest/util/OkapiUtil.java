@@ -19,7 +19,6 @@ import org.folio.rest.tools.utils.TenantTool;
 public final class OkapiUtil {
 
   private OkapiUtil() {
-    throw new UnsupportedOperationException("Util class");
   }
 
   public static Future<List<String>> getModulesProvidingInterface(String interfaceName, Map<String, String> okapiHeaders,

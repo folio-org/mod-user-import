@@ -22,7 +22,6 @@ public final class CustomFieldsUtil {
   public static final String CF_OPTIONS_VALUES_KEY = "values";
 
   private CustomFieldsUtil() {
-    throw new UnsupportedOperationException("Util class");
   }
 
   public static boolean updateCfOptions(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions) {
