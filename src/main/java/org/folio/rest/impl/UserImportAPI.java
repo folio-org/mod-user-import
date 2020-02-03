@@ -1,10 +1,29 @@
 package org.folio.rest.impl;
 
-import static org.folio.rest.util.AddressTypeManager.*;
-import static org.folio.rest.util.HttpClientUtil.*;
-import static org.folio.rest.util.PatronGroupManager.*;
-import static org.folio.rest.util.UserDataUtil.*;
-import static org.folio.rest.util.UserImportAPIConstants.*;
+import static org.folio.rest.util.AddressTypeManager.getAddressTypes;
+import static org.folio.rest.util.HttpClientUtil.createHeaders;
+import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
+import static org.folio.rest.util.PatronGroupManager.getPatronGroups;
+import static org.folio.rest.util.UserDataUtil.extractExistingUsers;
+import static org.folio.rest.util.UserDataUtil.updateExistingUserWithIncomingFields;
+import static org.folio.rest.util.UserDataUtil.updateUserData;
+import static org.folio.rest.util.UserImportAPIConstants.CONN_TO;
+import static org.folio.rest.util.UserImportAPIConstants.ERROR_MESSAGE;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_IMPORT_USERS;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USERS;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
+import static org.folio.rest.util.UserImportAPIConstants.IDLE_TO;
+import static org.folio.rest.util.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.util.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
+import static org.folio.rest.util.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
+import static org.folio.rest.util.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,21 +33,8 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-import org.folio.rest.jaxrs.model.FailedUser;
-import org.folio.rest.jaxrs.model.ImportResponse;
-import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataimportCollection;
-import org.folio.rest.jaxrs.resource.UserImportResource;
-import org.folio.rest.model.UserImportData;
-import org.folio.rest.model.UserMappingFailedException;
-import org.folio.rest.tools.client.HttpClientFactory;
-import org.folio.rest.tools.client.interfaces.HttpClientInterface;
-import org.folio.rest.util.SingleUserImportResponse;
-import org.folio.rest.util.UserRecordImportStatus;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
@@ -41,11 +47,22 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
+import org.folio.rest.jaxrs.model.FailedUser;
+import org.folio.rest.jaxrs.model.ImportResponse;
+import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.UserdataimportCollection;
+import org.folio.rest.jaxrs.resource.UserImportResource;
+import org.folio.rest.model.UserImportData;
+import org.folio.rest.model.UserMappingFailedException;
+import org.folio.rest.tools.client.HttpClientFactory;
+import org.folio.rest.tools.client.interfaces.HttpClientInterface;
+import org.folio.rest.util.CustomFieldsManager;
+import org.folio.rest.util.SingleUserImportResponse;
+import org.folio.rest.util.UserRecordImportStatus;
+
 public class UserImportAPI implements UserImportResource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
-  private static final int CONN_TO = 5000;
-  private static final int IDLE_TO = 10000;
 
   /*
    * Fake endpoint. Workaround for raml-module-builder.
@@ -72,27 +89,30 @@ public class UserImportAPI implements UserImportResource {
       asyncResultHandler
         .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
     } else {
-
-      HttpClientInterface httpClient = HttpClientFactory.getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER), true, CONN_TO, IDLE_TO,false,30L);
-      startUserImport(httpClient, okapiHeaders, userCollection).setHandler(handler -> {
-        if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
-          asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
-        } else {
-          asyncResultHandler
-            .handle(Future.succeededFuture(PostUserImportResponse.withJsonInternalServerError(handler.result())));
-        }
-
-      });
+      CustomFieldsManager.checkAndUpdateCustomFields(okapiHeaders, userCollection, vertxContext.owner())
+        .compose(o -> startUserImport(okapiHeaders, userCollection))
+        .otherwise(throwable -> processErrorResponse(userCollection, throwable.getMessage()))
+        .setHandler(handler -> {
+          if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
+            asyncResultHandler
+              .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
+          } else {
+            asyncResultHandler
+              .handle(Future.succeededFuture(PostUserImportResponse.withJsonInternalServerError(handler.result())));
+          }
+        });
     }
   }
 
   /**
    * Start user import by getting address types and patron groups from the system.
    */
-  private Future<ImportResponse> startUserImport(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataimportCollection userCollection) {
-
+  private Future<ImportResponse> startUserImport(Map<String, String> okapiHeaders, UserdataimportCollection userCollection) {
     Future<ImportResponse> future = Future.future();
+
+    HttpClientInterface httpClient = HttpClientFactory
+      .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER),
+        true, CONN_TO, IDLE_TO, false, 30L);
 
     getAddressTypes(httpClient, okapiHeaders).setHandler(addressTypeResultHandler -> {
       if (addressTypeResultHandler.failed()) {
@@ -224,7 +244,6 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Process a batch of users. Extract existing users from the user list and process the result (create non-existing, update existing users).
-   * @param userSearchClient
    */
   private Future<ImportResponse> processUserBatch(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     List<User> currentPartition, UserImportData userImportData) {

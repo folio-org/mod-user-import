@@ -1,6 +1,9 @@
 package org.folio.rest.util;
 
-import static org.folio.rest.util.UserImportAPIConstants.*;
+import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_ACCEPT;
+import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_CONTENT_TYPE;
+import static org.folio.rest.util.UserImportAPIConstants.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.util.UserImportAPIConstants.OKAPI_URL_HEADER;
 
 import java.util.HashMap;
 import java.util.Map;
