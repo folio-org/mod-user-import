@@ -32,7 +32,7 @@
     <ramlfiles_util_path>${basedir}/ramls/raml-util</ramlfiles_util_path>
     <okapi.version>2.0.0</okapi.version>
     <generate_routing_context>/user-import</generate_routing_context>
-    <jackson.version>2.9.9</jackson.version>
+    <jackson.version>2.10.2</jackson.version>
   </properties>
 
   <dependencies>
