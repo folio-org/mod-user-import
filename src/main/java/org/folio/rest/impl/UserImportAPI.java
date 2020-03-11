@@ -51,7 +51,7 @@ import org.folio.rest.jaxrs.model.FailedUser;
 import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
-import org.folio.rest.jaxrs.resource.UserImportResource;
+import org.folio.rest.jaxrs.resource.UserImport;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.model.UserMappingFailedException;
 import org.folio.rest.tools.client.HttpClientFactory;
@@ -60,7 +60,7 @@ import org.folio.rest.util.CustomFieldsManager;
 import org.folio.rest.util.SingleUserImportResponse;
 import org.folio.rest.util.UserRecordImportStatus;
 
-public class UserImportAPI implements UserImportResource {
+public class UserImportAPI implements UserImport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
 
@@ -69,9 +69,9 @@ public class UserImportAPI implements UserImportResource {
    */
   @Override
   public void getUserImport(RoutingContext routingContext, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     asyncResultHandler
-      .handle(Future.succeededFuture(GetUserImportResponse.withPlainBadRequest("This is a fake endpoint.")));
+       .handle(Future.succeededFuture(GetUserImportResponse.respond400WithTextPlain("This is a fake endpoint.")));
   }
 
   /**
@@ -81,13 +81,13 @@ public class UserImportAPI implements UserImportResource {
   public void postUserImport(UserdataimportCollection userCollection, RoutingContext routingContext,
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) throws Exception {
+    Context vertxContext) {
     if (userCollection.getTotalRecords() == 0) {
       ImportResponse emptyResponse = new ImportResponse()
         .withMessage("No users to import.")
         .withTotalRecords(0);
       asyncResultHandler
-        .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
+        .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
     } else {
       CustomFieldsManager.checkAndUpdateCustomFields(okapiHeaders, userCollection, vertxContext.owner())
         .compose(o -> startUserImport(okapiHeaders, userCollection))
@@ -95,10 +95,10 @@ public class UserImportAPI implements UserImportResource {
         .setHandler(handler -> {
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
+              .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
           } else {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.withJsonInternalServerError(handler.result())));
+              .handle(Future.succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
           }
         });
     }
