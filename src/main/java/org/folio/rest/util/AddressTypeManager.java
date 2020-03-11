@@ -10,6 +10,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -22,7 +23,7 @@ public class AddressTypeManager {
   }
 
   public static Future<Map<String, String>> getAddressTypes(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
-    Future<Map<String, String>> future = Future.future();
+    Promise<Map<String, String>> future = Promise.promise();
 
     Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String addressTypeQuery = UriBuilder.fromPath("/addresstypes").build().toString();
@@ -49,7 +50,7 @@ public class AddressTypeManager {
       LOGGER.warn("Failed to list address types", exc.getMessage());
       future.fail(exc);
     }
-    return future;
+    return future.future();
   }
 
   private static Map<String, String> extractAddressTypes(JsonArray addressTypes) {
