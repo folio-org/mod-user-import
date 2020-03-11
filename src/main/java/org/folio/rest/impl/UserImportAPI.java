@@ -64,16 +64,6 @@ public class UserImportAPI implements UserImport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
 
-  /*
-   * Fake endpoint. Workaround for raml-module-builder.
-   */
-  @Override
-  public void getUserImport(RoutingContext routingContext, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    asyncResultHandler
-       .handle(Future.succeededFuture(GetUserImportResponse.respond400WithTextPlain("This is a fake endpoint.")));
-  }
-
   /**
    * User import entry point.
    */
