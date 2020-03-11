@@ -40,6 +40,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -98,7 +99,7 @@ public class UserImportAPI implements UserImport {
    * Start user import by getting address types and patron groups from the system.
    */
   private Future<ImportResponse> startUserImport(Map<String, String> okapiHeaders, UserdataimportCollection userCollection) {
-    Future<ImportResponse> future = Future.future();
+    Promise<ImportResponse> promise = Promise.promise();
 
     HttpClientInterface httpClient = HttpClientFactory
       .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER),
@@ -108,7 +109,7 @@ public class UserImportAPI implements UserImport {
       if (addressTypeResultHandler.failed()) {
         LOGGER.error(FAILED_TO_LIST_ADDRESS_TYPES + extractErrorMessage(addressTypeResultHandler));
         ImportResponse addressTypeListingFailureResponse = processErrorResponse(userCollection, FAILED_TO_LIST_ADDRESS_TYPES + extractErrorMessage(addressTypeResultHandler));
-        future.complete(addressTypeListingFailureResponse);
+        promise.complete(addressTypeListingFailureResponse);
       } else {
         getPatronGroups(httpClient, okapiHeaders).setHandler(patronGroupResultHandler -> {
 
@@ -118,22 +119,20 @@ public class UserImportAPI implements UserImport {
             userImportData.setPatronGroups(patronGroupResultHandler.result());
 
             if (userImportData.getDeactivateMissingUsers()) {
-              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, userImportData).setHandler(
-                future.completer());
+              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, userImportData)
+                .setHandler(promise::handle);
             } else {
-              startImport(httpClient, userCollection, userImportData, okapiHeaders).setHandler(future.completer());
+              startImport(httpClient, userCollection, userImportData, okapiHeaders).setHandler(promise::handle);
             }
-
           } else {
             LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
             ImportResponse patronGroupListingFailureResponse = processErrorResponse(userCollection, FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
-            future.complete(patronGroupListingFailureResponse);
+            promise.complete(patronGroupListingFailureResponse);
           }
         });
       }
     });
-    return future;
-
+    return promise.future();
   }
 
   /**
@@ -141,13 +140,13 @@ public class UserImportAPI implements UserImport {
    */
   private Future<ImportResponse> startImportWithDeactivatingUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataimportCollection userCollection,
     UserImportData userImportData) {
-    Future<ImportResponse> future = Future.future();
+    Promise<ImportResponse> promise = Promise.promise();
     listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
 
       if (handler.failed()) {
         LOGGER.error("Failed to list users with externalSystemId (and specific sourceType)");
         ImportResponse userListingFailureResponse = processErrorResponse(userCollection, FAILED_TO_IMPORT_USERS + extractErrorMessage(handler));
-        future.complete(userListingFailureResponse);
+        promise.complete(userListingFailureResponse);
       } else {
         List<Map> existingUsers = handler.result();
         try {
@@ -162,29 +161,29 @@ public class UserImportAPI implements UserImport {
 
               if (existingUserMap.isEmpty()) {
                 compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
-                future.complete(compositeResponse);
+                promise.complete(compositeResponse);
               } else if (compositeResponse.getFailedRecords() > 0) {
                 LOGGER.warn("Failed to import all users, skipping deactivation.");
                 compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
-                future.complete(compositeResponse);
+                promise.complete(compositeResponse);
               } else {
                 deactivateUsers(httpClient, okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
                   compositeResponse.setMessage("Deactivated missing users.");
-                  future.complete(compositeResponse);
+                  promise.complete(compositeResponse);
                 });
               }
             } else {
               ImportResponse userProcessFailureResponse = processErrorResponse(userCollection, FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-              future.complete(userProcessFailureResponse);
+              promise.complete(userProcessFailureResponse);
             }
           });
         } catch (UserMappingFailedException exc) {
           ImportResponse userMappingFailureResponse = processErrorResponse(userCollection, USER_SCHEMA_MISMATCH);
-          future.complete(userMappingFailureResponse);
+          promise.complete(userMappingFailureResponse);
         }
       }
     });
-    return future;
+    return promise.future();
   }
 
   /**
@@ -207,7 +206,7 @@ public class UserImportAPI implements UserImport {
    * Start user import. Partition and process users in batches of 10.
    */
   private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataimportCollection userCollection, UserImportData userImportData, Map<String, String> okapiHeaders) {
-    Future<ImportResponse> future = Future.future();
+    Promise<ImportResponse> promise = Promise.promise();
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
     List<Future> futures = new ArrayList<>();
@@ -223,13 +222,13 @@ public class UserImportAPI implements UserImport {
         LOGGER.info("Aggregating user import result.");
         ImportResponse successResponse = processFutureResponses(futures);
         successResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
-        future.complete(successResponse);
+        promise.complete(successResponse);
       } else {
         ImportResponse userProcessFailureResponse = processErrorResponse(userCollection, FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-        future.complete(userProcessFailureResponse);
+        promise.complete(userProcessFailureResponse);
       }
     });
-    return future;
+    return promise.future();
   }
 
   /**
@@ -237,7 +236,7 @@ public class UserImportAPI implements UserImport {
    */
   private Future<ImportResponse> processUserBatch(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     List<User> currentPartition, UserImportData userImportData) {
-    Future<ImportResponse> processFuture = Future.future();
+    Promise<ImportResponse> promise = Promise.promise();
     listUsers(httpClient, currentPartition, userImportData.getSourceType()).setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
         try {
@@ -246,14 +245,14 @@ public class UserImportAPI implements UserImport {
           processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
             .setHandler(response -> {
               if (response.succeeded()) {
-                processFuture.complete(response.result());
+                promise.complete(response.result());
               } else {
                 LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
                 UserdataimportCollection userCollection = new UserdataimportCollection();
                 userCollection.setTotalRecords(currentPartition.size());
                 userCollection.setUsers(currentPartition);
                 ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-                processFuture.complete(userSearchFailureResponse);
+                promise.complete(userSearchFailureResponse);
               }
             });
         } catch (UserMappingFailedException exc) {
@@ -261,7 +260,7 @@ public class UserImportAPI implements UserImport {
           userCollection.setTotalRecords(currentPartition.size());
           userCollection.setUsers(currentPartition);
           ImportResponse userMappingFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + USER_SCHEMA_MISMATCH);
-          processFuture.complete(userMappingFailureResponse);
+          promise.complete(userMappingFailureResponse);
         }
 
       } else {
@@ -270,17 +269,17 @@ public class UserImportAPI implements UserImport {
         userCollection.setTotalRecords(currentPartition.size());
         userCollection.setUsers(currentPartition);
         ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
-        processFuture.complete(userSearchFailureResponse);
+        promise.complete(userSearchFailureResponse);
       }
     });
-    return processFuture;
+    return promise.future();
   }
 
   /**
    * List a batch of users.
    */
   private Future<List<Map>> listUsers(HttpClientInterface userSearchClient, List<User> users, String sourceType) {
-    Future<List<Map>> future = Future.future();
+    Promise<List<Map>> promise = Promise.promise();
 
     StringBuilder userQueryBuilder = new StringBuilder("externalSystemId==(");
     for (int i = 0; i < users.size(); i++) {
@@ -304,16 +303,16 @@ public class UserImportAPI implements UserImport {
         .whenComplete((userSearchQueryResponse, ex) -> {
           if (isSuccess(userSearchQueryResponse, ex)) {
             JsonObject resultObject = userSearchQueryResponse.getBody();
-            future.complete(getUsersFromResult(resultObject));
+            promise.complete(getUsersFromResult(resultObject));
           } else {
-            errorManagement(userSearchQueryResponse, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
+            errorManagement(userSearchQueryResponse, ex, promise, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
-      future.fail(exc);
+      promise.fail(exc);
     }
-    return future;
+    return promise.future();
   }
 
   /**
@@ -321,10 +320,9 @@ public class UserImportAPI implements UserImport {
    */
   private Future<ImportResponse> processUserSearchResult(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     Map<String, User> existingUsers, List<User> usersToImport, UserImportData userImportData) {
-    Future<ImportResponse> future = Future.future();
 
+    Promise<ImportResponse> promise = Promise.promise();
     List<Future> futures = new ArrayList<>();
-
     for (User user : usersToImport) {
       updateUserData(user, userImportData);
       if (existingUsers.containsKey(user.getExternalSystemId())) {
@@ -346,14 +344,13 @@ public class UserImportAPI implements UserImport {
       if (ar.succeeded()) {
         LOGGER.info("User creation and update has finished for the current batch.");
         ImportResponse successResponse = processSuccessfulImportResponse(futures);
-        future.complete(successResponse);
+        promise.complete(successResponse);
       } else {
         LOGGER.error(FAILED_TO_IMPORT_USERS);
-        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
+        promise.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
-
-    return future;
+    return promise.future();
   }
 
   /**
@@ -390,7 +387,7 @@ public class UserImportAPI implements UserImport {
    * Update a single user.
    */
   private Future<SingleUserImportResponse> updateUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, final User user) {
-    Future<SingleUserImportResponse> future = Future.future();
+    Promise<SingleUserImportResponse> promise = Promise.promise();
 
     try {
       final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
@@ -401,30 +398,30 @@ public class UserImportAPI implements UserImport {
         .whenComplete((res, ex) -> {
           if (isSuccess(res, ex)) {
             try {
-              future.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
+              promise.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
-              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
+              promise.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
           } else {
-            errorManagement(res, ex, future, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
+            errorManagement(res, ex, promise, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
               SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), res.getCode(), FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
+      promise.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
 
-    return future;
+    return promise.future();
   }
 
   /**
    * Create a new user.
    */
   private Future<SingleUserImportResponse> createNewUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, User user) {
-    Future<SingleUserImportResponse> future = Future.future();
-
+   
+    Promise<SingleUserImportResponse> promise = Promise.promise();
     if (user.getId() == null) {
       user.setId(UUID.randomUUID().toString());
     }
@@ -441,27 +438,26 @@ public class UserImportAPI implements UserImport {
                 if (futurePermissionHandler.failed()) {
                   LOGGER.error("Failed to register permissions for user with externalSystemId: " + user.getExternalSystemId());
                 }
-                future.complete(SingleUserImportResponse.created(user.getExternalSystemId()));
+                promise.complete(SingleUserImportResponse.created(user.getExternalSystemId()));
               });
             } catch (Exception e) {
               LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
-              future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
+              promise.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
             }
           } else {
-            errorManagement(userCreationResponse, ex, future, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
+            errorManagement(userCreationResponse, ex, promise, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
               SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), userCreationResponse.getCode(), FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
+      promise.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
-
-    return future;
+    return promise.future();
   }
 
   private Future<JsonObject> addEmptyPermissionSetForUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, User user) {
-    Future<JsonObject> future = Future.future();
+    Promise<JsonObject> promise = Promise.promise();
 
     Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
 
@@ -476,27 +472,27 @@ public class UserImportAPI implements UserImport {
         .whenComplete((response, ex) -> {
           if (isSuccess(response, ex)) {
             try {
-              future.complete(response.getBody());
+              promise.complete(response.getBody());
             } catch (Exception e) {
               LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
-              future.fail(e);
+              promise.fail(e);
             }
           } else {
-            errorManagement(response, ex, future, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
+            errorManagement(response, ex, promise, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId());
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.fail(exc);
+      promise.fail(exc);
     }
-    return future;
+    return promise.future();
   }
 
   /**
    * List all users (in a sourceType if given).
    */
   private Future<List<Map>> listAllUsersWithExternalSystemId(HttpClientInterface httpClient, Map<String, String> okapiHeaders, String sourceType) {
-    Future<List<Map>> future = Future.future();
+    Promise<List<Map>> promise = Promise.promise();
 
     StringBuilder queryBuilder = new StringBuilder("externalSystemId");
     if (!Strings.isNullOrEmpty(sourceType)) {
@@ -515,22 +511,22 @@ public class UserImportAPI implements UserImport {
       httpClient.request(HttpMethod.GET, userSearchQuery, headers)
         .whenComplete((response, ex) -> {
           if (isSuccess(response, ex)) {
-            listAllUsers(future, response.getBody(), httpClient, okapiHeaders, query, limit);
+            listAllUsers(promise, response.getBody(), httpClient, okapiHeaders, query, limit);
           } else {
-            errorManagement(response, ex, future, FAILED_TO_PROCESS_USER_SEARCH_RESULT);
+            errorManagement(response, ex, promise, FAILED_TO_PROCESS_USER_SEARCH_RESULT);
           }
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_PROCESS_USERS, exc.getMessage());
-      future.fail(exc);
+      promise.fail(exc);
     }
-    return future;
+    return promise.future();
   }
 
   /**
    * List all users.
    */
-  private void listAllUsers(Future<List<Map>> future, JsonObject resultObject, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit) {
+  private void listAllUsers(Promise<List<Map>> promise, JsonObject resultObject, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit) {
     try {
       List<Future> futures = new ArrayList<>();
       List<Map> existingUserList = new ArrayList<>();
@@ -553,18 +549,18 @@ public class UserImportAPI implements UserImport {
         CompositeFuture.all(futures).setHandler(ar -> {
           if (ar.succeeded()) {
             LOGGER.info("Listed all users.");
-            future.complete(existingUserList);
+            promise.complete(existingUserList);
           } else {
             LOGGER.error(FAILED_TO_PROCESS_USERS);
-            future.fail(FAILED_TO_PROCESS_USERS + extractErrorMessage(ar));
+            promise.fail(FAILED_TO_PROCESS_USERS + extractErrorMessage(ar));
           }
         });
       } else {
-        future.complete(existingUserList);
+        promise.complete(existingUserList);
       }
     } catch (Exception e) {
       LOGGER.warn(FAILED_TO_PROCESS_USERS, e.getMessage());
-      future.fail(e);
+      promise.fail(e);
     }
   }
 
@@ -572,7 +568,7 @@ public class UserImportAPI implements UserImport {
    * Process user search response.
    */
   private Future processResponse(List<Map> existingUserList, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit, int offset) {
-    Future future = Future.future();
+    Promise promise = Promise.promise();
 
     try {
       final String userSearchQuery = generateUserSearchQuery(query, limit, offset);
@@ -582,22 +578,21 @@ public class UserImportAPI implements UserImport {
             try {
               List<Map> users = getUsersFromResult(subResponse.getBody());
               existingUserList.addAll(users);
-              future.complete();
+              promise.complete();
             } catch (Exception e) {
               LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, e.getMessage());
-              future.fail(e);
+              promise.fail(e);
             }
           } else {
-            errorManagement(subResponse, subEx, future, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
+            errorManagement(subResponse, subEx, promise, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE);
           }
         });
 
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
-      future.fail(exc);
+      promise.fail(exc);
     }
-
-    return future;
+    return promise.future();
   }
 
   /**
@@ -607,12 +602,11 @@ public class UserImportAPI implements UserImport {
    * @return  a completed future if users were deactivated
    *          a failed future if not all users could be deactivated
    */
-  private Future<Void> deactivateUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
-    Map<String, User> existingUserMap) {
-    Future<Void> future = Future.future();
+  private Future<Void> deactivateUsers(HttpClientInterface httpClient,
+    Map<String, String> okapiHeaders, Map<String, User> existingUserMap) {
 
+    Promise<Void> promise = Promise.promise();
     List<Future> futures = new ArrayList<>();
-
     for (User user : existingUserMap.values()) {
       if (user.getActive()) {
         user.setActive(Boolean.FALSE);
@@ -625,14 +619,13 @@ public class UserImportAPI implements UserImport {
     CompositeFuture.all(futures).setHandler(ar -> {
       if (ar.succeeded()) {
         LOGGER.info("Deactivated missing users.");
-        future.complete();
+        promise.complete();
       } else {
         LOGGER.error("Failed to deactivate users.");
-        future.fail("Failed to deactivate users." + extractErrorMessage(ar));
+        promise.fail("Failed to deactivate users." + extractErrorMessage(ar));
       }
     });
-
-    return future;
+    return promise.future();
   }
 
   /**
@@ -734,15 +727,15 @@ public class UserImportAPI implements UserImport {
     return ex == null && org.folio.rest.tools.client.Response.isSuccess(response.getCode());
   }
 
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage) {
-    errorManagement(response, ex, future, errorMessage, null);
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> promise, String errorMessage) {
+    errorManagement(response, ex, promise, errorMessage, null);
   }
 
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage, T completeObj) {
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> promise, String errorMessage, T completeObj) {
     if (ex != null) {
       LOGGER.error(errorMessage);
       LOGGER.error(ex.getMessage());
-      future.fail(ex.getMessage());
+      promise.fail(ex.getMessage());
     } else {
       LOGGER.error(errorMessage);
       StringBuilder errorBuilder = new StringBuilder(errorMessage);
@@ -751,9 +744,9 @@ public class UserImportAPI implements UserImport {
         LOGGER.error(response.getError());
       }
       if (completeObj == null) {
-        future.fail(errorBuilder.toString());
+        promise.fail(errorBuilder.toString());
       } else {
-        future.complete(completeObj);
+        promise.complete(completeObj);
       }
     }
   }
