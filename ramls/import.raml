@@ -1,4 +1,4 @@
-#%RAML 0.8
+#%RAML 1.0
 title: User import
 version: v1
 baseUri: https://github.com/folio-org/mod-user-import
@@ -7,12 +7,9 @@ documentation:
   - title: mod-user-import API
     content: This documents the API calls that can be made to import users into the system
 
-schemas:
-  - userdataimport.json: !include schemas/userdataimport.json
-  - userdataimportCollection: !include schemas/userdataimportCollection.json
-  - failedUserdata.json: !include schemas/failedUserdata.json
-  - importResponse: !include schemas/importResponse.json
-  - metadata.schema: !include schemas/metadata.schema
+types:
+  userdataimportCollection: !include schemas/userdataimportCollection.json
+  importResponse: !include schemas/importResponse.json
 
 /user-import:
   get:
@@ -24,7 +21,7 @@ schemas:
   post:
     body:
       application/json:
-        schema: userdataimportCollection
+        type: userdataimportCollection
         example: !include examples/userdataimportCollection.sample
     description: Create or update a list of users
     responses:
@@ -32,9 +29,9 @@ schemas:
         description: "Return OK"
         body:
           application/json:
-            schema: importResponse
+            type: importResponse
       500:
         description: "Internal server error"
         body:
           application/json:
-            schema: importResponse
+            type: importResponse
