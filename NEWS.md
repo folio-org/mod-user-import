@@ -1,4 +1,4 @@
-## 3.2.0 2020-02-13
+## 3.2.0 2020-03-13
 
  * MODUIMP-9 Upgrade to RAML 1.0 and RMB 29
  * Update for custom fields MODCFIELDS-10 MODCFIELDS-35
