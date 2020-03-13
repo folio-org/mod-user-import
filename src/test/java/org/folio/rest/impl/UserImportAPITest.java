@@ -76,22 +76,6 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testFakeEndpoint() throws IOException {
-
-    mock.setMockJsonContent("mock_content.json");
-
-    given()
-      .header(TENANT_HEADER)
-      .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
-      .header(JSON_CONTENT_TYPE_HEADER)
-      .get(USER_IMPORT)
-      .then()
-      .body(equalTo("This is a fake endpoint."))
-      .statusCode(400);
-  }
-
-  @Test
   public void testImportWithoutUsers() throws IOException {
 
     mock.setMockJsonContent("mock_content.json");

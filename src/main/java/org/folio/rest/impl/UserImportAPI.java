@@ -40,6 +40,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -51,7 +52,7 @@ import org.folio.rest.jaxrs.model.FailedUser;
 import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
-import org.folio.rest.jaxrs.resource.UserImportResource;
+import org.folio.rest.jaxrs.resource.UserImport;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.model.UserMappingFailedException;
 import org.folio.rest.tools.client.HttpClientFactory;
@@ -60,19 +61,9 @@ import org.folio.rest.util.CustomFieldsManager;
 import org.folio.rest.util.SingleUserImportResponse;
 import org.folio.rest.util.UserRecordImportStatus;
 
-public class UserImportAPI implements UserImportResource {
+public class UserImportAPI implements UserImport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
-
-  /*
-   * Fake endpoint. Workaround for raml-module-builder.
-   */
-  @Override
-  public void getUserImport(RoutingContext routingContext, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
-    asyncResultHandler
-      .handle(Future.succeededFuture(GetUserImportResponse.withPlainBadRequest("This is a fake endpoint.")));
-  }
 
   /**
    * User import entry point.
@@ -81,13 +72,13 @@ public class UserImportAPI implements UserImportResource {
   public void postUserImport(UserdataimportCollection userCollection, RoutingContext routingContext,
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) throws Exception {
+    Context vertxContext) {
     if (userCollection.getTotalRecords() == 0) {
       ImportResponse emptyResponse = new ImportResponse()
         .withMessage("No users to import.")
         .withTotalRecords(0);
       asyncResultHandler
-        .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(emptyResponse)));
+        .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
     } else {
       CustomFieldsManager.checkAndUpdateCustomFields(okapiHeaders, userCollection, vertxContext.owner())
         .compose(o -> startUserImport(okapiHeaders, userCollection))
@@ -95,21 +86,22 @@ public class UserImportAPI implements UserImportResource {
         .setHandler(handler -> {
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.withJsonOK(handler.result())));
+              .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
           } else {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.withJsonInternalServerError(handler.result())));
+              .handle(Future.succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
           }
         });
     }
   }
 
   /**
-   * Start user import by getting address types and patron groups from the system.
+   * Start user import by getting address types and patron groups from the
+   * system.
    */
   private Future<ImportResponse> startUserImport(Map<String, String> okapiHeaders, UserdataimportCollection userCollection) {
-    Future<ImportResponse> future = Future.future();
 
+    Promise<ImportResponse> future = Promise.promise();
     HttpClientInterface httpClient = HttpClientFactory
       .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER),
         true, CONN_TO, IDLE_TO, false, 30L);
@@ -128,12 +120,11 @@ public class UserImportAPI implements UserImportResource {
             userImportData.setPatronGroups(patronGroupResultHandler.result());
 
             if (userImportData.getDeactivateMissingUsers()) {
-              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, userImportData).setHandler(
-                future.completer());
+              startImportWithDeactivatingUsers(httpClient, okapiHeaders, userCollection, userImportData)
+                .setHandler(future::handle);
             } else {
-              startImport(httpClient, userCollection, userImportData, okapiHeaders).setHandler(future.completer());
+              startImport(httpClient, userCollection, userImportData, okapiHeaders).setHandler(future::handle);
             }
-
           } else {
             LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
             ImportResponse patronGroupListingFailureResponse = processErrorResponse(userCollection, FAILED_TO_LIST_PATRON_GROUPS + extractErrorMessage(patronGroupResultHandler));
@@ -142,16 +133,18 @@ public class UserImportAPI implements UserImportResource {
         });
       }
     });
-    return future;
-
+    return future.future();
   }
 
   /**
-   * Start importing users if deactivation is needed. In this case all users should be queried to be able to tell which ones need to be deactivated after the import.
+   * Start importing users if deactivation is needed. In this case all users
+   * should be queried to be able to tell which ones need to be deactivated
+   * after the import.
    */
   private Future<ImportResponse> startImportWithDeactivatingUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders, UserdataimportCollection userCollection,
     UserImportData userImportData) {
-    Future<ImportResponse> future = Future.future();
+
+    Promise<ImportResponse> future = Promise.promise();
     listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userCollection.getSourceType()).setHandler(handler -> {
 
       if (handler.failed()) {
@@ -194,19 +187,20 @@ public class UserImportAPI implements UserImportResource {
         }
       }
     });
-    return future;
+    return future.future();
   }
 
   /**
-   * Create partitions from all users, process them and return the list of Futures of the partition processing.
+   * Create partitions from all users, process them and return the list of
+   * Futures of the partition processing.
    */
   private List<Future> processAllUsersInPartitions(HttpClientInterface httpClient, UserdataimportCollection userCollection, UserImportData userImportData, Map<String, User> existingUserMap, Map<String, String> okapiHeaders) {
+
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
     List<Future> futures = new ArrayList<>();
-
     for (List<User> currentPartition : userPartitions) {
-      Future<ImportResponse> userSearchAsyncResult =
-        processUserSearchResult(httpClient, okapiHeaders, existingUserMap,
+      Future<ImportResponse> userSearchAsyncResult
+        = processUserSearchResult(httpClient, okapiHeaders, existingUserMap,
           currentPartition, userImportData);
       futures.add(userSearchAsyncResult);
     }
@@ -217,14 +211,15 @@ public class UserImportAPI implements UserImportResource {
    * Start user import. Partition and process users in batches of 10.
    */
   private Future<ImportResponse> startImport(HttpClientInterface httpClient, UserdataimportCollection userCollection, UserImportData userImportData, Map<String, String> okapiHeaders) {
-    Future<ImportResponse> future = Future.future();
+
+    Promise<ImportResponse> future = Promise.promise();
     List<List<User>> userPartitions = Lists.partition(userCollection.getUsers(), 10);
 
     List<Future> futures = new ArrayList<>();
 
     for (List<User> currentPartition : userPartitions) {
-      Future<ImportResponse> userBatchProcessResponse =
-        processUserBatch(httpClient, okapiHeaders, currentPartition, userImportData);
+      Future<ImportResponse> userBatchProcessResponse
+        = processUserBatch(httpClient, okapiHeaders, currentPartition, userImportData);
       futures.add(userBatchProcessResponse);
     }
 
@@ -239,15 +234,17 @@ public class UserImportAPI implements UserImportResource {
         future.complete(userProcessFailureResponse);
       }
     });
-    return future;
+    return future.future();
   }
 
   /**
-   * Process a batch of users. Extract existing users from the user list and process the result (create non-existing, update existing users).
+   * Process a batch of users. Extract existing users from the user list and
+   * process the result (create non-existing, update existing users).
    */
   private Future<ImportResponse> processUserBatch(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     List<User> currentPartition, UserImportData userImportData) {
-    Future<ImportResponse> processFuture = Future.future();
+
+    Promise<ImportResponse> future = Promise.promise();
     listUsers(httpClient, currentPartition, userImportData.getSourceType()).setHandler(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
         try {
@@ -256,14 +253,14 @@ public class UserImportAPI implements UserImportResource {
           processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
             .setHandler(response -> {
               if (response.succeeded()) {
-                processFuture.complete(response.result());
+                future.complete(response.result());
               } else {
                 LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
                 UserdataimportCollection userCollection = new UserdataimportCollection();
                 userCollection.setTotalRecords(currentPartition.size());
                 userCollection.setUsers(currentPartition);
                 ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-                processFuture.complete(userSearchFailureResponse);
+                future.complete(userSearchFailureResponse);
               }
             });
         } catch (UserMappingFailedException exc) {
@@ -271,7 +268,7 @@ public class UserImportAPI implements UserImportResource {
           userCollection.setTotalRecords(currentPartition.size());
           userCollection.setUsers(currentPartition);
           ImportResponse userMappingFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + USER_SCHEMA_MISMATCH);
-          processFuture.complete(userMappingFailureResponse);
+          future.complete(userMappingFailureResponse);
         }
 
       } else {
@@ -280,17 +277,17 @@ public class UserImportAPI implements UserImportResource {
         userCollection.setTotalRecords(currentPartition.size());
         userCollection.setUsers(currentPartition);
         ImportResponse userSearchFailureResponse = processErrorResponse(userCollection, FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
-        processFuture.complete(userSearchFailureResponse);
+        future.complete(userSearchFailureResponse);
       }
     });
-    return processFuture;
+    return future.future();
   }
 
   /**
    * List a batch of users.
    */
   private Future<List<Map>> listUsers(HttpClientInterface userSearchClient, List<User> users, String sourceType) {
-    Future<List<Map>> future = Future.future();
+    Promise<List<Map>> future = Promise.promise();
 
     StringBuilder userQueryBuilder = new StringBuilder("externalSystemId==(");
     for (int i = 0; i < users.size(); i++) {
@@ -323,18 +320,18 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
       future.fail(exc);
     }
-    return future;
+    return future.future();
   }
 
   /**
-   * Process batch of users. Decide if current user exists, if it does, updates it, otherwise creates a new one.
+   * Process batch of users. Decide if current user exists, if it does, updates
+   * it, otherwise creates a new one.
    */
   private Future<ImportResponse> processUserSearchResult(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
     Map<String, User> existingUsers, List<User> usersToImport, UserImportData userImportData) {
-    Future<ImportResponse> future = Future.future();
 
+    Promise<ImportResponse> future = Promise.promise();
     List<Future> futures = new ArrayList<>();
-
     for (User user : usersToImport) {
       updateUserData(user, userImportData);
       if (existingUsers.containsKey(user.getExternalSystemId())) {
@@ -362,8 +359,7 @@ public class UserImportAPI implements UserImportResource {
         future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
       }
     });
-
-    return future;
+    return future.future();
   }
 
   /**
@@ -400,8 +396,8 @@ public class UserImportAPI implements UserImportResource {
    * Update a single user.
    */
   private Future<SingleUserImportResponse> updateUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, final User user) {
-    Future<SingleUserImportResponse> future = Future.future();
 
+    Promise<SingleUserImportResponse> future = Promise.promise();
     try {
       final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
 
@@ -426,15 +422,15 @@ public class UserImportAPI implements UserImportResource {
       future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
 
-    return future;
+    return future.future();
   }
 
   /**
    * Create a new user.
    */
   private Future<SingleUserImportResponse> createNewUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, User user) {
-    Future<SingleUserImportResponse> future = Future.future();
 
+    Promise<SingleUserImportResponse> future = Promise.promise();
     if (user.getId() == null) {
       user.setId(UUID.randomUUID().toString());
     }
@@ -466,13 +462,12 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
     }
-
-    return future;
+    return future.future();
   }
 
   private Future<JsonObject> addEmptyPermissionSetForUser(HttpClientInterface httpClient, Map<String, String> okapiHeaders, User user) {
-    Future<JsonObject> future = Future.future();
 
+    Promise<JsonObject> future = Promise.promise();
     Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
 
     try {
@@ -499,15 +494,15 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
-    return future;
+    return future.future();
   }
 
   /**
    * List all users (in a sourceType if given).
    */
   private Future<List<Map>> listAllUsersWithExternalSystemId(HttpClientInterface httpClient, Map<String, String> okapiHeaders, String sourceType) {
-    Future<List<Map>> future = Future.future();
 
+    Promise<List<Map>> future = Promise.promise();
     StringBuilder queryBuilder = new StringBuilder("externalSystemId");
     if (!Strings.isNullOrEmpty(sourceType)) {
       queryBuilder.append("=^").append(sourceType).append("_*");
@@ -534,13 +529,14 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(FAILED_TO_PROCESS_USERS, exc.getMessage());
       future.fail(exc);
     }
-    return future;
+    return future.future();
   }
 
   /**
    * List all users.
    */
-  private void listAllUsers(Future<List<Map>> future, JsonObject resultObject, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit) {
+  private void listAllUsers(Promise<List<Map>> future, JsonObject resultObject, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit) {
+
     try {
       List<Future> futures = new ArrayList<>();
       List<Map> existingUserList = new ArrayList<>();
@@ -582,8 +578,8 @@ public class UserImportAPI implements UserImportResource {
    * Process user search response.
    */
   private Future processResponse(List<Map> existingUserList, HttpClientInterface userSearchClient, Map<String, String> okapiHeaders, String query, int limit, int offset) {
-    Future future = Future.future();
 
+    Promise future = Promise.promise();
     try {
       final String userSearchQuery = generateUserSearchQuery(query, limit, offset);
       userSearchClient.request(HttpMethod.GET, userSearchQuery, okapiHeaders)
@@ -606,28 +602,28 @@ public class UserImportAPI implements UserImportResource {
       LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESPONSE, exc.getMessage());
       future.fail(exc);
     }
-
-    return future;
+    return future.future();
   }
 
   /**
    * Deactivate users
+   *
    * @param okapiHeaders the Okapi headers
-   * @param existingUserMap the existing users that were not updated in the request
-   * @return  a completed future if users were deactivated
-   *          a failed future if not all users could be deactivated
+   * @param existingUserMap the existing users that were not updated in the
+   * request
+   * @return a completed future if users were deactivated a failed future if not
+   * all users could be deactivated
    */
-  private Future<Void> deactivateUsers(HttpClientInterface httpClient, Map<String, String> okapiHeaders,
-    Map<String, User> existingUserMap) {
-    Future<Void> future = Future.future();
+  private Future<Void> deactivateUsers(HttpClientInterface httpClient,
+    Map<String, String> okapiHeaders, Map<String, User> existingUserMap) {
 
+    Promise<Void> future = Promise.promise();
     List<Future> futures = new ArrayList<>();
-
     for (User user : existingUserMap.values()) {
       if (user.getActive()) {
         user.setActive(Boolean.FALSE);
-        Future<SingleUserImportResponse> userDeactivateAsyncResult =
-          updateUser(httpClient, okapiHeaders, user);
+        Future<SingleUserImportResponse> userDeactivateAsyncResult
+          = updateUser(httpClient, okapiHeaders, user);
         futures.add(userDeactivateAsyncResult);
       }
     }
@@ -641,12 +637,12 @@ public class UserImportAPI implements UserImportResource {
         future.fail("Failed to deactivate users." + extractErrorMessage(ar));
       }
     });
-
-    return future;
+    return future.future();
   }
 
   /**
    * Build query for user search.
+   *
    * @param query the query string
    * @param limit maximum number of retrieved users
    * @param offset page number
@@ -663,6 +659,7 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Extract users from JSONObject.
+   *
    * @param result the JSONObject containing the users
    * @return the users from the JSONObject
    */
@@ -676,6 +673,7 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Extract error message from result.
+   *
    * @param asyncResult the result
    * @return the extracted error message
    */
@@ -689,7 +687,9 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Create import response from sub-responses.
-   * @param futures the ImportResponse list with the successful/failed user creation/update
+   *
+   * @param futures the ImportResponse list with the successful/failed user
+   * creation/update
    * @return the aggregated ImportResponse
    */
   private ImportResponse processFutureResponses(List<Future> futures) {
@@ -717,6 +717,7 @@ public class UserImportAPI implements UserImportResource {
 
   /**
    * Helper function to create ImportResponse.
+   *
    * @param userCollection the users which were failed to import
    * @param errorMessage the reason of the failure
    * @return the assembled ImportResponse object
@@ -744,11 +745,11 @@ public class UserImportAPI implements UserImportResource {
     return ex == null && org.folio.rest.tools.client.Response.isSuccess(response.getCode());
   }
 
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage) {
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> future, String errorMessage) {
     errorManagement(response, ex, future, errorMessage, null);
   }
 
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Future<T> future, String errorMessage, T completeObj) {
+  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> future, String errorMessage, T completeObj) {
     if (ex != null) {
       LOGGER.error(errorMessage);
       LOGGER.error(ex.getMessage());
