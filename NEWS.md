@@ -1,5 +1,10 @@
+## 3.2.0 2020-03-13
+
+ * MODUIMP-9 Upgrade to RAML 1.0 and RMB 29
+ * Update for custom fields MODCFIELDS-10 MODCFIELDS-35
+
 ## 3.1.0 2018-09-18
-* Support `users` interface 15.0 (which removes `meta` object from proxy relationship, MODUSERS-75)
+ * Support `users` interface 15.0 (which removes `meta` object from proxy relationship, MODUSERS-75)
 
 ## 3.0.0 2018-02-28
  * Update readme with usage information
