@@ -9,7 +9,6 @@ import static org.folio.rest.util.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPO
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
 import static org.folio.rest.util.UserImportAPIConstants.IDLE_TO;
-import static org.folio.rest.util.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.util.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.util.UserImportAPIConstants.USERS_INTERFACE_NAME;
 
@@ -23,12 +22,13 @@ import java.util.Set;
 import java.util.function.Function;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
@@ -44,7 +44,7 @@ public final class CustomFieldsManager {
 
   public static Future<Void> checkAndUpdateCustomFields(Map<String, String> okapiHeaders,
                                                         UserdataimportCollection userCollection, Vertx vertx) {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(userCollection);
 
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
@@ -52,25 +52,24 @@ public final class CustomFieldsManager {
       .getHttpClient(getOkapiUrl(okapiHeaders), -1, TenantTool.tenantId(headers),
         true, CONN_TO, IDLE_TO, false, 30L);
     if (customFieldsOptions.isEmpty()) {
-      future.complete();
+      promise.complete();
     } else {
       OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, vertx)
         .compose(moduleIds -> updateHeaders(moduleIds, headers))
         .compose(o -> requestCustomFieldsDefinitions(httpClient, headers))
         .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, headers))
-        .setHandler(o -> {
+        .onComplete(o -> {
           httpClient.closeClient();
           if (o.succeeded()) {
-            future.complete();
+            promise.complete();
           } else {
-            future.fail(o.cause());
+            promise.fail(o.cause());
           }
         });
     }
-    return future;
+    return promise.future();
   }
 
-  @SuppressWarnings("unchecked")
   private static Map<String, Set<String>> getCustomFieldsOptions(UserdataimportCollection userCollection) {
     Map<String, Set<String>> customFieldsOptions = new HashMap<>();
     userCollection.getUsers()
@@ -86,7 +85,9 @@ public final class CustomFieldsManager {
         if (value instanceof String) {
           options.add((String) value);
         } else if (value instanceof List) {
-          options.addAll((List<String>) value);
+          @SuppressWarnings("unchecked")
+          List<String> values = (List<String>) value;
+          options.addAll(values);
         }
       });
     return customFieldsOptions;
@@ -96,53 +97,53 @@ public final class CustomFieldsManager {
     if (moduleIds.size() != 1) {
       return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
     } else {
-      headers.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
+      headers.put(XOkapiHeaders.MODULE_ID, moduleIds.get(0));
       return Future.succeededFuture();
     }
   }
 
   private static Future<JsonObject> requestCustomFieldsDefinitions(HttpClientInterface client, Map<String, String> headers) {
-    Future<JsonObject> future = Future.future();
+    Promise<JsonObject> promise = Promise.promise();
     try {
       client.request(GET_CUSTOM_FIELDS_ENDPOINT, headers)
-        .whenComplete((response, ex) -> processResponse(future, response, ex, Response::getBody));
+        .whenComplete((response, ex) -> processResponse(promise, response, ex, Response::getBody));
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private static Future<Void> updateCF(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions,
                                        HttpClientInterface client, Map<String, String> okapiHeaders) {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     boolean isUpdated = updateCfOptions(cfCollection, customFieldsOptions);
     if (isUpdated) {
       Map<String, String> headers =
         createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       try {
         client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
-          .whenComplete((response, ex) -> processResponse(future, response, ex, r -> null));
+          .whenComplete((response, ex) -> processResponse(promise, response, ex, r -> null));
       } catch (Exception e) {
-        future.fail(e);
+        promise.fail(e);
       }
     } else {
-      future.complete();
+      promise.complete();
     }
-    return future;
+    return promise.future();
   }
 
-  private static <T> void processResponse(Future<T> future, Response response, Throwable ex,
+  private static <T> void processResponse(Promise<T> promise, Response response, Throwable ex,
                                           Function<Response, T> completeFunction) {
     if (ex != null) {
-      future.fail(ex);
+      promise.fail(ex);
     } else if (response.getException() != null) {
-      future.fail(response.getException());
+      promise.fail(response.getException());
     } else if (isFailedResponseCode(response)) {
       String failureMessage =
         response.getError() != null ? response.getError().encode() : "Error code: " + response.getCode();
-      future.fail(failureMessage);
+      promise.fail(failureMessage);
     } else {
-      future.complete(completeFunction.apply(response));
+      promise.complete(completeFunction.apply(response));
     }
   }
 

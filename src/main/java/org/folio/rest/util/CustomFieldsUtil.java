@@ -2,10 +2,12 @@ package org.folio.rest.util;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -14,12 +16,13 @@ import io.vertx.core.json.JsonObject;
 
 public final class CustomFieldsUtil {
 
-  public static final String CF_ARRAY_KEY = "customFields";
-  public static final String CF_REF_ID_KEY = "refId";
-  public static final String CF_OPTIONS_KEY = "options";
-  public static final String CF_SELECT_FIELD_KEY = "selectField";
-  public static final String CF_TOTAL_RECORDS_KEY = "totalRecords";
-  public static final String CF_OPTIONS_VALUES_KEY = "values";
+  private static final String CF_ARRAY_KEY = "customFields";
+  private static final String CF_REF_ID_KEY = "refId";
+  private static final String CF_OPTIONS_KEY = "options";
+  private static final String CF_SELECT_FIELD_KEY = "selectField";
+  private static final String CF_TOTAL_RECORDS_KEY = "totalRecords";
+  private static final String CF_OPTIONS_VALUES_KEY = "values";
+  private static final String CF_OPTION_VALUE_KEY = "value";
 
   private CustomFieldsUtil() {
   }
@@ -39,11 +42,17 @@ public final class CustomFieldsUtil {
     Set<String> expectedOptions = getExpectedOptions(cfObject, customFieldsOptions);
     if (isNotEmpty(expectedOptions) && isNotEmptyJsonObject(cfObject.getJsonObject(CF_SELECT_FIELD_KEY))) {
       JsonArray cfOptionsArray = getCfOptionsArray(cfObject);
-      jsonObjectsStream(cfOptionsArray, isNotNull(cfOptionsArray) ? cfOptionsArray::getString : null)
-        .forEach(v -> expectedOptions.removeIf(s -> s.equalsIgnoreCase(v)));
-      if (isNotNull(cfOptionsArray) && isNotEmpty(expectedOptions)) {
+      List<JsonObject> cfOptions =
+        jsonObjectsStream(cfOptionsArray, cfOptionsArray != null ? cfOptionsArray::getJsonObject : null)
+          .collect(Collectors.toList());
+      cfOptions
+        .forEach(entries -> expectedOptions.removeIf(s -> s.equalsIgnoreCase(entries.getString(CF_OPTION_VALUE_KEY))));
+      if (cfOptionsArray != null && isNotEmpty(expectedOptions)) {
         isUpdated = true;
-        expectedOptions.forEach(cfOptionsArray::add);
+        for (String newOptionValue : expectedOptions) {
+          JsonObject newOption = new JsonObject().put(CF_OPTION_VALUE_KEY, newOptionValue);
+          cfOptionsArray.add(newOption);
+        }
       }
     }
     return isUpdated;
@@ -76,11 +85,7 @@ public final class CustomFieldsUtil {
   }
 
   private static boolean isNotEmptyJsonArray(JsonArray jsonArray) {
-    return isNotNull(jsonArray) && !jsonArray.isEmpty();
-  }
-
-  private static boolean isNotNull(JsonArray jsonArray) {
-    return jsonArray != null;
+    return jsonArray != null && !jsonArray.isEmpty();
   }
 
   public static <T> Stream<T> jsonObjectsStream(JsonArray jsonArray, IntFunction<T> mappingFunction) {

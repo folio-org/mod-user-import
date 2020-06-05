@@ -27,7 +27,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <raml-module-builder.version>29.3.0</raml-module-builder.version>
+    <raml-module-builder.version>30.0.1</raml-module-builder.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <generate_routing_context>/user-import</generate_routing_context>
   </properties>
@@ -59,7 +59,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-unit</artifactId>
-      <version>3.8.5</version>
+      <version>3.9.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -105,7 +105,10 @@
         "active": true,
         "patronGroup": "undergrad",
         "customFields": {
-          "department_1": ["Development", "Design"]
+          "department_1": [
+            "Development",
+            "Design"
+          ]
         }
       },
       "receivedPath": "",
@@ -122,7 +125,10 @@
         "active": true,
         "patronGroup": "undergrad",
         "customFields": {
-          "department_1": ["Development", "Design"]
+          "department_1": [
+            "Development",
+            "Design"
+          ]
         }
       }
     },
@@ -157,8 +163,7 @@
               "defaults": [],
               "multiSelect": true,
               "options": {
-                "values": null,
-                "sorted": []
+                "values": null
               }
             },
             "metadata": {
@@ -200,8 +205,12 @@
               "multiSelect": true,
               "options": {
                 "values": [
-                  "Design",
-                  "Development"
+                  {
+                    "value": "Design"
+                  },
+                  {
+                    "value": "Development"
+                  }
                 ],
                 "sorted": []
               }

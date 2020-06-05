@@ -10,6 +10,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -23,7 +24,7 @@ public class PatronGroupManager {
   }
 
   public static Future<Map<String, String>> getPatronGroups(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
-    Future<Map<String, String>> future = Future.future();
+    Promise<Map<String, String>> promise = Promise.promise();
 
     Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     final String patronGroupQuery = UriBuilder.fromPath("/groups").queryParam("limit",  "2147483647").build().toString();
@@ -34,22 +35,22 @@ public class PatronGroupManager {
           if (ex != null) {
             LOGGER.error(FAILED_TO_LIST_PATRON_GROUPS);
             LOGGER.debug(ex.getMessage());
-            future.fail(ex.getMessage());
+            promise.fail(ex.getMessage());
           } else if (!org.folio.rest.tools.client.Response.isSuccess(patronGroupResponse.getCode())) {
             LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS);
-            future.fail("");
+            promise.fail("");
           } else {
             JsonObject resultObject = patronGroupResponse.getBody();
             JsonArray patronGroupArray = resultObject.getJsonArray("usergroups");
             Map<String, String> patronGroups = extractPatronGroups(patronGroupArray);
-            future.complete(patronGroups);
+            promise.complete(patronGroups);
           }
         });
     } catch (Exception exc) {
       LOGGER.warn(FAILED_TO_LIST_PATRON_GROUPS, exc.getMessage());
-      future.fail(exc);
+      promise.fail(exc);
     }
-    return future;
+    return promise.future();
   }
 
   private static Map<String, String> extractPatronGroups(JsonArray patronGroups) {

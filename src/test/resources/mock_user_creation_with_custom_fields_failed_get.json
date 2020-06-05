@@ -175,8 +175,13 @@
               "multiSelect": true,
               "options": {
                 "values": [
-                  "Design",
-                  "Development"
+                  {
+                    "id": "opt_0",
+                    "value": "Design"
+                  },
+                  {
+                    "value": "Development"
+                  }
                 ],
                 "sorted": []
               }
