@@ -5,16 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Strings;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
+
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.model.UserMappingFailedException;
-
-import com.google.common.base.Strings;
-
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public class UserDataUtil {
 
@@ -110,9 +110,12 @@ public class UserDataUtil {
         existingAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
         currentAddresses.forEach(address -> addressMap.put(address.getAddressTypeId(), address));
 
-        addresses = new ArrayList<>();
-        addresses.addAll(addressMap.values());
+        addresses = new ArrayList<>(addressMap.values());
       }
+    }
+
+    if (StringUtils.isBlank(user.getPersonal().getPreferredFirstName())) {
+      response.getPersonal().setPreferredFirstName(existingUser.getPersonal().getPreferredFirstName());
     }
 
     if (addresses != null) {

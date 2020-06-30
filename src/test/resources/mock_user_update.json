@@ -111,6 +111,7 @@
         "personal": {
           "firstName": "User",
           "lastName": "Update",
+          "preferredFirstName": "Preferred User",
           "email": "user_update@user.org",
           "preferredContactTypeId": "email",
           "addresses": []
