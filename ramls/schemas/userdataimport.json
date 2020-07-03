@@ -138,12 +138,12 @@
       ]
     },
     "enrollmentDate": {
-      "description": "The date in which the user joined the organization",
+      "description": "The date when the user joined the organization",
       "type": "string",
       "format": "date-time"
     },
     "expirationDate": {
-      "description": "The date for when the user becomes inactive",
+      "description": "The date when the user becomes inactive",
       "type": "string",
       "format": "date-time"
     },
