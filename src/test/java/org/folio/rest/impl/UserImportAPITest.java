@@ -493,7 +493,9 @@ public class UserImportAPITest {
     mock.setMockJsonContent("mock_user_update.json");
 
     List<User> users = new ArrayList<>();
-    users.add(generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3"));
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    user.getPersonal().setPreferredFirstName("Preferred User");
+    users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
