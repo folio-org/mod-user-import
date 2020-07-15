@@ -1,6 +1,8 @@
 package org.folio.rest.impl;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -32,6 +34,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
+import org.folio.rest.jaxrs.model.RequestPreference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -117,15 +120,15 @@ public class UserImportAPITest {
       .body(collection)
       .post(USER_IMPORT)
       .then()
-      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
@@ -151,14 +154,14 @@ public class UserImportAPITest {
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
@@ -439,7 +442,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
         UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
@@ -447,7 +450,7 @@ public class UserImportAPITest {
 
   /*
    * This test does not work as expected because the user creation endpoint can only be mocked once in a JSON file.
-   * The solution could be to check the body of the input and decide if the response should be success or failure.
+   * The solution couldtestImportWithUserAddressUpdate be to check the body of the input and decide if the response should be success or failure.
    */
   @Test
   public void testImportWithMoreUserCreation() throws IOException {
@@ -1098,5 +1101,416 @@ public class UserImportAPITest {
         UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithServicePointsResponseError() throws IOException {
+
+    mock.setMockJsonContent("mock_service_points_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_LIST_SERVICE_POINTS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_LIST_SERVICE_POINTS))
+      .body(FAILED_USERS, hasSize(1))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithNewPreferenceCreation() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDeliveryIsFalseAndFulfillmentSpecified () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(false)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must be not specified"))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDeliveryIsFalseAndAddressTypeSpecified () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(false)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "defaultDeliveryAddressTypeId must be not specified"))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceInvalidDefaultServicePoint () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(false)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717d")
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body("errors.parameters", hasSize(1))
+      .statusCode(422);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDeliveryIsTrueAndInvalidAddressType() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717d3")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532c")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body("errors.parameters", hasSize(1))
+      .statusCode(422);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDefaultServicePointNotFound () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(false)
+        .withDefaultServicePointId("00000000-0000-0000-0000-000000000000")
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultServicePointId value not in collection"))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDeliveryIsTrueAndAddressTypeNotFound () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("00000000-0000-0000-0000-000000000000")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value not in collection"))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserPreferenceDeliveryIsTrueAndFulfillmentIsNull () throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withFulfillment(null)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must not be null"))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateAndNewPreferenceCreation() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_new_preference_creation.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(false)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateAndExistingPreferenceUpdate() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_preference_update.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateWithNoPreference() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_no_user_preference.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+
   }
 }

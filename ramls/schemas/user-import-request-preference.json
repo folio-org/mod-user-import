@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request preference schema",
+  "properties": {
+    "id": {
+      "description": "Unique request preference ID",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
+    },
+    "userId": {
+      "description": "UUID of user associated with this request preference",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
+    },
+    "holdShelf": {
+      "description": "Whether 'Hold Shelf' option is available to the user.",
+      "type": "boolean",
+      "enum": [true],
+      "example": true
+    },
+    "delivery": {
+      "description": "Whether 'Delivery' option is available to the user.",
+      "type": "boolean",
+      "default": false,
+      "example": false
+    },
+    "defaultServicePointId": {
+      "description": "UUID of default service point for 'Hold Shelf' option",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
+    },
+    "defaultDeliveryAddressTypeId": {
+      "description": "UUID of user's address type",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
+    },
+    "fulfillment": {
+      "description": "Preferred fulfillment type. Possible values are 'Delivery', 'Hold Shelf'",
+      "type": "string",
+      "enum":["Delivery", "Hold Shelf"],
+      "example": "Delivery"
+    },
+    "metadata": {
+      "description": "Metadata about creation and changes to request preference",
+      "$ref": "../raml-util/schemas/metadata.schema",
+      "readonly": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "holdShelf",
+    "delivery"
+  ]
+}
