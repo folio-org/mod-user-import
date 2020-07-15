@@ -2,6 +2,7 @@ package org.folio.rest.util;
 
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_CREATE_USER_PREFERENCE;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_DELETE_USER_PREFERENCE;
+import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_GET_USER_PREFERENCE;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_UPDATE_USER_PREFERENCE;
 import static org.folio.rest.util.UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION;
 import static org.folio.rest.util.UserImportAPIConstants.REQUEST_PREFERENCES_ENDPOINT;
@@ -34,7 +35,7 @@ public class UserPreferenceService {
 
   public static Future<RequestPreference> get(Map<String, String> okapiHeaders, String userId){
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT , "?query=userId=="+ userId );
-    return RequestManager.get(RequestManager.getHttpClient(okapiHeaders), okapiHeaders, query, "Failed to get user preferences")
+    return RequestManager.get(RequestManager.getHttpClient(okapiHeaders), okapiHeaders, query, FAILED_TO_GET_USER_PREFERENCE)
       .map(mapToRequestPreference())
       .otherwiseEmpty();
   }

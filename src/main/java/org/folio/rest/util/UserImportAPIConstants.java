@@ -14,6 +14,7 @@ public class UserImportAPIConstants {
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
   public static final String FAILED_TO_LIST_PATRON_GROUPS = "Failed to list patron groups.";
   public static final String FAILED_TO_LIST_SERVICE_POINTS = "Failed to list service points.";
+  public static final String FAILED_TO_GET_USER_PREFERENCE = "Failed to get user preference.";
   public static final String FAILED_TO_CREATE_USER_PREFERENCE = "Failed to create new user preference.";
   public static final String FAILED_TO_UPDATE_USER_PREFERENCE = "Failed to update user preference.";
   public static final String FAILED_TO_DELETE_USER_PREFERENCE = "Failed to delete user preference.";
