@@ -503,8 +503,10 @@ public class UserImportAPI implements UserImport {
         if (Objects.nonNull(result)){
           RequestPreference requestPreference = userImportData.getRequestPreference().get(user.getUsername());
           if (Objects.nonNull(requestPreference)) {
+            requestPreference.setId(result.getId());
+            requestPreference.setUserId(result.getUserId());
             return UserPreferenceService.validate(requestPreference, userImportData)
-              .compose(o -> UserPreferenceService.update(okapiHeaders, result).mapEmpty());
+              .compose(o -> UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty());
           } else {
             return UserPreferenceService.delete(okapiHeaders, result.getId()).mapEmpty();
           }

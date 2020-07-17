@@ -1322,7 +1322,7 @@ public class UserImportAPITest {
       new RequestPreference()
         .withHoldShelf(RequestPreference.HoldShelf.TRUE)
         .withDelivery(false)
-        .withDefaultServicePointId("00000000-0000-0000-0000-000000000000")
+        .withDefaultServicePointId("00000000-0000-1000-a000-000000000000")
     );
     users.add(user);
 
@@ -1340,7 +1340,7 @@ public class UserImportAPITest {
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultServicePointId value not in collection"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultServicePointId value does not exist"))
       .statusCode(200);
   }
 
@@ -1355,7 +1355,7 @@ public class UserImportAPITest {
         .withHoldShelf(RequestPreference.HoldShelf.TRUE)
         .withDelivery(true)
         .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
-        .withDefaultDeliveryAddressTypeId("00000000-0000-0000-0000-000000000000")
+        .withDefaultDeliveryAddressTypeId("11111111-1111-1111-b111-111111111111")
         .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
     );
     users.add(user);
@@ -1374,7 +1374,7 @@ public class UserImportAPITest {
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value not in collection"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value does not exist"))
       .statusCode(200);
   }
 

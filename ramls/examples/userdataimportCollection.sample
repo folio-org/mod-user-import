@@ -21,6 +21,13 @@
       },
       "customFields": {
         "scope_1": "Design"
+      },
+      "requestPreference": {
+        "holdShelf": true,
+        "delivery": true,
+        "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
+        "defaultDeliveryAddressTypeId": "11111111-1111-1111-b111-111111111111",
+        "fulfillment": "Delivery"
       }
     }
   ],
