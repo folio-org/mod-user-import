@@ -165,6 +165,11 @@
       "description": "Object that contains custom field",
       "type": "object",
       "additionalProperties": true
+    },
+    "requestPreference": {
+      "description": "User request preferences",
+      "type": "object",
+      "$ref": "user-import-request-preference.json"
     }
   },
   "additionalProperties": false,

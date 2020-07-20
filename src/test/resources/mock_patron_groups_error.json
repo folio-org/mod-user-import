@@ -43,6 +43,26 @@
       "sendData": {}
     },
     {
+      "url": "/service-points",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "servicepoints": [{
+          "id": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+          "name": "Test one"
+        },
+          {
+            "id": "b3e8cd45-dd4b-477c-b194-23b9a3afe4cc",
+            "name": "Test two"
+          },
+          {
+            "id": "179c85ac-aef3-4466-8310-30094bc750ce",
+            "name": "Test three"
+          }
+        ]
+      }
+    },
+    {
       "url": "/groups?limit=2147483647",
       "method": "get",
       "status": 500,

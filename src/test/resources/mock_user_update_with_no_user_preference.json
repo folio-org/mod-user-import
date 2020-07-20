@@ -95,48 +95,93 @@
       }
     },
     {
-      "url": "/users?query=externalSystemId%3D%3D%28amy_cabble%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%3D%28user_update%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {
-        "users": [],
-        "totalRecords": 0
+        "users": [{
+          "id": "58512926-9a29-483b-b801-d36aced855d3",
+          "externalSystemId": "user_update",
+          "personal": {
+            "firstName": "User",
+            "lastName": "Update",
+            "email": "user_update@user.org",
+            "preferredContactTypeId": "email"
+          },
+          "barcode": "89101112",
+          "username": "user_update",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
       },
       "receivedPath": "",
       "sendData": {}
     },
     {
-      "url": "/users",
-      "method": "post",
-      "status": 201,
+      "url": "/users/58512926-9a29-483b-b801-d36aced855d3",
+      "method": "put",
+      "status": 204,
       "receivedData": {
-        "id": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
+        "id": "58512926-9a29-483b-b801-d36aced855d3",
         "proxyFor": [],
-        "externalSystemId": "amy_cabble",
-        "barcode": "1234567",
-        "username": "amy_cabble",
+        "externalSystemId": "user_update",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Update",
+          "preferredFirstName": "Preferred User",
+          "email": "user_update@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "89101112",
+        "username": "user_update",
         "active": true,
         "patronGroup": "undergrad"
       },
       "receivedPath": "",
       "sendData": {
-        "externalSystemId": "amy_cabble",
-        "barcode": "1234567",
-        "username": "amy_cabble",
+        "externalSystemId": "user_update",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Update",
+          "email": "user_update@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "89101112",
+        "username": "user_update",
         "active": true,
         "patronGroup": "undergrad"
       }
     },
     {
-      "url": "/perms/users",
-      "method": "post",
-      "status": 201,
-      "receivedData": {},
-      "receivedPath": "",
-      "sendData": {
-        "userId": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
-        "permissions": []
+      "url": "/request-preference-storage/request-preference?query=userId==58512926-9a29-483b-b801-d36aced855d3",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "requestPreferences": [
+          {
+            "id": "9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
+            "userId": "58512926-9a29-483b-b801-d36aced855d3",
+            "holdShelf": true,
+            "delivery": false,
+            "defaultServicePointId": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+            "metadata": {
+              "createdDate": "2020-07-09T18:15:05.005+0000",
+              "createdByUserId": "58512926-9a29-483b-b801-d36aced855d3",
+              "updatedDate": "2020-09-14T18:15:05.005+0000",
+              "updatedByUserId": "58512926-9a29-483b-b801-d36aced855d3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "/request-preference-storage/request-preference/9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
+      "method": "delete",
+      "status": 204,
+      "receivedData": {
       }
     }
-   ]
+  ]
 }
