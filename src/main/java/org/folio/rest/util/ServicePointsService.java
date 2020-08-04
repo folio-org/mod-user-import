@@ -13,7 +13,7 @@ import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 public class ServicePointsService {
 
   public static final String SERVICE_POINTS_ARRAY_KEY = "servicepoints";
-  public static final String SERVICE_POINT_OBJECT_KEY = "name";
+  public static final String SERVICE_POINT_NAME_OBJECT_KEY = "name";
 
   private ServicePointsService(){}
 
@@ -23,6 +23,6 @@ public class ServicePointsService {
   }
 
   private static Map<String, String> extractServicePoints(JsonObject result){
-    return JsonObjectUtil.extractMap(result, SERVICE_POINTS_ARRAY_KEY, SERVICE_POINT_OBJECT_KEY);
+    return JsonObjectUtil.extractMap(result, SERVICE_POINTS_ARRAY_KEY, SERVICE_POINT_NAME_OBJECT_KEY);
   }
 }

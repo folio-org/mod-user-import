@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static org.folio.rest.util.AddressTypeManager.getAddressTypes;
+import static org.folio.rest.util.DepartmentsManager.getDepartments;
 import static org.folio.rest.util.HttpClientUtil.createHeaders;
 import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
 import static org.folio.rest.util.PatronGroupManager.getPatronGroups;
@@ -115,8 +116,9 @@ public class UserImportAPI implements UserImport {
     Future<Map<String, String>> addressTypesFuture = getAddressTypes(httpClient, okapiHeaders);
     Future<Map<String, String>> patronGroupsFuture = getPatronGroups(httpClient, okapiHeaders);
     Future<Map<String, String>> servicePointsFuture = getServicePoints(httpClient, okapiHeaders);
+    Future<Map<String, String>> departmentsFuture = getDepartments(httpClient, okapiHeaders);
 
-    return CompositeFuture.all(addressTypesFuture, patronGroupsFuture, servicePointsFuture)
+    return CompositeFuture.all(addressTypesFuture, patronGroupsFuture, servicePointsFuture, departmentsFuture)
       .map(CompositeFuture::<Map<String, String>>list)
       .map(getUserImportData(userCollection))
       .compose(importData -> importUsers(importData, httpClient, okapiHeaders, future));
@@ -129,10 +131,12 @@ public class UserImportAPI implements UserImport {
         Map<String, String> addressTypes = list.get(0);
         Map<String, String> patronGroups = list.get(1);
         Map<String, String> servicePoints = list.get(2);
+        Map<String, String> departments = list.get(3);
         final UserImportData userImportData = new UserImportData(userCollection);
         userImportData.setAddressTypes(addressTypes);
         userImportData.setPatronGroups(patronGroups);
         userImportData.setServicePoints(servicePoints);
+        userImportData.setDepartments(departments);
         return userImportData;
       };
   }

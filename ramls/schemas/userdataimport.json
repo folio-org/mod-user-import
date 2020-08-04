@@ -29,7 +29,7 @@
       "type": "string"
     },
     "patronGroup": {
-      "description": "A UUID corresponding to the group the user belongs to",
+      "description": "A name of the corresponding group the user belongs to",
       "type": "string"
     },
     "meta": {
@@ -116,7 +116,7 @@
                 "type": "string"
               },
               "addressTypeId": {
-                "description": "A UUID that corresponds with an address type object",
+                "description": "A name of the corresponding address type",
                 "type": "string"
               },
               "primaryAddress": {
@@ -170,6 +170,14 @@
       "description": "User request preferences",
       "type": "object",
       "$ref": "user-import-request-preference.json"
+    },
+    "departments": {
+      "description": "Names of the corresponding departments the user belongs to",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": false,

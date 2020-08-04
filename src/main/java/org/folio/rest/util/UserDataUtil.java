@@ -2,13 +2,18 @@ package org.folio.rest.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import com.google.common.base.Strings;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.rest.jaxrs.model.Address;
@@ -51,28 +56,22 @@ public class UserDataUtil {
   }
 
   public static void updateUserData(User user, UserImportData userImportData) {
-    if (!Strings.isNullOrEmpty(userImportData.getSourceType())) {
+    if (StringUtils.isNotEmpty(userImportData.getSourceType())) {
       user.setExternalSystemId(userImportData.getSourceType() + "_" + user.getExternalSystemId());
     }
-    if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
-      user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
-    } else {
-      user.setPatronGroup(null);
+    setPatronGroup(user, userImportData);
+    setPersonalData(user, userImportData);
+    setDepartments(user, userImportData);
+  }
+
+  public static void setPersonalData(User user, UserImportData userImportData) {
+    if (user.getPersonal() != null) {
+      setAddressTypes(user, userImportData);
+      setPreferredContactType(user);
     }
-    if (user.getPersonal() == null) {
-      return;
-    }
-    if (user.getPersonal().getAddresses() != null
-      && !user.getPersonal().getAddresses().isEmpty()) {
-      List<Address> updatedAddresses = new ArrayList<>();
-      for (Address address : user.getPersonal().getAddresses()) {
-        if (address.getAddressTypeId() != null && userImportData.getAddressTypes().containsKey(address.getAddressTypeId())) {
-          address.setAddressTypeId(userImportData.getAddressTypes().get(address.getAddressTypeId()));
-          updatedAddresses.add(address);
-        }
-      }
-      user.getPersonal().setAddresses(updatedAddresses);
-    }
+  }
+
+  private static void setPreferredContactType(User user) {
     if (user.getPersonal().getPreferredContactTypeId() != null
       && preferredContactTypeIds.containsKey(user.getPersonal().getPreferredContactTypeId().toLowerCase())) {
       user.getPersonal()
@@ -80,6 +79,41 @@ public class UserDataUtil {
           preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
     } else {
       user.getPersonal().setPreferredContactTypeId(null);
+    }
+  }
+
+  private static void setAddressTypes(User user, UserImportData userImportData) {
+    Map<String, String> addressTypes = userImportData.getAddressTypes();
+    List<Address> addressList = user.getPersonal().getAddresses();
+    if (CollectionUtils.isNotEmpty(addressList)) {
+      List<Address> updatedAddresses = new ArrayList<>();
+      addressList.stream()
+        .filter(address -> address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId()))
+        .forEach(address -> {
+          address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
+          updatedAddresses.add(address);
+        });
+      user.getPersonal().setAddresses(updatedAddresses);
+    }
+  }
+
+  private static void setPatronGroup(User user, UserImportData userImportData) {
+    if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
+      user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
+    } else {
+      user.setPatronGroup(null);
+    }
+  }
+
+  private static void setDepartments(User user, UserImportData userImportData) {
+    Set<String> departments = user.getDepartments();
+    Map<String, String> existingDepartments = userImportData.getDepartments();
+    if (CollectionUtils.isNotEmpty(departments)){
+      Set<String> updatedDepartments = new HashSet<>();
+      departments.stream()
+        .filter(existingDepartments::containsKey)
+        .forEach(department -> updatedDepartments.add(existingDepartments.get(department)));
+      user.setDepartments(updatedDepartments);
     }
   }
 

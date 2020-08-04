@@ -16,6 +16,7 @@ public class UserImportData {
   private Map<String, String> patronGroups;
   private Map<String, String> addressTypes;
   private Map<String, String> servicePoints;
+  private Map<String, String> departments;
   private List<User> users;
   private Map<String, RequestPreference> requestPreferences;
 
@@ -77,5 +78,13 @@ public class UserImportData {
 
   public Map<String, RequestPreference> getRequestPreference() {
     return requestPreferences;
+  }
+
+  public Map<String, String> getDepartments() {
+    return departments;
+  }
+
+  public void setDepartments(Map<String, String> departments) {
+    this.departments = departments;
   }
 }

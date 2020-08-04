@@ -15,7 +15,7 @@ import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 public class PatronGroupManager {
 
   private static final String USER_GROUPS_ARRAY_KEY = "usergroups";
-  private static final String USER_GROUP_OBJECT_KEY = "group";
+  private static final String USER_GROUP_NAME_OBJECT_KEY = "group";
 
   private PatronGroupManager() {}
 
@@ -26,6 +26,6 @@ public class PatronGroupManager {
   }
 
   private static Map<String, String> extractPatronGroups(JsonObject result) {
-    return JsonObjectUtil.extractMap(result, USER_GROUPS_ARRAY_KEY, USER_GROUP_OBJECT_KEY);
+    return JsonObjectUtil.extractMap(result, USER_GROUPS_ARRAY_KEY, USER_GROUP_NAME_OBJECT_KEY);
   }
 }
