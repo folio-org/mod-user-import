@@ -25,7 +25,7 @@
       "requestPreference": {
         "holdShelf": true,
         "delivery": false,
-        "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
+        "defaultServicePointId": "00000000-0000-1000-a000-000000000000"
       }
     }
   ],
