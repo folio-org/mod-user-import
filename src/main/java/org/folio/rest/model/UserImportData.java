@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
@@ -37,11 +38,11 @@ public class UserImportData {
   }
 
   public void setPatronGroups(Map<String, String> patronGroups) {
-    this.patronGroups = patronGroups;
+    this.patronGroups = new CaseInsensitiveMap<>(patronGroups);
   }
 
   public void setAddressTypes(Map<String, String> addressTypes) {
-    this.addressTypes = addressTypes;
+    this.addressTypes = new CaseInsensitiveMap<>(addressTypes);
   }
 
   public boolean getDeactivateMissingUsers() {
@@ -69,7 +70,7 @@ public class UserImportData {
   }
 
   public void setServicePoints(Map<String, String> servicePoints) {
-    this.servicePoints = servicePoints;
+    this.servicePoints = new CaseInsensitiveMap<>(servicePoints);
   }
 
   public List<User> getUsers() {
@@ -85,6 +86,6 @@ public class UserImportData {
   }
 
   public void setDepartments(Map<String, String> departments) {
-    this.departments = departments;
+    this.departments = new CaseInsensitiveMap<>(departments);
   }
 }

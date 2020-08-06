@@ -31,9 +31,8 @@
       "$ref": "../raml-util/schemas/uuid.schema"
     },
     "defaultDeliveryAddressTypeId": {
-      "description": "UUID of user's address type",
-      "type": "string",
-      "$ref": "../raml-util/schemas/uuid.schema"
+      "description": "Name of user's address type",
+      "type": "string"
     },
     "fulfillment": {
       "description": "Preferred fulfillment type. Possible values are 'Delivery', 'Hold Shelf'",

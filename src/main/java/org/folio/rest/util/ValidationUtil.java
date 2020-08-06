@@ -11,7 +11,7 @@ public class ValidationUtil {
 
   private static final String MUST_NOT_BE_NULL_FORMAT = "%s must not be null";
   private static final String MUST_BE_NULL_FORMAT = "%s must be not specified";
-  private static final String VALUE_DOES_NOT_EXIST_FORMAT = "Provided %s value does not exist";
+  private static final String VALUE_DOES_NOT_EXIST_FORMAT = "Provided %s value does not exist in %s";
 
   public static void checkIsNotNull(String paramName, Object value) {
     if (Objects.isNull(value)) {
@@ -27,10 +27,10 @@ public class ValidationUtil {
     }
   }
 
-  public static void checkValueInStringCollection(String paramName, String value, Collection<String> collection) {
+  public static void checkValueInStringCollection(String paramName, String collectionName, String value, Collection<String> collection) {
     if (!collection.contains(value)) {
       throw new ValidationException(
-        String.format(VALUE_DOES_NOT_EXIST_FORMAT, paramName));
+        String.format(VALUE_DOES_NOT_EXIST_FORMAT, paramName, collectionName));
     }
   }
 }

@@ -18,6 +18,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.folio.rest.jaxrs.model.User;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.jaxrs.model.RequestPreference;
@@ -61,10 +62,10 @@ public class UserPreferenceService {
     return RequestManager.post(okapiHeaders, REQUEST_PREFERENCES_ENDPOINT, RequestPreference.class, entity, FAILED_TO_CREATE_USER_PREFERENCE);
   }
 
-  public static Future<Void> validate(@NotNull RequestPreference entity, @NotNull UserImportData importData) {
+  public static Future<Void> validate(@NotNull RequestPreference entity, @NotNull UserImportData importData, User user) {
     Promise<Void> promise = Promise.promise();
     try {
-      UserRequestManagerValidator.validate(entity, importData.getAddressTypes(), importData.getServicePoints());
+      UserRequestManagerValidator.validate(entity, importData, user);
       promise.complete();
     } catch (ValidationException ex){
       LOGGER.error(FAILED_USER_PREFERENCE_VALIDATION + ex.getMessage());

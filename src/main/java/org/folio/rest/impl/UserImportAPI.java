@@ -49,6 +49,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.rest.util.UserDataUtil;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.annotations.Validate;
@@ -493,8 +494,11 @@ public class UserImportAPI implements UserImport {
     RequestPreference requestPreference = userImportData.getRequestPreference().get(user.getUsername());
     if (Objects.nonNull(requestPreference)) {
       requestPreference.setUserId(user.getId());
-      return UserPreferenceService.validate(requestPreference, userImportData)
-        .compose(o -> UserPreferenceService.create(okapiHeaders, requestPreference));
+      return UserPreferenceService.validate(requestPreference, userImportData, user)
+        .compose(o -> {
+          UserDataUtil.updateUserPreference(requestPreference, userImportData);
+          return UserPreferenceService.create(okapiHeaders, requestPreference);
+        });
     } else {
       return Future.succeededFuture().mapEmpty();
     }
@@ -509,8 +513,11 @@ public class UserImportAPI implements UserImport {
           if (Objects.nonNull(requestPreference)) {
             requestPreference.setId(result.getId());
             requestPreference.setUserId(result.getUserId());
-            return UserPreferenceService.validate(requestPreference, userImportData)
-              .compose(o -> UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty());
+            return UserPreferenceService.validate(requestPreference, userImportData, user)
+              .compose(o -> {
+                UserDataUtil.updateUserPreference(requestPreference, userImportData);
+                return UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty();
+              });
           } else {
             return UserPreferenceService.delete(okapiHeaders, result.getId()).mapEmpty();
           }

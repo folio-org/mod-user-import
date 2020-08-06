@@ -172,11 +172,12 @@
       "$ref": "user-import-request-preference.json"
     },
     "departments": {
-      "description": "Names of the corresponding departments the user belongs to",
+      "description": "A UUIDs corresponding to the departments the user belongs to",
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "type": "string"
+        "type": "string",
+        "$ref": "../raml-util/schemas/uuid.schema"
       }
     }
   },
