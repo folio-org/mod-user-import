@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static org.folio.rest.util.AddressTypeManager.getAddressTypes;
+import static org.folio.rest.util.DepartmentsManager.getDepartments;
 import static org.folio.rest.util.HttpClientUtil.createHeaders;
 import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
 import static org.folio.rest.util.PatronGroupManager.getPatronGroups;
@@ -48,6 +49,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.rest.util.UserDataUtil;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.annotations.Validate;
@@ -115,8 +117,9 @@ public class UserImportAPI implements UserImport {
     Future<Map<String, String>> addressTypesFuture = getAddressTypes(httpClient, okapiHeaders);
     Future<Map<String, String>> patronGroupsFuture = getPatronGroups(httpClient, okapiHeaders);
     Future<Map<String, String>> servicePointsFuture = getServicePoints(httpClient, okapiHeaders);
+    Future<Map<String, String>> departmentsFuture = getDepartments(httpClient, okapiHeaders);
 
-    return CompositeFuture.all(addressTypesFuture, patronGroupsFuture, servicePointsFuture)
+    return CompositeFuture.all(addressTypesFuture, patronGroupsFuture, servicePointsFuture, departmentsFuture)
       .map(CompositeFuture::<Map<String, String>>list)
       .map(getUserImportData(userCollection))
       .compose(importData -> importUsers(importData, httpClient, okapiHeaders, future));
@@ -129,10 +132,12 @@ public class UserImportAPI implements UserImport {
         Map<String, String> addressTypes = list.get(0);
         Map<String, String> patronGroups = list.get(1);
         Map<String, String> servicePoints = list.get(2);
+        Map<String, String> departments = list.get(3);
         final UserImportData userImportData = new UserImportData(userCollection);
         userImportData.setAddressTypes(addressTypes);
         userImportData.setPatronGroups(patronGroups);
         userImportData.setServicePoints(servicePoints);
+        userImportData.setDepartments(departments);
         return userImportData;
       };
   }
@@ -489,8 +494,11 @@ public class UserImportAPI implements UserImport {
     RequestPreference requestPreference = userImportData.getRequestPreference().get(user.getUsername());
     if (Objects.nonNull(requestPreference)) {
       requestPreference.setUserId(user.getId());
-      return UserPreferenceService.validate(requestPreference, userImportData)
-        .compose(o -> UserPreferenceService.create(okapiHeaders, requestPreference));
+      return UserPreferenceService.validate(requestPreference, userImportData, user)
+        .compose(o -> {
+          UserDataUtil.updateUserPreference(requestPreference, userImportData);
+          return UserPreferenceService.create(okapiHeaders, requestPreference);
+        });
     } else {
       return Future.succeededFuture().mapEmpty();
     }
@@ -505,8 +513,11 @@ public class UserImportAPI implements UserImport {
           if (Objects.nonNull(requestPreference)) {
             requestPreference.setId(result.getId());
             requestPreference.setUserId(result.getUserId());
-            return UserPreferenceService.validate(requestPreference, userImportData)
-              .compose(o -> UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty());
+            return UserPreferenceService.validate(requestPreference, userImportData, user)
+              .compose(o -> {
+                UserDataUtil.updateUserPreference(requestPreference, userImportData);
+                return UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty();
+              });
           } else {
             return UserPreferenceService.delete(okapiHeaders, result.getId()).mapEmpty();
           }

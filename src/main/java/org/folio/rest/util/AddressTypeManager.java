@@ -13,7 +13,7 @@ import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 public class AddressTypeManager {
 
   private static final String ADDRESS_TYPES_ARRAY_KEY = "addressTypes";
-  private static final String ADDRESS_TYPE_OBJECT_KEY = "addressType";
+  private static final String ADDRESS_TYPE_NAME_OBJECT_KEY = "addressType";
 
   private AddressTypeManager() {}
 
@@ -23,6 +23,6 @@ public class AddressTypeManager {
   }
 
   private static Map<String, String> extractAddressTypes(JsonObject result) {
-    return JsonObjectUtil.extractMap(result, ADDRESS_TYPES_ARRAY_KEY, ADDRESS_TYPE_OBJECT_KEY);
+    return JsonObjectUtil.extractMap(result, ADDRESS_TYPES_ARRAY_KEY, ADDRESS_TYPE_NAME_OBJECT_KEY);
   }
 }

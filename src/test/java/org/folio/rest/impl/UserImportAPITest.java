@@ -46,6 +46,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.tools.client.test.HttpClientMock2;
 import org.folio.rest.util.UserImportAPIConstants;
+import org.mockito.internal.util.collections.Sets;
 
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
@@ -1142,12 +1143,22 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Returns")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
     user.setRequestPreference(
       new RequestPreference()
         .withHoldShelf(RequestPreference.HoldShelf.TRUE)
         .withDelivery(true)
         .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
-        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withDefaultDeliveryAddressTypeId("Returns")
         .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
     );
     users.add(user);
@@ -1290,8 +1301,8 @@ public class UserImportAPITest {
       new RequestPreference()
         .withHoldShelf(RequestPreference.HoldShelf.TRUE)
         .withDelivery(true)
-        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717d3")
-        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532c")
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717z")
+        .withDefaultDeliveryAddressTypeId("Returns")
         .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
     );
     users.add(user);
@@ -1453,12 +1464,22 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Returns")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
     user.setRequestPreference(
       new RequestPreference()
         .withHoldShelf(RequestPreference.HoldShelf.TRUE)
         .withDelivery(true)
         .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
-        .withDefaultDeliveryAddressTypeId("71628bf4-1962-4dff-a8f2-11108ab532cc")
+        .withDefaultDeliveryAddressTypeId("Returns")
         .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
     );
     users.add(user);
@@ -1481,6 +1502,50 @@ public class UserImportAPITest {
       .body(UPDATED_RECORDS, equalTo(1))
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithUserUpdateAndWrongPreferenceAddressType() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_preference_update.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Returns")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
+    user.setRequestPreference(
+      new RequestPreference()
+        .withHoldShelf(RequestPreference.HoldShelf.TRUE)
+        .withDelivery(true)
+        .withDefaultServicePointId("59646a99-4074-4ee5-bfd4-86f3fc7717da")
+        .withDefaultDeliveryAddressTypeId("Claim")
+        .withFulfillment(RequestPreference.Fulfillment.DELIVERY)
+    );
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value does not exist in user addresses collection"))
       .statusCode(200);
   }
 
@@ -1511,6 +1576,98 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
+  }
 
+  @Test
+  public void testImportWithDepartmentsResponseError() throws IOException {
+
+    mock.setMockJsonContent("mock_departments_error.json");
+
+    List<User> users = new ArrayList<>();
+    users.add(generateUser("1234567", "Amy", "Cabble", null));
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS))
+      .body(FAILED_USERS, hasSize(1))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportWithDepartmentsOnNewUserCreation() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_existng_department.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("Accounting"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportDepartmentsOnUserUpdate() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_existing_departments.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    user.setDepartments(Sets.newSet("Accounting", "History"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
   }
 }

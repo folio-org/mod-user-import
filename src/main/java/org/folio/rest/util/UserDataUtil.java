@@ -2,25 +2,30 @@ package org.folio.rest.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.google.common.base.Strings;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.model.UserMappingFailedException;
+import org.jetbrains.annotations.NotNull;
 
 public class UserDataUtil {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserDataUtil.class);
 
-  private static final Map<String, String> preferredContactTypeIds = new HashMap<>();
+  private static final Map<String, String> preferredContactTypeIds = new CaseInsensitiveMap<>();
 
   static {
     preferredContactTypeIds.put("mail", "001");
@@ -30,8 +35,7 @@ public class UserDataUtil {
     preferredContactTypeIds.put("mobile", "005");
   }
 
-  private UserDataUtil() {
-  }
+  private UserDataUtil() { }
 
   public static Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
     Map<String, User> existingUsers = new HashMap<>();
@@ -51,35 +55,74 @@ public class UserDataUtil {
   }
 
   public static void updateUserData(User user, UserImportData userImportData) {
-    if (!Strings.isNullOrEmpty(userImportData.getSourceType())) {
+    if (StringUtils.isNotEmpty(userImportData.getSourceType())) {
       user.setExternalSystemId(userImportData.getSourceType() + "_" + user.getExternalSystemId());
     }
-    if (user.getPatronGroup() != null && userImportData.getPatronGroups().containsKey(user.getPatronGroup())) {
-      user.setPatronGroup(userImportData.getPatronGroups().get(user.getPatronGroup()));
-    } else {
-      user.setPatronGroup(null);
+    setPatronGroup(user, userImportData);
+    setPersonalData(user, userImportData);
+    setDepartments(user, userImportData);
+  }
+
+  public static void updateUserPreference(RequestPreference preference, UserImportData userImportData){
+    setPreferenceAddressType(preference, userImportData);
+  }
+
+  private static void setPersonalData(User user, UserImportData userImportData) {
+    if (user.getPersonal() != null) {
+      setAddressTypes(user, userImportData);
+      setPreferredContactType(user);
     }
-    if (user.getPersonal() == null) {
-      return;
-    }
-    if (user.getPersonal().getAddresses() != null
-      && !user.getPersonal().getAddresses().isEmpty()) {
-      List<Address> updatedAddresses = new ArrayList<>();
-      for (Address address : user.getPersonal().getAddresses()) {
-        if (address.getAddressTypeId() != null && userImportData.getAddressTypes().containsKey(address.getAddressTypeId())) {
-          address.setAddressTypeId(userImportData.getAddressTypes().get(address.getAddressTypeId()));
-          updatedAddresses.add(address);
-        }
-      }
+  }
+
+  private static void setPreferredContactType(User user) {
+    String preferredContactTypeName = user.getPersonal().getPreferredContactTypeId();
+    user.getPersonal()
+      .setPreferredContactTypeId(preferredContactTypeIds.getOrDefault(preferredContactTypeName, null));
+  }
+
+  private static void setAddressTypes(User user, UserImportData userImportData) {
+    Map<String, String> addressTypes = userImportData.getAddressTypes();
+    List<Address> addressList = user.getPersonal().getAddresses();
+    if (CollectionUtils.isNotEmpty(addressList)) {
+      List<Address> updatedAddresses = getExistingAddresses(addressTypes, addressList);
       user.getPersonal().setAddresses(updatedAddresses);
     }
-    if (user.getPersonal().getPreferredContactTypeId() != null
-      && preferredContactTypeIds.containsKey(user.getPersonal().getPreferredContactTypeId().toLowerCase())) {
-      user.getPersonal()
-        .setPreferredContactTypeId(
-          preferredContactTypeIds.get(user.getPersonal().getPreferredContactTypeId().toLowerCase()));
-    } else {
-      user.getPersonal().setPreferredContactTypeId(null);
+  }
+
+  private static void setPreferenceAddressType(RequestPreference preference, UserImportData userImportData){
+    Map<String, String> addressTypes = userImportData.getAddressTypes();
+    String addressTypeName = preference.getDefaultDeliveryAddressTypeId();
+    String addressTypeId = addressTypes.getOrDefault(addressTypeName, null);
+    preference.setDefaultDeliveryAddressTypeId(addressTypeId);
+  }
+
+  @NotNull
+  private static List<Address> getExistingAddresses(Map<String, String> addressTypes, List<Address> addressList) {
+    List<Address> updatedAddresses = new ArrayList<>();
+    addressList.stream()
+      .filter(address -> address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId()))
+      .forEach(address -> {
+        address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
+        updatedAddresses.add(address);
+      });
+    return updatedAddresses;
+  }
+
+  private static void setPatronGroup(User user, UserImportData userImportData) {
+    Map<String, String> patronGroups = userImportData.getPatronGroups();
+    String patronGroupName = user.getPatronGroup();
+    user.setPatronGroup(patronGroups.getOrDefault(patronGroupName, null));
+  }
+
+  private static void setDepartments(User user, UserImportData userImportData) {
+    Set<String> departments = user.getDepartments();
+    Map<String, String> existingDepartments = userImportData.getDepartments();
+    if (CollectionUtils.isNotEmpty(departments)){
+      Set<String> updatedDepartments = new HashSet<>();
+      departments.stream()
+        .filter(existingDepartments::containsValue)
+        .forEach(updatedDepartments::add);
+      user.setDepartments(updatedDepartments);
     }
   }
 

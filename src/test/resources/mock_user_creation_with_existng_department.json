@@ -135,37 +135,20 @@
         "id": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
         "proxyFor": [],
         "externalSystemId": "amy_cabble",
-        "personal": {
-          "firstName": "Amy",
-          "lastName": "Cabble",
-          "email": "amy_cabble@user.org",
-          "preferredContactTypeId": "email",
-          "addresses": []
-        },
         "barcode": "1234567",
         "username": "amy_cabble",
         "active": true,
         "patronGroup": "undergrad",
-        "customFields": {
-          "department_1": ["Development", "Design"]
-        }
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc"]
       },
       "receivedPath": "",
       "sendData": {
         "externalSystemId": "amy_cabble",
-        "personal": {
-          "firstName": "Amy",
-          "lastName": "Cabble",
-          "email": "amy_cabble@user.org",
-          "preferredContactTypeId": "email"
-        },
         "barcode": "1234567",
         "username": "amy_cabble",
         "active": true,
         "patronGroup": "undergrad",
-        "customFields": {
-          "department_1": ["Development", "Design"]
-        }
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc"]
       }
     },
     {
@@ -177,87 +160,6 @@
       "sendData": {
         "userId": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
         "permissions": []
-      }
-    },
-    {
-      "url": "/custom-fields?offset=0&limit=2147483647",
-      "method": "get",
-      "status": 200,
-      "receivedData": {
-        "customFields": [
-          {
-            "id": "25eba243-0d62-420a-b884-43f9aedbd216",
-            "name": "Department",
-            "refId": "department_1",
-            "type": "SINGLE_SELECT_DROPDOWN",
-            "entityType": "user",
-            "visible": true,
-            "required": true,
-            "order": 1,
-            "helpText": "Provide a Departmanet",
-            "selectField": {
-              "defaults": [],
-              "multiSelect": true,
-              "options": {
-                "values": null,
-                "sorted": []
-              }
-            },
-            "metadata": {
-              "createdDate": "2020-01-27T09:47:05.247+0000",
-              "createdByUserId": "7fb608d5-d252-5a3f-b36a-fa677dad4428",
-              "createdByUsername": "diku_admin",
-              "updatedDate": "2020-01-28T08:26:27.304+0000",
-              "updatedByUserId": "7fb608d5-d252-5a3f-b36a-fa677dad4428",
-              "updatedByUsername": "diku_admin"
-            }
-          }
-        ],
-        "totalRecords": 1
-      },
-      "receivedPath": "",
-      "sendData": {}
-    },
-    {
-      "url": "/custom-fields",
-      "method": "put",
-      "status": 204,
-      "receivedData": {
-      },
-      "receivedPath": "",
-      "sendData": {
-        "customFields": [
-          {
-            "id": "25eba243-0d62-420a-b884-43f9aedbd216",
-            "name": "Department",
-            "refId": "department_1",
-            "type": "SINGLE_SELECT_DROPDOWN",
-            "entityType": "user",
-            "visible": true,
-            "required": true,
-            "order": 1,
-            "helpText": "Provide a Departmanet",
-            "selectField": {
-              "defaults": [],
-              "multiSelect": true,
-              "options": {
-                "values": [
-                  "Design",
-                  "Development"
-                ],
-                "sorted": []
-              }
-            },
-            "metadata": {
-              "createdDate": "2020-01-27T09:47:05.247+0000",
-              "createdByUserId": "7fb608d5-d252-5a3f-b36a-fa677dad4428",
-              "createdByUsername": "diku_admin",
-              "updatedDate": "2020-01-28T08:26:27.304+0000",
-              "updatedByUserId": "7fb608d5-d252-5a3f-b36a-fa677dad4428",
-              "updatedByUsername": "diku_admin"
-            }
-          }
-        ]
       }
     }
   ]

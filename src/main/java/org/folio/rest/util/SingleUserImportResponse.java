@@ -24,7 +24,7 @@ public class SingleUserImportResponse {
       .withExternalSystemId(externalSystemId)
       .withUsername(username)
       .withStatus(UserRecordImportStatus.FAILED)
-      .swithErrorCode(errorCode)
+      .withErrorCode(errorCode)
       .withErrorMessage(errorMessage);
   }
 
@@ -68,7 +68,7 @@ public class SingleUserImportResponse {
     return this;
   }
 
-  public SingleUserImportResponse swithErrorCode(int errorCode) {
+  public SingleUserImportResponse withErrorCode(int errorCode) {
     this.errorCode = errorCode;
     return this;
   }

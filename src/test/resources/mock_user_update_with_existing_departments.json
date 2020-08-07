@@ -133,7 +133,8 @@
           "barcode": "89101112",
           "username": "user_update",
           "active": true,
-          "patronGroup": "undergrad"
+          "patronGroup": "undergrad",
+          "departments": ["99958431-4b48-49c6-bfae-911fe592addc"]
         }],
         "totalRecords": 1
       },
@@ -159,7 +160,8 @@
         "barcode": "89101112",
         "username": "user_update",
         "active": true,
-        "patronGroup": "undergrad"
+        "patronGroup": "undergrad",
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc", "7b9741bc-e891-4cde-8516-6a209307aed4"]
       },
       "receivedPath": "",
       "sendData": {
@@ -173,36 +175,8 @@
         "barcode": "89101112",
         "username": "user_update",
         "active": true,
-        "patronGroup": "undergrad"
-      }
-    },
-    {
-      "url": "/request-preference-storage/request-preference?query=userId==58512926-9a29-483b-b801-d36aced855d3",
-      "method": "get",
-      "status": 200,
-      "receivedData": {
-        "requestPreferences": [
-          {
-            "id": "9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
-            "userId": "58512926-9a29-483b-b801-d36aced855d3",
-            "holdShelf": true,
-            "delivery": false,
-            "defaultServicePointId": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
-            "metadata": {
-              "createdDate": "2020-07-09T18:15:05.005+0000",
-              "createdByUserId": "58512926-9a29-483b-b801-d36aced855d3",
-              "updatedDate": "2020-09-14T18:15:05.005+0000",
-              "updatedByUserId": "58512926-9a29-483b-b801-d36aced855d3"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "url": "/request-preference-storage/request-preference/9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
-      "method": "delete",
-      "status": 204,
-      "receivedData": {
+        "patronGroup": "undergrad",
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc", "7b9741bc-e891-4cde-8516-6a209307aed4"]
       }
     }
   ]

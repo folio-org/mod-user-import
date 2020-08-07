@@ -5,7 +5,7 @@
       "externalSystemId": "111_112",
       "barcode": "1234567",
       "active": true,
-      "patronGroup": "4bb563d9-3f9d-4e1e-8d1d-04e75666d68f",
+      "patronGroup": "staff",
       "meta": {
         "creation_date": "2016-11-05T0723",
         "last_login_date": ""
@@ -24,10 +24,8 @@
       },
       "requestPreference": {
         "holdShelf": true,
-        "delivery": true,
-        "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
-        "defaultDeliveryAddressTypeId": "11111111-1111-1111-b111-111111111111",
-        "fulfillment": "Delivery"
+        "delivery": false,
+        "defaultServicePointId": "00000000-0000-1000-a000-000000000000"
       }
     }
   ],
