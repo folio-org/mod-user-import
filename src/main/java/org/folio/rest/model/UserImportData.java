@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+
+import org.folio.rest.jaxrs.model.IncludedObjects;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
@@ -17,14 +19,15 @@ public class UserImportData {
   private Map<String, String> patronGroups;
   private Map<String, String> addressTypes;
   private Map<String, String> servicePoints;
-  private Map<String, String> departments;
   private List<User> users;
   private Map<String, RequestPreference> requestPreferences;
+  private IncludedObjects includedObjects;
 
   public UserImportData(UserdataimportCollection userdataCollection) {
     this.deactivateMissingUsers = Boolean.TRUE.equals(userdataCollection.getDeactivateMissingUsers());
     this.updateOnlyPresentFields = Boolean.TRUE.equals(userdataCollection.getUpdateOnlyPresentFields());
     this.sourceType = userdataCollection.getSourceType();
+    this.includedObjects = userdataCollection.getIncluded();
     parseUsersAndRequestPreferences(userdataCollection.getUsers());
   }
 
@@ -81,11 +84,7 @@ public class UserImportData {
     return requestPreferences;
   }
 
-  public Map<String, String> getDepartments() {
-    return departments;
-  }
-
-  public void setDepartments(Map<String, String> departments) {
-    this.departments = new CaseInsensitiveMap<>(departments);
+  public IncludedObjects getIncludedObjects() {
+    return includedObjects;
   }
 }

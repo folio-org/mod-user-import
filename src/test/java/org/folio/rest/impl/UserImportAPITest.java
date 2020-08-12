@@ -365,7 +365,7 @@ public class UserImportAPITest {
       .withUsers(users)
       .withTotalRecords(1);
 
-    given()
+    String s = given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
       .header(OKAPI_URL_HEADER)
@@ -379,7 +379,8 @@ public class UserImportAPITest {
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
-      .statusCode(200);
+      .statusCode(200).extract().asString();
+    System.out.println(s);
   }
 
   @Test
@@ -1617,7 +1618,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Accounting"));
+    user.setDepartments(Sets.newSet("99958431-4b48-49c6-bfae-911fe592addc"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
@@ -1647,7 +1648,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
-    user.setDepartments(Sets.newSet("Accounting", "History"));
+    user.setDepartments(Sets.newSet("99958431-4b48-49c6-bfae-911fe592addc", "7b9741bc-e891-4cde-8516-6a209307aed4"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()

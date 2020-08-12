@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.json.JsonObject;
@@ -15,6 +16,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
@@ -60,7 +62,6 @@ public class UserDataUtil {
     }
     setPatronGroup(user, userImportData);
     setPersonalData(user, userImportData);
-    setDepartments(user, userImportData);
   }
 
   public static void updateUserPreference(RequestPreference preference, UserImportData userImportData){
@@ -112,18 +113,6 @@ public class UserDataUtil {
     Map<String, String> patronGroups = userImportData.getPatronGroups();
     String patronGroupName = user.getPatronGroup();
     user.setPatronGroup(patronGroups.getOrDefault(patronGroupName, null));
-  }
-
-  private static void setDepartments(User user, UserImportData userImportData) {
-    Set<String> departments = user.getDepartments();
-    Map<String, String> existingDepartments = userImportData.getDepartments();
-    if (CollectionUtils.isNotEmpty(departments)){
-      Set<String> updatedDepartments = new HashSet<>();
-      departments.stream()
-        .filter(existingDepartments::containsValue)
-        .forEach(updatedDepartments::add);
-      user.setDepartments(updatedDepartments);
-    }
   }
 
   /*

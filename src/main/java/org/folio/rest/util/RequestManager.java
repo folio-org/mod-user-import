@@ -29,12 +29,13 @@ public class RequestManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RequestManager.class);
 
-  public static Future<JsonObject> get(HttpClientInterface httpClient, Map<String, String> okapiHeaders, String query,
+  public static Future<JsonObject> get(Map<String, String> okapiHeaders, String query,
                                        String failedMessage) {
     Promise<JsonObject> future = Promise.promise();
     Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
     LOGGER.info("Do GET request: {}",  query);
     try {
+      final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
       httpClient.request(query, headers)
         .whenComplete((response, ex) -> {
           if (ex != null) {
@@ -123,7 +124,7 @@ public class RequestManager {
     final String okapiURL = getOkapiUrl(okapiHeaders);
     final String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER));
 
-    return HttpClientFactory.getHttpClient(okapiURL, tenantId);
+    return HttpClientFactory.getHttpClient(okapiURL, tenantId, true);
   }
 
   private static boolean isSuccess(org.folio.rest.tools.client.Response response, Throwable ex) {

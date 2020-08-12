@@ -1,0 +1,26 @@
+stages:
+  - name: Build
+    steps:
+      - runScriptConfig:
+          image: maven:3-openjdk-8
+          shellScript: mvn package -DskipTests
+  - name: Build Docker with DIND
+    steps:
+      - publishImageConfig:
+          dockerfilePath: ./Dockerfile
+          buildContext: .
+          tag: docker.dev.folio.org/mod-user-import:spitfire-latest
+          pushRemote: true
+          registry: docker.dev.folio.org
+  - name: Deploy
+    steps:
+      - applyAppConfig:
+          catalogTemplate: p-9tp2k:spitfire-helmcharts-mod-user-import
+          version: 0.1.18
+          answers:
+            image.repository: docker.dev.folio.org/mod-user-import
+            image.tag: spitfire-latest
+          targetNamespace: spitfire
+          name: mod-user-import
+timeout: 60
+notification: {}

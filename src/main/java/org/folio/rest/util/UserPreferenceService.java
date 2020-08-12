@@ -36,7 +36,7 @@ public class UserPreferenceService {
 
   public static Future<RequestPreference> get(Map<String, String> okapiHeaders, String userId){
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT , "?query=userId=="+ userId );
-    return RequestManager.get(RequestManager.getHttpClient(okapiHeaders), okapiHeaders, query, FAILED_TO_GET_USER_PREFERENCE)
+    return RequestManager.get(okapiHeaders, query, FAILED_TO_GET_USER_PREFERENCE)
       .map(mapToRequestPreference())
       .otherwiseEmpty();
   }
