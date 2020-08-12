@@ -29,6 +29,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <raml-module-builder.version>29.3.0</raml-module-builder.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
+    <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
   </properties>
 
@@ -125,7 +126,6 @@
             </goals>
             <configuration>
               <mainClass>org.folio.rest.tools.GenerateRunner</mainClass>
-              <!-- <executable>java</executable> -->
               <cleanupDaemonThreads>false</cleanupDaemonThreads>
               <systemProperties>
                 <systemProperty>
@@ -136,7 +136,27 @@
                   <key>raml_files</key>
                   <value>${ramlfiles_path}</value>
                 </systemProperty>
+                <systemProperty>
+                  <key>schema_paths</key>
+                  <value>${jsonschema_paths}</value>
+                </systemProperty>
               </systemProperties>
+            </configuration>
+          </execution>
+          <execution>
+            <id>git submodule update</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>git</executable>
+              <arguments>
+                <argument>submodule</argument>
+                <argument>update</argument>
+                <argument>--init</argument>
+                <argument>--recursive</argument>
+              </arguments>
             </configuration>
           </execution>
         </executions>
