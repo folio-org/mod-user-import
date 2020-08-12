@@ -81,6 +81,28 @@
       "receivedData": "Internal server error",
       "receivedPath": "",
       "sendData": {}
+    },
+    {
+      "url": "/departments",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "departments": [
+          {
+            "id": "99958431-4b48-49c6-bfae-911fe592addc",
+            "name": "Accounting",
+            "code": "ACC",
+            "usageNumber": 0
+          },
+          {
+            "id": "7b9741bc-e891-4cde-8516-6a209307aed4",
+            "name": "History",
+            "code": "HIS",
+            "usageNumber": 0
+          }
+        ],
+        "totalRecords": 2
+      }
     }
   ]
 }

@@ -12,12 +12,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
 import io.vertx.core.Future;
 import io.vertx.core.impl.CompositeFutureImpl;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,6 +35,10 @@ public class DepartmentsManager {
       .map(User::getDepartments)
       .flatMap(Collection::stream)
       .collect(Collectors.toSet());
+
+    if  (importDepartmentsIds.isEmpty()) {
+      return Future.succeededFuture();
+    }
 
     Set<Department> includedDepartmentsData =
       userCollection.getIncluded() == null ? Collections.emptySet() : userCollection.getIncluded().getDepartments();
