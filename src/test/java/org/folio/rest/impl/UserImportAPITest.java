@@ -1585,7 +1585,9 @@ public class UserImportAPITest {
     mock.setMockJsonContent("mock_departments_error.json");
 
     List<User> users = new ArrayList<>();
-    users.add(generateUser("1234567", "Amy", "Cabble", null));
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("99958431-4b48-49c6-bfae-911fe592addc"));
+    users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
