@@ -26,12 +26,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataimportCollection;
+import org.folio.rest.model.UserImportData;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.Response;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
@@ -42,10 +41,10 @@ public final class CustomFieldsManager {
   private CustomFieldsManager() {
   }
 
-  public static Future<Void> checkAndUpdateCustomFields(Map<String, String> okapiHeaders,
-                                                        UserdataimportCollection userCollection, Vertx vertx) {
+  public static Future<Void> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders,
+                                                 Vertx vertx) {
     Future<Void> future = Future.future();
-    Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(userCollection);
+    Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(importData);
 
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
     HttpClientInterface httpClient = HttpClientFactory
@@ -71,9 +70,9 @@ public final class CustomFieldsManager {
   }
 
   @SuppressWarnings("unchecked")
-  private static Map<String, Set<String>> getCustomFieldsOptions(UserdataimportCollection userCollection) {
+  private static Map<String, Set<String>> getCustomFieldsOptions(UserImportData importData) {
     Map<String, Set<String>> customFieldsOptions = new HashMap<>();
-    userCollection.getUsers()
+    importData.getUsers()
       .stream()
       .map(User::getCustomFields)
       .filter(Objects::nonNull)

@@ -26,9 +26,21 @@
         "holdShelf": true,
         "delivery": false,
         "defaultServicePointId": "00000000-0000-1000-a000-000000000000"
-      }
+      },
+      "departments": [
+        "Accounting",
+        "Finance"
+      ]
     }
   ],
+  "included": {
+    "departments": [
+      {
+        "name": "Accounting",
+        "code": "ACC"
+      }
+    ]
+  },
   "totalRecords": 1,
   "deactivateMissingUsers": true,
   "updateOnlyPresentFields": false,

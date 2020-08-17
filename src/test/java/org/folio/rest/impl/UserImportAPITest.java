@@ -34,6 +34,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
+import org.folio.rest.jaxrs.model.Department;
+import org.folio.rest.jaxrs.model.IncludedObjects;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.junit.After;
 import org.junit.Before;
@@ -1584,7 +1586,9 @@ public class UserImportAPITest {
     mock.setMockJsonContent("mock_departments_error.json");
 
     List<User> users = new ArrayList<>();
-    users.add(generateUser("1234567", "Amy", "Cabble", null));
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("Accounting"));
+    users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
@@ -1669,5 +1673,106 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithDepartmentsCreation() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_new_department.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("Financial"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withIncluded(new IncludedObjects().withDepartments(
+        Sets.newSet(new Department().withName("Financial").withCode("FIN"))
+      ))
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithDepartmentsUpdating() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_update_department.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("Financial Accounting"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withIncluded(new IncludedObjects().withDepartments(
+        Sets.newSet(new Department().withName("Financial Accounting").withCode("ACC"))
+      ))
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportWithDepartmentsThatNotExisted() throws IOException {
+
+    mock.setMockJsonContent("mock_user_creation_with_new_department.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null);
+    user.setDepartments(Sets.newSet("Financial", "Chemistry"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(OKAPI_URL_HEADER)
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(ERROR, containsString("Departments do not exist in the system: [Chemistry, Financial]"))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString("Departments do not exist in the system: [Chemistry, Financial]"))
+      .body(FAILED_USERS, hasSize(1))
+      .statusCode(500);
   }
 }

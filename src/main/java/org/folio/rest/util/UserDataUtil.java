@@ -2,10 +2,11 @@ package org.folio.rest.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -13,13 +14,14 @@ import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
 import org.folio.rest.model.UserMappingFailedException;
-import org.jetbrains.annotations.NotNull;
 
 public class UserDataUtil {
 
@@ -63,7 +65,7 @@ public class UserDataUtil {
     setDepartments(user, userImportData);
   }
 
-  public static void updateUserPreference(RequestPreference preference, UserImportData userImportData){
+  public static void updateUserPreference(RequestPreference preference, UserImportData userImportData) {
     setPreferenceAddressType(preference, userImportData);
   }
 
@@ -81,7 +83,7 @@ public class UserDataUtil {
   }
 
   private static void setAddressTypes(User user, UserImportData userImportData) {
-    Map<String, String> addressTypes = userImportData.getAddressTypes();
+    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
     List<Address> addressList = user.getPersonal().getAddresses();
     if (CollectionUtils.isNotEmpty(addressList)) {
       List<Address> updatedAddresses = getExistingAddresses(addressTypes, addressList);
@@ -89,8 +91,8 @@ public class UserDataUtil {
     }
   }
 
-  private static void setPreferenceAddressType(RequestPreference preference, UserImportData userImportData){
-    Map<String, String> addressTypes = userImportData.getAddressTypes();
+  private static void setPreferenceAddressType(RequestPreference preference, UserImportData userImportData) {
+    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
     String addressTypeName = preference.getDefaultDeliveryAddressTypeId();
     String addressTypeId = addressTypes.getOrDefault(addressTypeName, null);
     preference.setDefaultDeliveryAddressTypeId(addressTypeId);
@@ -109,20 +111,22 @@ public class UserDataUtil {
   }
 
   private static void setPatronGroup(User user, UserImportData userImportData) {
-    Map<String, String> patronGroups = userImportData.getPatronGroups();
+    Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
     String patronGroupName = user.getPatronGroup();
     user.setPatronGroup(patronGroups.getOrDefault(patronGroupName, null));
   }
 
   private static void setDepartments(User user, UserImportData userImportData) {
     Set<String> departments = user.getDepartments();
-    Map<String, String> existingDepartments = userImportData.getDepartments();
-    if (CollectionUtils.isNotEmpty(departments)){
-      Set<String> updatedDepartments = new HashSet<>();
-      departments.stream()
-        .filter(existingDepartments::containsValue)
-        .forEach(updatedDepartments::add);
-      user.setDepartments(updatedDepartments);
+    if (CollectionUtils.isNotEmpty(departments)) {
+      Set<Department> existedDepartments = userImportData.getSystemData().getDepartments();
+      Set<String> departmentIds = departments.stream()
+        .map(departmentName -> DepartmentsManager.findDepartmentByName(existedDepartments, departmentName))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(Department::getId)
+        .collect(Collectors.toSet());
+      user.setDepartments(departmentIds);
     }
   }
 

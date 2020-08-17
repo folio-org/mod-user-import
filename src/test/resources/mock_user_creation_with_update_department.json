@@ -77,10 +77,22 @@
     {
       "url": "/service-points",
       "method": "get",
-      "status": 500,
-      "receivedData": "Internal server error",
-      "receivedPath": "",
-      "sendData": {}
+      "status": 200,
+      "receivedData": {
+        "servicepoints": [{
+          "id": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+          "name": "Test one"
+        },
+          {
+            "id": "b3e8cd45-dd4b-477c-b194-23b9a3afe4cc",
+            "name": "Test two"
+          },
+          {
+            "id": "179c85ac-aef3-4466-8310-30094bc750ce",
+            "name": "Test three"
+          }
+        ]
+      }
     },
     {
       "url": "/departments",
@@ -102,6 +114,61 @@
           }
         ],
         "totalRecords": 2
+      }
+    },
+    {
+      "url": "/departments/99958431-4b48-49c6-bfae-911fe592addc",
+      "method": "put",
+      "status": 204,
+      "sendData": {
+        "name": "Financial Accounting",
+        "code": "ACC"
+      }
+    },
+    {
+      "url": "/users?query=externalSystemId%3D%3D%28amy_cabble%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {
+        "id": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
+        "proxyFor": [],
+        "externalSystemId": "amy_cabble",
+        "barcode": "1234567",
+        "username": "amy_cabble",
+        "active": true,
+        "patronGroup": "undergrad",
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc"]
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "amy_cabble",
+        "barcode": "1234567",
+        "username": "amy_cabble",
+        "active": true,
+        "patronGroup": "undergrad",
+        "departments": ["99958431-4b48-49c6-bfae-911fe592addc"]
+      }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
+        "permissions": []
       }
     }
   ]

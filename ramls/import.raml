@@ -16,7 +16,9 @@ types:
     body:
       application/json:
         type: userdataimportCollection
-        example: !include examples/userdataimportCollection.sample
+        example:
+          value: !include examples/userdataimportCollection.sample
+          strict: false
     description: Create or update a list of users
     responses:
       200:
