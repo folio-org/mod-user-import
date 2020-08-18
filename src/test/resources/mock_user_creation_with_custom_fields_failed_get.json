@@ -133,6 +133,28 @@
       }
     },
     {
+      "url": "/departments",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "departments": [
+          {
+            "id": "99958431-4b48-49c6-bfae-911fe592addc",
+            "name": "Accounting",
+            "code": "ACC",
+            "usageNumber": 0
+          },
+          {
+            "id": "7b9741bc-e891-4cde-8516-6a209307aed4",
+            "name": "History",
+            "code": "HIS",
+            "usageNumber": 0
+          }
+        ],
+        "totalRecords": 2
+      }
+    },
+    {
       "url": "/perms/users",
       "method": "post",
       "status": 201,
@@ -150,6 +172,26 @@
       "receivedData": "Internal server error.",
       "receivedPath": "",
       "sendData": {}
+    },
+    {
+      "url": "/service-points",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "servicepoints": [{
+          "id": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+          "name": "Test one"
+        },
+          {
+            "id": "b3e8cd45-dd4b-477c-b194-23b9a3afe4cc",
+            "name": "Test two"
+          },
+          {
+            "id": "179c85ac-aef3-4466-8310-30094bc750ce",
+            "name": "Test three"
+          }
+        ]
+      }
     },
     {
       "url": "/custom-fields",

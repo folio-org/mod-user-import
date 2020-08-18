@@ -8,8 +8,6 @@ import java.util.Map;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import org.folio.rest.tools.client.interfaces.HttpClientInterface;
-
 public class ServicePointsService {
 
   public static final String SERVICE_POINTS_ARRAY_KEY = "servicepoints";
@@ -17,8 +15,8 @@ public class ServicePointsService {
 
   private ServicePointsService(){}
 
-  public static Future<Map<String, String>> getServicePoints(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
-    return RequestManager.get(httpClient, okapiHeaders, SERVICE_POINTS_ENDPOINT, FAILED_TO_LIST_SERVICE_POINTS)
+  public static Future<Map<String, String>> getServicePoints(Map<String, String> okapiHeaders) {
+    return RequestManager.get(okapiHeaders, SERVICE_POINTS_ENDPOINT, FAILED_TO_LIST_SERVICE_POINTS)
       .map(ServicePointsService::extractServicePoints);
   }
 

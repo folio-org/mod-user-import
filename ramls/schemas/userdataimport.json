@@ -128,7 +128,7 @@
           }
         },
         "preferredContactTypeId": {
-          "description": "Id of user's preferred contact type",
+          "description": "Name of user's preferred contact type",
           "type": "string"
         }
       },
@@ -172,12 +172,11 @@
       "$ref": "user-import-request-preference.json"
     },
     "departments": {
-      "description": "A UUIDs corresponding to the departments the user belongs to",
+      "description": "Names of departments the user belongs to",
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "type": "string",
-        "$ref": "../raml-util/schemas/uuid.schema"
+        "type": "string"
       }
     }
   },

@@ -21,6 +21,23 @@
     },
     "sourceType": {
       "type": "string"
+    },
+    "included": {
+      "description": "Entities that should be imported with users",
+      "javaType": "org.folio.rest.jaxrs.model.IncludedObjects",
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "departments": {
+          "description": "Departments entities that should be imported with users",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "$ref": "department.json"
+          }
+        }
+      }
     }
   },
   "required": [

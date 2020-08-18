@@ -25,6 +25,14 @@
           ],
           "modulePermissions": [
             "addresstypes.collection.get",
+            "circulation-storage.request-preferences.collection.get",
+            "circulation-storage.request-preferences.item.delete",
+            "circulation-storage.request-preferences.item.post",
+            "circulation-storage.request-preferences.item.put",
+            "departments.collection.get",
+            "departments.item.post",
+            "departments.item.put",
+            "inventory-storage.service-points.collection.get",
             "perms.users.item.post",
             "user-settings.custom-fields.collection.get",
             "user-settings.custom-fields.collection.put",
@@ -61,7 +69,15 @@
     },
     {
       "id": "users",
-      "version": "14.0 15.0"
+      "version": "15.1"
+    },
+    {
+      "id": "request-preference-storage",
+      "version": "2.0"
+    },
+    {
+      "id": "service-points",
+      "version": "3.2"
     }
   ],
   "launchDescriptor": {
@@ -74,7 +90,8 @@
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS",
+      {
+        "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0"
       }
     ]

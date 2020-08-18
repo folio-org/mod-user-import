@@ -10,8 +10,6 @@ import javax.ws.rs.core.UriBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import org.folio.rest.tools.client.interfaces.HttpClientInterface;
-
 public class PatronGroupManager {
 
   private static final String USER_GROUPS_ARRAY_KEY = "usergroups";
@@ -19,9 +17,9 @@ public class PatronGroupManager {
 
   private PatronGroupManager() {}
 
-  public static Future<Map<String, String>> getPatronGroups(HttpClientInterface httpClient, Map<String, String> okapiHeaders) {
+  public static Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
     final String query = UriBuilder.fromPath(PATRON_GROUPS_ENDPOINT).queryParam("limit",  "2147483647").build().toString();
-    return RequestManager.get(httpClient, okapiHeaders, query, FAILED_TO_LIST_PATRON_GROUPS)
+    return RequestManager.get(okapiHeaders, query, FAILED_TO_LIST_PATRON_GROUPS)
       .map(PatronGroupManager::extractPatronGroups);
   }
 
