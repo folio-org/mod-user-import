@@ -54,7 +54,7 @@
     },
     {
       "permissionName": "user-import.all",
-      "displayName": "User import",
+      "displayName": "User import - all permissions",
       "description": "",
       "subPermissions": [
         "user-import.add"

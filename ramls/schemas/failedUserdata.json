@@ -1,15 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Failed User Schema",
+  "description": "Details of user that was failed on import",
   "type": "object",
   "properties": {
     "username": {
+      "description": "Username of failed user",
       "type": "string"
     },
     "externalSystemId": {
+      "description": "External system ID of failed user",
       "type": "string"
     },
     "errorMessage": {
+      "description": "Error message stating why the import was failed",
       "type": "string"
     }
   },
