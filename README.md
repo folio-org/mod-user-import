@@ -95,7 +95,7 @@ The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The def
       },
       "requestPreference": {
         "holdShelf": true,
-        "delivery": false,
+        "delivery": true,
         "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
         "defaultDeliveryAddressTypeId": "Home",
         "fulfillment": "Hold Shelf"
@@ -143,11 +143,18 @@ This should be true if only the fields present in the import should be updated, 
 A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore, e.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
 
 ### requestPreference
-Using this attribute can be populated Request preference, Fulfillment preference and Default delivery address.
-<code>holdShelf</code> should always be true;
-possible values of <code>fulfillment</code>: <code>Hold shelf</code> and <code>Delivery</code>;
-<code>delivery</code> could be <code>true</code> or <code>false</code>;
-<code>defaultDeliveryAddressTypeId</code> - the name of user's address type
+### requestPreference
+Use this attribute to populate the user Request preference. The Request Preference contains following properties:
+<code>holdShelf</code> - required field, should always be true;
+<code>delivery</code> - required field, could be <code>true</code> or <code>false</code>;
+<code>defaultServicePointId</code> - optional, the id of user's default service point
+if <code>delivery</code> is <code>true</code> then next properties can be used
+<code>fulfillment</code> - required field, can only have <code>Hold shelf</code> or <code>Delivery</code> value;
+<code>defaultDeliveryAddressTypeId</code> - optional, the name of user's address type
+* If the requestPreference exists in payload and exists in the system - the system will update existing user preference.
+* If the requestPreference exists in payload and doesn't exist in the system - the system will create a new one.
+* If the requestPreference does not exist in payload but exists in the system - the system will delete existing preference.
+* If value provided for defaultServicePointId or defaultDeliveryAddressTypeId does not exist in the system - the system will return an error
 
 ### departments
 Names of departments the user belongs to. To manage departments creation use attribute <code>departments</code> in <code>included</code>.

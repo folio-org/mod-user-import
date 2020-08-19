@@ -39,7 +39,7 @@
       },
       "requestPreference": {
         "holdShelf": true,
-        "delivery": false,
+        "delivery": true,
         "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
         "defaultDeliveryAddressTypeId": "Home",
         "fulfillment": "Hold Shelf"
