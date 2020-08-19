@@ -158,6 +158,7 @@
       "format": "date-time"
     },
     "metadata": {
+      "description": "Metadata about creation and changes to records, provided by the server (client should not provide)",
       "type": "object",
       "$ref": "../raml-util/schemas/metadata.schema"
     },

@@ -55,41 +55,74 @@ The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The def
 
 ## Example import request
 <pre><code>{
-  "users": [{
-    "username": "somebody012",
-    "externalSystemId": "somebody012",
-    "barcode": "1657463",
-    "active": true,
-    "patronGroup": "faculty",
-    "personal": {
-      "lastName": "Somebody",
-      "firstName": "Test",
-      "middleName": "",
-      "email": "test@email.com",
-      "phone": "+36 55 230 348",
-      "mobilePhone": "+36 55 379 130",
-      "dateOfBirth": "1995-10-10",
-      "addresses": [{
-        "countryId": "HU",
-        "addressLine1": "Andrássy Street 1.",
-        "addressLine2": "",
-        "city": "Budapest",
-        "region": "Pest",
-        "postalCode": "1061",
-        "addressTypeId": "Home",
-        "primaryAddress": true
-      }],
-      "preferredContactTypeId": "mail"
-    },
-    "enrollmentDate": "2017-01-01",
-    "expirationDate": "2019-01-01"
-  }],
+  "users": [
+    {
+      "username": "jhandey",
+      "externalSystemId": "111_112",
+      "barcode": "1234567",
+      "active": true,
+      "patronGroup": "staff",
+      "personal": {
+        "lastName": "Handey",
+        "firstName": "Jack",
+        "middleName": "Michael",
+        "preferredFirstName": "Jackie",
+        "phone": "+36 55 230 348",
+        "mobilePhone": "+36 55 379 130",
+        "dateOfBirth": "1995-10-10",
+        "addresses": [
+          {
+            "countryId": "HU",
+            "addressLine1": "Andrássy Street 1.",
+            "addressLine2": "",
+            "city": "Budapest",
+            "region": "Pest",
+            "postalCode": "1061",
+            "addressTypeId": "Home",
+            "primaryAddress": true
+          }
+        ],
+        "preferredContactTypeId": "mail"
+      },
+      "enrollmentDate": "2017-01-01",
+      "expirationDate": "2019-01-01",
+      "customFields": {
+        "scope": "Design",
+        "specialization": [
+          "Business",
+          "Jurisprudence"
+        ]
+      },
+      "requestPreference": {
+        "holdShelf": true,
+        "delivery": true,
+        "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
+        "defaultDeliveryAddressTypeId": "Home",
+        "fulfillment": "Hold Shelf"
+      },
+      "departments": [
+        "Accounting",
+        "Finance",
+        "Chemistry"
+      ]
+    }
+  ],
+  "included": {
+    "departments": [
+      {
+        "name": "Accounting",
+        "code": "ACC"
+      },
+      {
+        "name": "Finance"
+      }
+    ]
+  },
   "totalRecords": 1,
-  "deactivateMissingUsers": false,
+  "deactivateMissingUsers": true,
   "updateOnlyPresentFields": false,
   "sourceType": "test"
-}
-</code></pre>
+}</code></pre>
 
 ### patronGroup
 The value can be the name of an existing patron group in the system, e.g. <code>faculty</code>, <code>staff</code>, <code>undergrad</code>, <code>graduate</code>. The import module will match the patron group names and replace with the patron group ids. The currently available patron groups can be listed using a <code>GET</code> request for <code>{okapiUrl}/groups</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user needs to have a permission for retrieving patron groups (permission name: <code>users all</code>, permission code: <code>users.all</code>).
@@ -109,6 +142,34 @@ This should be true if only the fields present in the import should be updated, 
 ### sourceType
 A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore, e.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
 
+### requestPreference
+### requestPreference
+Use this attribute to populate the user Request preference. The Request Preference contains following properties:
+<code>holdShelf</code> - required field, should always be true;
+<code>delivery</code> - required field, could be <code>true</code> or <code>false</code>;
+<code>defaultServicePointId</code> - optional, the id of user's default service point
+if <code>delivery</code> is <code>true</code> then next properties can be used
+<code>fulfillment</code> - required field, can only have <code>Hold shelf</code> or <code>Delivery</code> value;
+<code>defaultDeliveryAddressTypeId</code> - optional, the name of user's address type
+* If the requestPreference exists in payload and exists in the system - the system will update existing user preference.
+* If the requestPreference exists in payload and doesn't exist in the system - the system will create a new one.
+* If the requestPreference does not exist in payload but exists in the system - the system will delete existing preference.
+* If value provided for defaultServicePointId or defaultDeliveryAddressTypeId does not exist in the system - the system will return an error
+
+### departments
+Names of departments the user belongs to. To manage departments creation use attribute <code>departments</code> in <code>included</code>.
+* If the department doesn't exist in included and exists in the system - assign the department to user
+* If the department exists in included and doesn't exist in the system - create the department (with code generation if missing) and assign the department to user
+* If the department with code exists in included and with the same code exists in the system - update department's name and assign the department to user
+* If the department doesn't exist in included and not exist in the system - error
+
+### customFields
+Can be populated with pairs:
+<code>refId: value</code>,
+where <code>refId</code> - refId of an existing custom field,
+<code>value</code> - one value or set of values.
+
+**Note:** In case of setting values to one of RADIO_BUTTON, SINGLE_SELECT_DROPDOWN, MULTI_SELECT_DROPDOWN type of custom field - use option names
 ## Additional information
 
 ### Issue tracker

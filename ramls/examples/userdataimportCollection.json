@@ -1,0 +1,69 @@
+{
+  "users": [
+    {
+      "username": "jhandey",
+      "externalSystemId": "111_112",
+      "barcode": "1234567",
+      "active": true,
+      "patronGroup": "staff",
+      "personal": {
+        "lastName": "Handey",
+        "firstName": "Jack",
+        "middleName": "Michael",
+        "preferredFirstName": "Jackie",
+        "phone": "+36 55 230 348",
+        "mobilePhone": "+36 55 379 130",
+        "dateOfBirth": "1995-10-10",
+        "addresses": [
+          {
+            "countryId": "HU",
+            "addressLine1": "Andrássy Street 1.",
+            "addressLine2": "",
+            "city": "Budapest",
+            "region": "Pest",
+            "postalCode": "1061",
+            "addressTypeId": "Home",
+            "primaryAddress": true
+          }
+        ],
+        "preferredContactTypeId": "mail"
+      },
+      "enrollmentDate": "2017-01-01",
+      "expirationDate": "2019-01-01",
+      "customFields": {
+        "scope": "Design",
+        "specialization": [
+          "Business",
+          "Jurisprudence"
+        ]
+      },
+      "requestPreference": {
+        "holdShelf": true,
+        "delivery": true,
+        "defaultServicePointId": "00000000-0000-1000-a000-000000000000",
+        "defaultDeliveryAddressTypeId": "Home",
+        "fulfillment": "Hold Shelf"
+      },
+      "departments": [
+        "Accounting",
+        "Finance",
+        "Chemistry"
+      ]
+    }
+  ],
+  "included": {
+    "departments": [
+      {
+        "name": "Accounting",
+        "code": "ACC"
+      },
+      {
+        "name": "Finance"
+      }
+    ]
+  },
+  "totalRecords": 1,
+  "deactivateMissingUsers": true,
+  "updateOnlyPresentFields": false,
+  "sourceType": "test"
+}

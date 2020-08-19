@@ -13,13 +13,13 @@ types:
 
 /user-import:
   post:
+    description: Create or update a list of users
     body:
       application/json:
         type: userdataimportCollection
         example:
-          value: !include examples/userdataimportCollection.sample
+          value: !include examples/userdataimportCollection.json
           strict: false
-    description: Create or update a list of users
     responses:
       200:
         description: "Return OK"

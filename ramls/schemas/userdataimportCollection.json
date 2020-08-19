@@ -1,25 +1,33 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "User Data Import Collection Schema",
+  "description": "The user data import collection",
+  "additionalProperties": false,
   "type": "object",
   "properties": {
     "users": {
-      "type": "array",
       "id": "usersData",
+      "type": "array",
+      "description": "List of users' data to import",
       "items": {
         "type": "object",
         "$ref": "userdataimport.json"
       }
     },
     "totalRecords": {
+      "description": "Total number of users' data to import",
       "type": "integer"
     },
     "deactivateMissingUsers": {
+      "description": "Indicates whether to deactivate users that missing in current users' data collection",
       "type": "boolean"
     },
     "updateOnlyPresentFields": {
+      "description": "Indicates whether to update only present fields in user's data",
       "type": "boolean"
     },
     "sourceType": {
+      "description": "A prefix for the externalSystemId",
       "type": "string"
     },
     "included": {

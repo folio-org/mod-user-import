@@ -1,24 +1,31 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Import response",
+  "title": "Import Response Schema",
+  "description": "The response of the import",
   "type": "object",
   "properties": {
     "message": {
+      "description": "Message stating that the import was successful or failed or the users were deactivated",
       "type": "string"
     },
     "error": {
+      "description": "Error message stating why the import was failed",
       "type": "string"
     },
     "createdRecords": {
+      "description": "Number of newly created users",
       "type": "integer"
     },
     "updatedRecords": {
+      "description": "Number of updated users",
       "type": "integer"
     },
     "failedRecords": {
+      "description": "Number of users failed to create/update",
       "type": "integer"
     },
     "failedUsers": {
+      "description": "A list of users that were failed to create/update",
       "type": "array",
       "id": "failedUsers",
       "items": {
@@ -27,6 +34,7 @@
       }
     },
     "totalRecords": {
+      "description": "Number of total records processed by the user import",
       "type": "integer"
     }
   },
