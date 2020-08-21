@@ -125,7 +125,13 @@ The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The def
 }</code></pre>
 
 ### patronGroup
-The value can be the name of an existing patron group in the system, e.g. <code>faculty</code>, <code>staff</code>, <code>undergrad</code>, <code>graduate</code>. The import module will match the patron group names and replace with the patron group ids. The currently available patron groups can be listed using a <code>GET</code> request for <code>{okapiUrl}/groups</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user needs to have a permission for retrieving patron groups (permission name: <code>users all</code>, permission code: <code>users.all</code>).
+The value can be the name of an existing patron group in the system, e.g. <code>faculty</code>, <code>staff</code>,
+<code>undergrad</code>, <code>graduate</code>. The import module will match the patron group names and replace with
+the patron group ids. If the patron group with the specified name does not exist in the system, then the error will be thrown.
+The currently available patron groups can be listed using a <code>GET</code> request for
+<code>{okapiUrl}/groups</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required.
+The authenticated user needs to have a permission for retrieving patron groups (permission name: <code>users all</code>,
+permission code: <code>users.all</code>).
 
 ### addressTypeId
 The value can be the name of an existing address type in the system, e.g. <code>Home</code>, <code>Claim</code>, <code>Order</code>. The import module will match the address type names for the address type ids. It is important to note that two addresses for a user cannot have the same address type. The available address types can be queried with a <code>GET</code> request to <code>{okapiUrl}/addresstypes</code>. The <code>x-okapi-token</code> and <code>x-okapi-tenant</code> headers are required. The authenticated user needs to have a permission for retrieving address types (permission name: <code>users all</code>, permission code: <code>users.all</code>).
@@ -142,7 +148,6 @@ This should be true if only the fields present in the import should be updated, 
 ### sourceType
 A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore, e.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
 
-### requestPreference
 ### requestPreference
 Use this attribute to populate the user Request preference. The Request Preference contains following properties:
 <code>holdShelf</code> - required field, should always be true;

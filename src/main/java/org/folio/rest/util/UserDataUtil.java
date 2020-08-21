@@ -21,7 +21,8 @@ import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.model.UserImportData;
-import org.folio.rest.model.UserMappingFailedException;
+import org.folio.rest.model.exception.PatronGroupMappingFailedException;
+import org.folio.rest.model.exception.UserMappingFailedException;
 
 public class UserDataUtil {
 
@@ -113,7 +114,11 @@ public class UserDataUtil {
   private static void setPatronGroup(User user, UserImportData userImportData) {
     Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
     String patronGroupName = user.getPatronGroup();
-    user.setPatronGroup(patronGroups.getOrDefault(patronGroupName, null));
+    String patronGroupId = patronGroups.get(patronGroupName);
+    if (patronGroupId == null) {
+      throw new PatronGroupMappingFailedException(patronGroupName);
+    }
+    user.setPatronGroup(patronGroupId);
   }
 
   private static void setDepartments(User user, UserImportData userImportData) {

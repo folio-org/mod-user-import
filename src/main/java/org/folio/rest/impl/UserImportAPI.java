@@ -63,7 +63,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.jaxrs.resource.UserImport;
 import org.folio.rest.model.UserImportData;
-import org.folio.rest.model.UserMappingFailedException;
+import org.folio.rest.model.exception.UserMappingFailedException;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 import org.folio.rest.util.CustomFieldsManager;

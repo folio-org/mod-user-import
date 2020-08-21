@@ -251,7 +251,7 @@ public class UserImportAPITest {
       .body(collection)
       .post(USER_IMPORT)
       .then()
-      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
@@ -259,9 +259,8 @@ public class UserImportAPITest {
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
-        UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
-      .statusCode(200);
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo("Patron group does not exist in the system: [nonExistingTestPatronGroup]"))
+      .statusCode(500);
   }
 
   @Test
