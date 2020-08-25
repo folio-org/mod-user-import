@@ -31,12 +31,14 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder.version>29.3.0</raml-module-builder.version>
+    <raml-module-builder.version>31.0.1</raml-module-builder.version>
     <lombok.version>1.18.12</lombok.version>
-    <vertx.version>3.8.5</vertx.version>
-    <junit.version>4.12</junit.version>
-    <rest-assured.version>3.0.3</rest-assured.version>
-    <wiremock.version>2.19.0</wiremock.version>
+    <log4j-slf4j-impl.version>2.13.3</log4j-slf4j-impl.version>
+    <vertx.version>3.9.1</vertx.version>
+    <junit.version>4.13</junit.version>
+    <rest-assured.version>4.3.0</rest-assured.version>
+    <wiremock.version>2.26.3</wiremock.version>
+    <aspectj.version>1.9.5</aspectj.version>
   </properties>
 
   <dependencies>
@@ -49,6 +51,12 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>${log4j-slf4j-impl.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -116,10 +124,11 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.8.1</version>
         <configuration>
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.target}</target>
+          <source>11</source>
+          <target>11</target>
+          <release>11</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -127,7 +136,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.6.0</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <id>generate_interfaces</id>
@@ -182,13 +191,13 @@
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
+        <groupId>com.nickwongdev</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
-        <version>1.8</version>
+        <version>1.12.6</version>
         <configuration>
           <verbose>true</verbose>
           <showWeaveInfo>false</showWeaveInfo>
-          <complianceLevel>1.8</complianceLevel>
+          <complianceLevel>11</complianceLevel>
           <includes>
             <include>**/impl/*.java</include>
             <include>**/*.aj</include>
@@ -214,19 +223,19 @@
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
-            <version>1.8.9</version>
+            <version>${aspectj.version}</version>
           </dependency>
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjtools</artifactId>
-            <version>1.8.9</version>
+            <version>${aspectj.version}</version>
           </dependency>
         </dependencies>
       </plugin>
 
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>copy-resources</id>
@@ -267,7 +276,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>add-raml-jaxrs-source</id>
@@ -313,25 +322,26 @@
         <version>1.0.0</version>
         <executions>
           <execution>
+            <id>set-system-properties</id>
             <goals>
               <goal>set-system-properties</goal>
             </goals>
+            <configuration>
+              <properties>
+                <property>
+                  <name>log4j.configurationFile</name>
+                  <value>${project.baseUri}src/main/resources/log4j2.xml</value>
+                </property>
+              </properties>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <properties>
-            <property>
-              <name>log4j.configuration</name>
-              <value>${project.baseUri}src/main/resources/log4j.properties</value>
-            </property>
-          </properties>
-        </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.3</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -358,7 +368,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.3</version>
+        <version>3.0.0-M1</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>

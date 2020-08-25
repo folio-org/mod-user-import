@@ -19,7 +19,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.jaxrs.model.User;
-import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.model.UserImportData;
@@ -41,7 +40,6 @@ public class UserPreferenceService {
       .otherwiseEmpty();
   }
 
-  @NotNull
   private static Function<JsonObject, RequestPreference> mapToRequestPreference() {
     return object -> object.getJsonArray(REQUEST_PREFERENCES_ARRAY_KEY)
       .getJsonObject(0)
@@ -62,7 +60,7 @@ public class UserPreferenceService {
     return RequestManager.post(okapiHeaders, REQUEST_PREFERENCES_ENDPOINT, RequestPreference.class, entity, FAILED_TO_CREATE_USER_PREFERENCE);
   }
 
-  public static Future<Void> validate(@NotNull RequestPreference entity, @NotNull UserImportData importData, User user) {
+  public static Future<Void> validate(RequestPreference entity, UserImportData importData, User user) {
     Promise<Void> promise = Promise.promise();
     try {
       UserRequestManagerValidator.validate(entity, importData, user);

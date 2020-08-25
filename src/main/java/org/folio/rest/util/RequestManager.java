@@ -16,7 +16,6 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.Response;
@@ -131,7 +130,6 @@ public class RequestManager {
     return ex == null && org.folio.rest.tools.client.Response.isSuccess(response.getCode());
   }
 
-  @NotNull
   public static BiConsumer<Response, Throwable> handleResponse(String failedMessage, Promise<Void> future, HttpClientInterface httpClient) {
     return (res, ex) -> {
       try {

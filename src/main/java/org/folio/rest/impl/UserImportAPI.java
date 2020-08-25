@@ -53,7 +53,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.folio.rest.model.UserSystemData;
 import org.folio.rest.util.DepartmentsManager;
 import org.folio.rest.util.UserDataUtil;
-import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.FailedUser;
@@ -94,7 +93,7 @@ public class UserImportAPI implements UserImport {
       prepareUserImportData(userCollection, okapiHeaders, vertxContext.owner())
         .compose(importData -> startUserImport(importData, okapiHeaders))
         .otherwise(throwable -> processErrorResponse(userCollection.getUsers(), throwable.getMessage()))
-        .setHandler(handler -> {
+        .onComplete(handler -> {
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
               .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
@@ -133,7 +132,6 @@ public class UserImportAPI implements UserImport {
     return importUsers(importData, httpClient, okapiHeaders, future);
   }
 
-  @NotNull
   private Function<List<Map<String, String>>, UserImportData> createUserImportData(UserdataimportCollection userCollection) {
     return list ->
       {
@@ -153,9 +151,9 @@ public class UserImportAPI implements UserImport {
                                              Map<String, String> okapiHeaders, Promise<ImportResponse> future) {
 
     if (importData.isDeactivateMissingUsers()) {
-      return startImportWithDeactivatingUsers(httpClient, importData, okapiHeaders).setHandler(future);
+      return startImportWithDeactivatingUsers(httpClient, importData, okapiHeaders).onComplete(future);
     } else {
-      return startImport(httpClient, importData, okapiHeaders).setHandler(future);
+      return startImport(httpClient, importData, okapiHeaders).onComplete(future);
     }
   }
 
@@ -169,7 +167,7 @@ public class UserImportAPI implements UserImport {
                                                                   Map<String, String> okapiHeaders) {
 
     Promise<ImportResponse> future = Promise.promise();
-    listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userImportData.getSourceType()).setHandler(handler -> {
+    listAllUsersWithExternalSystemId(httpClient, okapiHeaders, userImportData.getSourceType()).onComplete(handler -> {
 
       if (handler.failed()) {
         LOGGER.error("Failed to list users with externalSystemId (and specific sourceType)");
@@ -182,7 +180,7 @@ public class UserImportAPI implements UserImport {
 
           List<Future> futures = processAllUsersInPartitions(httpClient, userImportData, existingUserMap, okapiHeaders);
 
-          CompositeFuture.all(futures).setHandler(ar -> {
+          CompositeFuture.all(futures).onComplete(ar -> {
             if (ar.succeeded()) {
               LOGGER.info("Processing user search result.");
               ImportResponse compositeResponse = processFutureResponses(futures);
@@ -195,7 +193,7 @@ public class UserImportAPI implements UserImport {
                 compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
                 future.complete(compositeResponse);
               } else {
-                deactivateUsers(httpClient, okapiHeaders, existingUserMap).setHandler(deactivateHandler -> {
+                deactivateUsers(httpClient, okapiHeaders, existingUserMap).onComplete(deactivateHandler -> {
                   compositeResponse.setMessage("Deactivated missing users.");
                   future.complete(compositeResponse);
                 });
@@ -248,7 +246,7 @@ public class UserImportAPI implements UserImport {
       futures.add(userBatchProcessResponse);
     }
 
-    CompositeFuture.all(futures).setHandler(ar -> {
+    CompositeFuture.all(futures).onComplete(ar -> {
       if (ar.succeeded()) {
         LOGGER.info("Aggregating user import result.");
         ImportResponse successResponse = processFutureResponses(futures);
@@ -270,13 +268,13 @@ public class UserImportAPI implements UserImport {
     List<User> currentPartition, UserImportData userImportData) {
 
     Promise<ImportResponse> future = Promise.promise();
-    listUsers(httpClient, currentPartition, userImportData.getSourceType()).setHandler(userSearchAsyncResponse -> {
+    listUsers(httpClient, currentPartition, userImportData.getSourceType()).onComplete(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
         try {
           Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
 
           processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
-            .setHandler(response -> {
+            .onComplete(response -> {
               if (response.succeeded()) {
                 future.complete(response.result());
               } else {
@@ -378,7 +376,7 @@ public class UserImportAPI implements UserImport {
       }
     }
 
-    CompositeFuture.all(futures).setHandler(ar -> {
+    CompositeFuture.all(futures).onComplete(ar -> {
       if (ar.succeeded()) {
         LOGGER.info("User creation and update has finished for the current batch.");
         ImportResponse successResponse = processSuccessfulImportResponse(futures);
@@ -473,7 +471,7 @@ public class UserImportAPI implements UserImport {
         .whenComplete((userCreationResponse, ex) -> {
           if (isSuccess(userCreationResponse, ex)) {
             try {
-              addEmptyPermissionSetForUser(httpClient, okapiHeaders, user).setHandler(futurePermissionHandler -> {
+              addEmptyPermissionSetForUser(httpClient, okapiHeaders, user).onComplete(futurePermissionHandler -> {
                 if (futurePermissionHandler.failed()) {
                   LOGGER.error("Failed to register permissions for user with externalSystemId: " + user.getExternalSystemId());
                 }
@@ -608,10 +606,9 @@ public class UserImportAPI implements UserImport {
 
     try {
       List<Future> futures = new ArrayList<>();
-      List<Map> existingUserList = new ArrayList<>();
 
       List<Map> users = getUsersFromResult(resultObject);
-      existingUserList.addAll(users);
+      List<Map> existingUserList = new ArrayList<>(users);
       int totalRecords = resultObject.getInteger("totalRecords");
       if (totalRecords > limit) {
 
@@ -625,7 +622,7 @@ public class UserImportAPI implements UserImport {
           futures.add(subFuture);
         }
 
-        CompositeFuture.all(futures).setHandler(ar -> {
+        CompositeFuture.all(futures).onComplete(ar -> {
           if (ar.succeeded()) {
             LOGGER.info("Listed all users.");
             future.complete(existingUserList);
@@ -697,7 +694,7 @@ public class UserImportAPI implements UserImport {
       }
     }
 
-    CompositeFuture.all(futures).setHandler(ar -> {
+    CompositeFuture.all(futures).onComplete(ar -> {
       if (ar.succeeded()) {
         LOGGER.info("Deactivated missing users.");
         future.complete();
@@ -827,7 +824,7 @@ public class UserImportAPI implements UserImport {
       LOGGER.error(errorMessage);
       StringBuilder errorBuilder = new StringBuilder(errorMessage);
       if (response.getError() != null) {
-        errorBuilder.append(" " + response.getError().toString());
+        errorBuilder.append(" ").append(response.getError().toString());
         LOGGER.error(response.getError());
       }
       if (completeObj == null) {

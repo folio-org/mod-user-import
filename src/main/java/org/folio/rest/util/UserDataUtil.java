@@ -14,7 +14,6 @@ import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.Department;
@@ -99,7 +98,6 @@ public class UserDataUtil {
     preference.setDefaultDeliveryAddressTypeId(addressTypeId);
   }
 
-  @NotNull
   private static List<Address> getExistingAddresses(Map<String, String> addressTypes, List<Address> addressList) {
     List<Address> updatedAddresses = new ArrayList<>();
     addressList.stream()
@@ -166,7 +164,7 @@ public class UserDataUtil {
       }
     }
 
-    if (StringUtils.isBlank(user.getPersonal().getPreferredFirstName())) {
+    if (user.getPersonal() != null && StringUtils.isBlank(user.getPersonal().getPreferredFirstName())) {
       response.getPersonal().setPreferredFirstName(existingUser.getPersonal().getPreferredFirstName());
     }
 
