@@ -1,11 +1,10 @@
 
-
+buildNode = jenkins-agent-java11
 buildMvn {
   publishModDescriptor = 'yes'
   publishAPI = 'yes'
   mvnDeploy = 'yes'
   runLintRamlCop = 'yes'
-  buildNode = jenkins-agent-java11
 
   doDocker = {
     buildJavaDocker {
