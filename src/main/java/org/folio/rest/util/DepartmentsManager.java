@@ -62,7 +62,7 @@ public class DepartmentsManager {
   private static Set<String> findMissedDepartments(Set<Department> systemDepartments, Set<String> usersDepartmentNames) {
     Set<String> missedDepartmentNames = new TreeSet<>();
     usersDepartmentNames.forEach(departmentName -> {
-      if (!findDepartmentByName(systemDepartments, departmentName).isPresent()) {
+      if (findDepartmentByName(systemDepartments, departmentName).isEmpty()) {
         missedDepartmentNames.add(departmentName);
       }
     });
@@ -82,7 +82,7 @@ public class DepartmentsManager {
     List<Future<Void>> futures = new ArrayList<>();
     for (Department importDepartment : importDepartments) {
       Optional<Department> existedDepartmentByName = findDepartmentByName(systemDepartments, importDepartment.getName());
-      if (!existedDepartmentByName.isPresent()) {
+      if (existedDepartmentByName.isEmpty()) {
         Optional<Department> existedDepartmentByCode =
           findDepartmentByCode(systemDepartments, importDepartment.getCode());
         if (existedDepartmentByCode.isPresent()) {

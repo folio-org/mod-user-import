@@ -166,7 +166,7 @@ public class UserDataUtil {
       }
     }
 
-    if (StringUtils.isBlank(user.getPersonal().getPreferredFirstName())) {
+    if (user.getPersonal() != null && StringUtils.isBlank(user.getPersonal().getPreferredFirstName())) {
       response.getPersonal().setPreferredFirstName(existingUser.getPersonal().getPreferredFirstName());
     }
 
