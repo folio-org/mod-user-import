@@ -31,11 +31,11 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder.version>29.3.0</raml-module-builder.version>
+    <raml-module-builder.version>30.2.6</raml-module-builder.version>
     <lombok.version>1.18.12</lombok.version>
-    <vertx.version>3.8.5</vertx.version>
+    <vertx.version>3.9.2</vertx.version>
     <junit.version>4.12</junit.version>
-    <rest-assured.version>3.0.3</rest-assured.version>
+    <rest-assured.version>4.3.1</rest-assured.version>
     <wiremock.version>2.19.0</wiremock.version>
   </properties>
 
@@ -49,6 +49,11 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>20.0.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
