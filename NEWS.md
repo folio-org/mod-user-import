@@ -1,3 +1,7 @@
+## 3.2.1 2020-08-28
+
+ * [MODUIMP-23](https://issues.folio.org/browse/MODUIMP-23) Upgrade raml-module-builder (RMB) from 29.3.0 to 30.2.6
+
 ## 3.2.0 2020-03-13
 
  * MODUIMP-9 Upgrade to RAML 1.0 and RMB 29
