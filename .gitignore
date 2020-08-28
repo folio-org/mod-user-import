@@ -25,6 +25,5 @@ hs_err_pid*
 .settings/
 bin/
 target/
-src/main/java/org/folio/rest/jaxrs/
 *.iml
 .idea
