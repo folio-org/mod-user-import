@@ -1,7 +1,6 @@
 package org.folio.rest.impl;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -58,7 +57,7 @@ public class UserImportAPITest {
   private HttpClientMock2 mock;
 
   @Before
-  public void setUp(TestContext context) throws Exception {
+  public void setUp(TestContext context) {
     vertx = Vertx.vertx();
 
     DeploymentOptions options = new DeploymentOptions()
@@ -77,7 +76,7 @@ public class UserImportAPITest {
   }
 
   @After
-  public void tearDown(TestContext context) throws Exception {
+  public void tearDown(TestContext context) {
     vertx.close(context.asyncAssertSuccess());
   }
 
@@ -536,9 +535,6 @@ public class UserImportAPITest {
       .withTotalRecords(1)
       .withDeactivateMissingUsers(false);
 
-    StringBuilder resultMessageBuilder = new StringBuilder(UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT);
-    resultMessageBuilder.append(UserImportAPIConstants.USER_SCHEMA_MISMATCH);
-
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
@@ -555,7 +551,8 @@ public class UserImportAPITest {
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(resultMessageBuilder.toString()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+        UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.USER_SCHEMA_MISMATCH))
       .statusCode(200);
   }
 

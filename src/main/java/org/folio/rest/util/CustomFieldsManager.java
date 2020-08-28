@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -43,7 +44,7 @@ public final class CustomFieldsManager {
 
   public static Future<Void> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders,
                                                  Vertx vertx) {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     Map<String, Set<String>> customFieldsOptions = getCustomFieldsOptions(importData);
 
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
@@ -51,22 +52,22 @@ public final class CustomFieldsManager {
       .getHttpClient(getOkapiUrl(okapiHeaders), -1, TenantTool.tenantId(headers),
         true, CONN_TO, IDLE_TO, false, 30L);
     if (customFieldsOptions.isEmpty()) {
-      future.complete();
+      promise.complete();
     } else {
       OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, vertx)
         .compose(moduleIds -> updateHeaders(moduleIds, headers))
         .compose(o -> requestCustomFieldsDefinitions(httpClient, headers))
         .compose(jsonObjects -> updateCF(jsonObjects, customFieldsOptions, httpClient, headers))
-        .setHandler(o -> {
+        .onComplete(o -> {
           httpClient.closeClient();
           if (o.succeeded()) {
-            future.complete();
+            promise.complete();
           } else {
-            future.fail(o.cause());
+            promise.fail(o.cause());
           }
         });
     }
-    return future;
+    return promise.future();
   }
 
   @SuppressWarnings("unchecked")
@@ -101,47 +102,47 @@ public final class CustomFieldsManager {
   }
 
   private static Future<JsonObject> requestCustomFieldsDefinitions(HttpClientInterface client, Map<String, String> headers) {
-    Future<JsonObject> future = Future.future();
+    Promise<JsonObject> promise = Promise.promise();
     try {
       client.request(GET_CUSTOM_FIELDS_ENDPOINT, headers)
-        .whenComplete((response, ex) -> processResponse(future, response, ex, Response::getBody));
+        .whenComplete((response, ex) -> processResponse(promise, response, ex, Response::getBody));
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private static Future<Void> updateCF(JsonObject cfCollection, Map<String, Set<String>> customFieldsOptions,
                                        HttpClientInterface client, Map<String, String> okapiHeaders) {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     boolean isUpdated = updateCfOptions(cfCollection, customFieldsOptions);
     if (isUpdated) {
       Map<String, String> headers =
         createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       try {
         client.request(HttpMethod.PUT, cfCollection, PUT_CUSTOM_FIELDS_ENDPOINT, headers)
-          .whenComplete((response, ex) -> processResponse(future, response, ex, r -> null));
+          .whenComplete((response, ex) -> processResponse(promise, response, ex, r -> null));
       } catch (Exception e) {
-        future.fail(e);
+        promise.fail(e);
       }
     } else {
-      future.complete();
+      promise.complete();
     }
-    return future;
+    return promise.future();
   }
 
-  private static <T> void processResponse(Future<T> future, Response response, Throwable ex,
+  private static <T> void processResponse(Promise<T> promise, Response response, Throwable ex,
                                           Function<Response, T> completeFunction) {
     if (ex != null) {
-      future.fail(ex);
+      promise.fail(ex);
     } else if (response.getException() != null) {
-      future.fail(response.getException());
+      promise.fail(response.getException());
     } else if (isFailedResponseCode(response)) {
       String failureMessage =
         response.getError() != null ? response.getError().encode() : "Error code: " + response.getCode();
-      future.fail(failureMessage);
+      promise.fail(failureMessage);
     } else {
-      future.complete(completeFunction.apply(response));
+      promise.complete(completeFunction.apply(response));
     }
   }
 

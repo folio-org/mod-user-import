@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 
@@ -23,14 +24,14 @@ public final class OkapiUtil {
 
   public static Future<List<String>> getModulesProvidingInterface(String interfaceName, Map<String, String> okapiHeaders,
                                                                   Vertx vertx) {
-    Future<List<String>> future = Future.future();
+    Promise<List<String>> promise = Promise.promise();
     OkapiClient okapiClient = new OkapiClient(getOkapiUrl(okapiHeaders), vertx, okapiHeaders);
     String requestUri = String.format(GET_MODULE_ID_ENDPOINT, TenantTool.tenantId(okapiHeaders), interfaceName);
     okapiClient.get(requestUri, response -> {
       AsyncResult<List<String>> asyncResult = response.map(s -> extractModuleIds(response.result()));
-      completeFutureWithResult(future, asyncResult);
+      completeFutureWithResult(promise, asyncResult);
     });
-    return future;
+    return promise.future();
   }
 
   private static List<String> extractModuleIds(String json) {
@@ -42,11 +43,11 @@ public final class OkapiUtil {
       .collect(Collectors.toList());
   }
 
-  private static void completeFutureWithResult(Future<List<String>> future, AsyncResult<List<String>> result) {
+  private static void completeFutureWithResult(Promise<List<String>> promise, AsyncResult<List<String>> result) {
     if (result.succeeded()) {
-      future.complete(result.result());
+      promise.complete(result.result());
     } else {
-      future.fail(result.cause());
+      promise.fail(result.cause());
     }
   }
 }
