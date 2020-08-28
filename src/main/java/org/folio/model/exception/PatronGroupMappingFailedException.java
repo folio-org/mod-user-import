@@ -1,4 +1,4 @@
-package org.folio.rest.model.exception;
+package org.folio.model.exception;
 
 public class PatronGroupMappingFailedException extends RuntimeException {
 

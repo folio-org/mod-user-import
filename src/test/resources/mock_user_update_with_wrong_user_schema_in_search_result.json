@@ -99,32 +99,32 @@
       "method": "get",
       "status": 200,
       "receivedData": {
-        "departments": [
-          {
-            "id": "99958431-4b48-49c6-bfae-911fe592addc",
-            "name": "Accounting",
-            "code": "ACC",
-            "usageNumber": 0
-          },
-          {
-            "id": "7b9741bc-e891-4cde-8516-6a209307aed4",
-            "name": "History",
-            "code": "HIS",
-            "usageNumber": 0
-          }
-        ],
-        "totalRecords": 2
+        "departments": [],
+        "totalRecords": 0
       }
+    },
+    {
+      "url": "/custom-fields?offset=0&limit=2147483647",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "customFields": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
     },
     {
       "url": "/users?query=externalSystemId%3D%3D%28user_update%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {
-        "users": [{
-          "id": "58512926-9a29-483b-b801-d36aced855d3",
-          "testMissingSchemaKey": "testValue"
-        }],
+        "users": [
+          {
+            "id": "58512926-9a29-483b-b801-d36aced855d3",
+            "testMissingSchemaKey": "testValue"
+          }
+        ],
         "totalRecords": 1
       },
       "receivedPath": "",

@@ -170,7 +170,7 @@
     "requestPreference": {
       "description": "User request preferences",
       "type": "object",
-      "$ref": "user-import-request-preference.json"
+      "$ref": "userImportRequestPreference.json"
     },
     "departments": {
       "description": "Names of departments the user belongs to",

@@ -1,12 +1,19 @@
-package org.folio.rest.util;
+package org.folio.service;
+
+import static org.folio.rest.jaxrs.model.CustomField.Type.MULTI_SELECT_DROPDOWN;
+import static org.folio.rest.jaxrs.model.CustomField.Type.RADIO_BUTTON;
+import static org.folio.rest.jaxrs.model.CustomField.Type.SINGLE_SELECT_DROPDOWN;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Consumer;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -16,17 +23,21 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import org.folio.model.UserImportData;
+import org.folio.model.exception.CustomFieldMappingFailedException;
+import org.folio.model.exception.DepartmentMappingFailedException;
+import org.folio.model.exception.PatronGroupMappingFailedException;
+import org.folio.model.exception.UserMappingFailedException;
 import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.Department;
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.RequestPreference;
+import org.folio.rest.jaxrs.model.SelectFieldOption;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.model.UserImportData;
-import org.folio.rest.model.exception.PatronGroupMappingFailedException;
-import org.folio.rest.model.exception.UserMappingFailedException;
 
-public class UserDataUtil {
+public class UserDataProcessingService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserDataUtil.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserDataProcessingService.class);
 
   private static final Map<String, String> preferredContactTypeIds = new CaseInsensitiveMap<>();
 
@@ -38,7 +49,7 @@ public class UserDataUtil {
     preferredContactTypeIds.put("mobile", "005");
   }
 
-  private UserDataUtil() { }
+  private UserDataProcessingService() { }
 
   public static Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
     Map<String, User> existingUsers = new HashMap<>();
@@ -64,6 +75,7 @@ public class UserDataUtil {
     setPatronGroup(user, userImportData);
     setPersonalData(user, userImportData);
     setDepartments(user, userImportData);
+    setCustomFields(user, userImportData);
   }
 
   public static void updateUserPreference(RequestPreference preference, UserImportData userImportData) {
@@ -122,17 +134,89 @@ public class UserDataUtil {
   }
 
   private static void setDepartments(User user, UserImportData userImportData) {
-    Set<String> departments = user.getDepartments();
+    var departments = user.getDepartments();
     if (CollectionUtils.isNotEmpty(departments)) {
-      Set<Department> existedDepartments = userImportData.getSystemData().getDepartments();
-      Set<String> departmentIds = departments.stream()
-        .map(departmentName -> DepartmentsManager.findDepartmentByName(existedDepartments, departmentName))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(Department::getId)
-        .collect(Collectors.toSet());
-      user.setDepartments(departmentIds);
+      var systemDepartments = userImportData.getSystemData().getDepartments();
+      Set<String> departmentIds = new HashSet<>();
+      Set<String> missedDepartmentNames = new TreeSet<>();
+
+      for (String departmentName : departments) {
+        DepartmentsService.findDepartmentByName(systemDepartments, departmentName)
+          .ifPresentOrElse(department -> departmentIds.add(department.getId()),
+            () -> missedDepartmentNames.add(departmentName)
+          );
+      }
+
+      if (missedDepartmentNames.isEmpty()) {
+        user.setDepartments(departmentIds);
+      } else {
+        throw new DepartmentMappingFailedException(missedDepartmentNames);
+      }
     }
+  }
+
+  private static void setCustomFields(User user, UserImportData userImportData) {
+    CustomFields customFields = user.getCustomFields();
+    if (customFields == null)
+      return;
+    var systemCustomFields = userImportData.getSystemData().getCustomFields();
+    var userCustomFields = customFields.getAdditionalProperties();
+
+    Set<String> missingCustomFieldsRefIds = new TreeSet<>();
+    Map<String, Set<String>> missingOptions = new TreeMap<>();
+    userCustomFields.entrySet().forEach(customFieldEntry -> {
+        String refId = customFieldEntry.getKey();
+        CustomFieldsService.findCustomFieldByRefId(systemCustomFields, refId)
+          .ifPresentOrElse(customFieldDefinition ->
+              setOptionIds(userCustomFields, customFieldDefinition, customFieldEntry, missingOptions),
+            () -> missingCustomFieldsRefIds.add(refId)
+          );
+      }
+    );
+    if (!missingCustomFieldsRefIds.isEmpty()) {
+      throw new CustomFieldMappingFailedException(missingCustomFieldsRefIds, missingOptions);
+    } else if (!missingOptions.isEmpty()) {
+      throw new CustomFieldMappingFailedException(Collections.emptySet(), missingOptions);
+    }
+  }
+
+  private static void setOptionIds(Map<String, Object> userCustomFields, CustomField definition,
+                                   Map.Entry<String, Object> customFieldEntry,
+                                   Map<String, Set<String>> missingOptions) {
+    if (isSelectableField(definition)) {
+      String refId = customFieldEntry.getKey();
+      Object value = customFieldEntry.getValue();
+      if (value instanceof String) {
+        setOptionId(value, refId, definition, opt -> userCustomFields.put(refId, opt.getId()), missingOptions);
+      } else if (value instanceof List) {
+        @SuppressWarnings("unchecked")
+        List<String> values = (List<String>) value;
+        List<String> optIds = new ArrayList<>();
+        for (String v : values) {
+          setOptionId(v, refId, definition, opt -> optIds.add(opt.getId()), missingOptions);
+        }
+        userCustomFields.put(refId, optIds);
+      }
+    }
+  }
+
+  private static void setOptionId(Object value, String refId, CustomField definition,
+                                  Consumer<SelectFieldOption> optionConsumer,
+                                  Map<String, Set<String>> missingOptions) {
+    definition.getSelectField().getOptions().getValues().stream()
+      .filter(opt -> opt.getValue().equals(value))
+      .findFirst()
+      .ifPresentOrElse(optionConsumer, () -> getEntrySet(missingOptions, refId).add((String) value)
+      );
+  }
+
+  private static Set<String> getEntrySet(Map<String, Set<String>> missingCustomFieldOptions, String refId) {
+    return missingCustomFieldOptions.computeIfAbsent(refId, s -> new TreeSet<>());
+  }
+
+  private static boolean isSelectableField(CustomField customField) {
+    return customField.getType() == RADIO_BUTTON || customField.getType() == MULTI_SELECT_DROPDOWN || customField
+      .getType() == SINGLE_SELECT_DROPDOWN;
   }
 
   /*

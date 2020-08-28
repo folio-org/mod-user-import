@@ -1,35 +1,39 @@
 package org.folio.rest.impl;
 
-import static org.folio.rest.util.AddressTypeManager.getAddressTypes;
-import static org.folio.rest.util.HttpClientUtil.createHeaders;
-import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
-import static org.folio.rest.util.PatronGroupManager.getPatronGroups;
-import static org.folio.rest.util.ServicePointsService.getServicePoints;
-import static org.folio.rest.util.UserDataUtil.extractExistingUsers;
-import static org.folio.rest.util.UserDataUtil.updateExistingUserWithIncomingFields;
-import static org.folio.rest.util.UserDataUtil.updateUserData;
-import static org.folio.rest.util.UserImportAPIConstants.CONN_TO;
-import static org.folio.rest.util.UserImportAPIConstants.ERROR_MESSAGE;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_IMPORT_USERS;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USERS;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID;
-import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
-import static org.folio.rest.util.UserImportAPIConstants.IDLE_TO;
-import static org.folio.rest.util.UserImportAPIConstants.OKAPI_TENANT_HEADER;
-import static org.folio.rest.util.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
-import static org.folio.rest.util.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
-import static org.folio.rest.util.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
+import static org.folio.rest.impl.UserImportAPIConstants.CONN_TO;
+import static org.folio.rest.impl.UserImportAPIConstants.ERROR_MESSAGE;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_IMPORT_USERS;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USERS;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
+import static org.folio.rest.impl.UserImportAPIConstants.IDLE_TO;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
+import static org.folio.rest.impl.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
+import static org.folio.rest.impl.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
+import static org.folio.service.AddressTypeService.getAddressTypes;
+import static org.folio.service.CustomFieldsService.prepareCustomFields;
+import static org.folio.service.DepartmentsService.prepareDepartments;
+import static org.folio.service.PatronGroupService.getPatronGroups;
+import static org.folio.service.ServicePointsService.getServicePoints;
+import static org.folio.service.UserDataProcessingService.extractExistingUsers;
+import static org.folio.service.UserDataProcessingService.updateExistingUserWithIncomingFields;
+import static org.folio.service.UserDataProcessingService.updateUserData;
+import static org.folio.util.HttpClientUtil.createHeaders;
+import static org.folio.util.HttpClientUtil.getOkapiUrl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -44,32 +48,31 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.impl.CompositeFutureImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
-import org.jetbrains.annotations.NotNull;
-
+import org.folio.model.SingleUserImportResponse;
+import org.folio.model.UserImportData;
+import org.folio.model.UserRecordImportStatus;
+import org.folio.model.UserSystemData;
+import org.folio.model.exception.UserMappingFailedException;
 import org.folio.rest.annotations.Validate;
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.FailedUser;
 import org.folio.rest.jaxrs.model.ImportResponse;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.jaxrs.resource.UserImport;
-import org.folio.rest.model.UserImportData;
-import org.folio.rest.model.UserSystemData;
-import org.folio.rest.model.exception.UserMappingFailedException;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
-import org.folio.rest.util.CustomFieldsManager;
-import org.folio.rest.util.DepartmentsManager;
-import org.folio.rest.util.SingleUserImportResponse;
-import org.folio.rest.util.UserDataUtil;
-import org.folio.rest.util.UserPreferenceService;
-import org.folio.rest.util.UserRecordImportStatus;
+import org.folio.service.UserDataProcessingService;
+import org.folio.service.UserPreferenceService;
 
 public class UserImportAPI implements UserImport {
 
@@ -108,17 +111,22 @@ public class UserImportAPI implements UserImport {
 
   private Future<UserImportData> prepareUserImportData(UserdataimportCollection userCollection,
                                                        Map<String, String> okapiHeaders, Vertx vertx) {
-    Future<Map<String, String>> addressTypesFuture = getAddressTypes(okapiHeaders);
-    Future<Map<String, String>> patronGroupsFuture = getPatronGroups(okapiHeaders);
-    Future<Map<String, String>> servicePointsFuture = getServicePoints(okapiHeaders);
-    return CompositeFuture.all(addressTypesFuture, patronGroupsFuture, servicePointsFuture)
-      .map(CompositeFuture::<Map<String, String>>list)
-      .map(createUserImportData(userCollection))
-      .compose(importData -> {
-        Future<Void> prepareCustomFields = CustomFieldsManager.prepareCustomFields(importData, okapiHeaders, vertx);
-        Future<Void> prepareDepartments = DepartmentsManager.prepareDepartments(importData, okapiHeaders);
-        return CompositeFuture.all(prepareCustomFields, prepareDepartments).map(compositeFuture -> importData);
-      });
+    UserImportData importData = new UserImportData(userCollection);
+    UserSystemData.UserSystemDataBuilder systemDataBuilder = UserSystemData.builder();
+    AtomicReference<UserSystemData.UserSystemDataBuilder> dataBuilderRef = new AtomicReference<>(systemDataBuilder);
+    Future<Map<String, String>> addressTypesFuture = getAddressTypes(okapiHeaders)
+      .onSuccess(addressTypes -> dataBuilderRef.updateAndGet(b -> b.addressTypes(addressTypes)));
+    Future<Map<String, String>> patronGroupsFuture = getPatronGroups(okapiHeaders)
+      .onSuccess(patronGroups -> dataBuilderRef.updateAndGet(b -> b.patronGroups(patronGroups)));
+    Future<Map<String, String>> servicePointsFuture = getServicePoints(okapiHeaders)
+      .onSuccess(servicePoints -> dataBuilderRef.updateAndGet(b -> b.servicePoints(servicePoints)));
+    Future<Set<CustomField>> customFieldsFuture = prepareCustomFields(importData, okapiHeaders, vertx)
+      .onSuccess(customFields -> dataBuilderRef.updateAndGet(b -> b.customFields(customFields)));
+    Future<Set<Department>> departmentsFuture = prepareDepartments(importData, okapiHeaders)
+      .onSuccess(departments -> dataBuilderRef.updateAndGet(b -> b.departments(departments)));
+    return CompositeFuture
+      .all(addressTypesFuture, patronGroupsFuture, servicePointsFuture, customFieldsFuture, departmentsFuture)
+      .map(o -> importData.withSystemData(dataBuilderRef.get().build()));
   }
 
   /**
@@ -132,22 +140,6 @@ public class UserImportAPI implements UserImport {
         true, CONN_TO, IDLE_TO, false, 30L);
 
     return importUsers(importData, httpClient, okapiHeaders, future);
-  }
-
-  @NotNull
-  private Function<List<Map<String, String>>, UserImportData> createUserImportData(UserdataimportCollection userCollection) {
-    return list ->
-    {
-      Map<String, String> addressTypes = list.get(0);
-      Map<String, String> patronGroups = list.get(1);
-      Map<String, String> servicePoints = list.get(2);
-      UserSystemData systemData = UserSystemData.builder()
-        .addressTypes(addressTypes)
-        .patronGroups(patronGroups)
-        .servicePoints(servicePoints)
-        .build();
-      return UserImportData.from(userCollection, systemData);
-    };
   }
 
   private Future<ImportResponse> importUsers(UserImportData importData, HttpClientInterface httpClient,
@@ -364,29 +356,11 @@ public class UserImportAPI implements UserImport {
                                                          UserImportData userImportData) {
 
     Promise<ImportResponse> future = Promise.promise();
-    List<Future> futures = new ArrayList<>();
-    for (User user : usersToImport) {
-      updateUserData(user, userImportData);
-      if (existingUsers.containsKey(user.getExternalSystemId())) {
-        if (userImportData.isUpdateOnlyPresentFields()) {
-          user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
-        } else {
-          user.setId(existingUsers.get(user.getExternalSystemId()).getId());
-        }
-        Future<SingleUserImportResponse> userUpdateResponse = updateUser(httpClient, okapiHeaders, user);
-        Future<RequestPreference> userPreference = updateUserPreference(user, userImportData, okapiHeaders);
-        futures.add(userUpdateResponse);
-        futures.add(userPreference);
-        existingUsers.remove(user.getExternalSystemId());
-      } else {
-        Future<SingleUserImportResponse> userCreationResponse = createNewUser(httpClient, okapiHeaders, user);
-        Future<RequestPreference> userPreference = createUserPreference(user, userImportData, okapiHeaders);
-        futures.add(userCreationResponse);
-        futures.add(userPreference);
-      }
-    }
+    List<Future<SingleUserImportResponse>> futures = usersToImport.stream()
+      .map(user -> processUser(user, userImportData, existingUsers, httpClient, okapiHeaders))
+      .collect(Collectors.toList());
 
-    CompositeFuture.all(futures).onComplete(ar -> {
+    CompositeFutureImpl.all(futures.toArray(new Future[0])).onComplete(ar -> {
       if (ar.succeeded()) {
         LOGGER.info("User creation and update has finished for the current batch.");
         ImportResponse successResponse = processSuccessfulImportResponse(futures);
@@ -399,26 +373,63 @@ public class UserImportAPI implements UserImport {
     return future.future();
   }
 
+  private Future<SingleUserImportResponse> processUser(User user, UserImportData userImportData,
+                                                       Map<String, User> existingUsers, HttpClientInterface httpClient,
+                                                       Map<String, String> okapiHeaders) {
+    try {
+      updateUserData(user, userImportData);
+    } catch (RuntimeException e) {
+      SingleUserImportResponse failed =
+        getFailedUserResponse(user, e);
+      return Future.succeededFuture(failed);
+    }
+
+    if (existingUsers.containsKey(user.getExternalSystemId())) {
+      if (userImportData.isUpdateOnlyPresentFields()) {
+        user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
+      } else {
+        user.setId(existingUsers.get(user.getExternalSystemId()).getId());
+      }
+      existingUsers.remove(user.getExternalSystemId());
+      User finalUser = user;
+      return updateUser(httpClient, okapiHeaders, user)
+        .compose(singleUserImportResponse -> updateUserPreference(finalUser, userImportData, okapiHeaders)
+          .map(o -> singleUserImportResponse)
+          .otherwise(e -> getFailedUserResponse(finalUser, e))
+        );
+    } else {
+      User finalUser = user;
+      return createNewUser(httpClient, okapiHeaders, user)
+        .compose(singleUserImportResponse -> createUserPreference(finalUser, userImportData, okapiHeaders)
+          .map(o -> singleUserImportResponse)
+          .otherwise(e -> getFailedUserResponse(finalUser, e))
+        );
+    }
+  }
+
+  private SingleUserImportResponse getFailedUserResponse(User finalUser, Throwable e) {
+    return SingleUserImportResponse
+      .failed(finalUser.getExternalSystemId(), finalUser.getUsername(), -1, e.getMessage());
+  }
+
   /**
    * Aggregate SingleUserImportResponses to an ImportResponse.
    */
-  private ImportResponse processSuccessfulImportResponse(List<Future> futures) {
+  private ImportResponse processSuccessfulImportResponse(List<Future<SingleUserImportResponse>> futures) {
     List<FailedUser> failedUsers = new ArrayList<>();
     int created = 0;
     int updated = 0;
     int failed = 0;
-    for (Future currentFuture : futures) {
-      if (currentFuture.result() instanceof SingleUserImportResponse) {
-        SingleUserImportResponse resp = (SingleUserImportResponse) currentFuture.result();
-        if (resp.getStatus() == UserRecordImportStatus.CREATED) {
-          created++;
-        } else if (resp.getStatus() == UserRecordImportStatus.UPDATED) {
-          updated++;
-        } else {
-          failed++;
-          failedUsers.add(new FailedUser().withExternalSystemId(resp.getExternalSystemId()).withUsername(resp.getUsername())
-            .withErrorMessage(resp.getErrorMessage()));
-        }
+    for (Future<SingleUserImportResponse> currentFuture : futures) {
+      SingleUserImportResponse resp = currentFuture.result();
+      if (resp.getStatus() == UserRecordImportStatus.CREATED) {
+        created++;
+      } else if (resp.getStatus() == UserRecordImportStatus.UPDATED) {
+        updated++;
+      } else {
+        failed++;
+        failedUsers.add(new FailedUser().withExternalSystemId(resp.getExternalSystemId()).withUsername(resp.getUsername())
+          .withErrorMessage(resp.getErrorMessage()));
       }
     }
     return new ImportResponse()
@@ -450,7 +461,7 @@ public class UserImportAPI implements UserImport {
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
               future.complete(
-                SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
+                getFailedUserResponse(user, e));
             }
           } else {
             errorManagement(res, ex, future, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
@@ -460,7 +471,7 @@ public class UserImportAPI implements UserImport {
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
+      future.complete(getFailedUserResponse(user, exc));
     }
 
     return future.future();
@@ -495,7 +506,7 @@ public class UserImportAPI implements UserImport {
             } catch (Exception e) {
               LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
               future.complete(
-                SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, e.getMessage()));
+                getFailedUserResponse(user, e));
             }
           } else {
             errorManagement(userCreationResponse, ex, future,
@@ -506,7 +517,7 @@ public class UserImportAPI implements UserImport {
         });
     } catch (Exception exc) {
       LOGGER.error(FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
-      future.complete(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(), -1, exc.getMessage()));
+      future.complete(getFailedUserResponse(user, exc));
     }
     return future.future();
   }
@@ -519,7 +530,7 @@ public class UserImportAPI implements UserImport {
       requestPreference.setUserId(user.getId());
       return UserPreferenceService.validate(requestPreference, userImportData, user)
         .compose(o -> {
-          UserDataUtil.updateUserPreference(requestPreference, userImportData);
+          UserDataProcessingService.updateUserPreference(requestPreference, userImportData);
           return UserPreferenceService.create(okapiHeaders, requestPreference);
         });
     } else {
@@ -538,7 +549,7 @@ public class UserImportAPI implements UserImport {
             requestPreference.setUserId(result.getUserId());
             return UserPreferenceService.validate(requestPreference, userImportData, user)
               .compose(o -> {
-                UserDataUtil.updateUserPreference(requestPreference, userImportData);
+                UserDataProcessingService.updateUserPreference(requestPreference, userImportData);
                 return UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty();
               });
           } else {

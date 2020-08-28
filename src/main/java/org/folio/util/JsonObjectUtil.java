@@ -1,4 +1,4 @@
-package org.folio.rest.util;
+package org.folio.util;
 
 import java.util.HashMap;
 import java.util.Map;

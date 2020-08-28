@@ -73,6 +73,26 @@
       },
       "receivedPath": "",
       "sendData": {}
+    },
+    {
+      "url": "/departments",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "departments": [],
+        "totalRecords": 0
+      }
+    },
+    {
+      "url": "/custom-fields?offset=0&limit=2147483647",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "customFields": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
     }
   ]
 }

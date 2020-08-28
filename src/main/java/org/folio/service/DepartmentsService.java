@@ -1,17 +1,15 @@
-package org.folio.rest.util;
+package org.folio.service;
 
 import static io.vertx.core.Future.succeededFuture;
 
-import static org.folio.rest.util.UserImportAPIConstants.DEPARTMENTS_ENDPOINT;
-import static org.folio.rest.util.UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS;
+import static org.folio.rest.impl.UserImportAPIConstants.DEPARTMENTS_ENDPOINT;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
@@ -20,21 +18,20 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
+import org.folio.model.UserImportData;
 import org.folio.rest.jaxrs.model.Department;
-import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.model.UserImportData;
+import org.folio.util.HttpClientUtil;
 
-public class DepartmentsManager {
+public class DepartmentsService {
 
   private static final String DEPARTMENTS_ARRAY_KEY = "departments";
-  private static final String DEPARTMENTS_NOT_EXIST_MESSAGE = "Departments do not exist in the system: [%s]";
   private static final String FAILED_TO_CREATE_DEPARTMENT_MESSAGE = "Failed to create department";
   private static final String FAILED_TO_UPDATE_DEPARTMENT_MESSAGE = "Failed to update department";
 
-  private DepartmentsManager() {}
+  private DepartmentsService() {}
 
-  public static Future<Void> prepareDepartments(UserImportData importData,
-                                                Map<String, String> okapiHeaders) {
+  public static Future<Set<Department>> prepareDepartments(UserImportData importData,
+                                                           Map<String, String> okapiHeaders) {
     return getDepartments(okapiHeaders)
       .compose(systemDepartments -> {
         Set<Department> importDepartments = importData.getDepartments();
@@ -43,37 +40,7 @@ public class DepartmentsManager {
         } else {
           return succeededFuture(systemDepartments);
         }
-      })
-      .compose(systemDepartments -> checkDepartmentsExistence(importData, systemDepartments));
-  }
-
-  private static Future<Void> checkDepartmentsExistence(UserImportData importData, Set<Department> systemDepartments) {
-    Set<String> usersDepartmentNames = fetchUsersDepartmentNames(importData);
-    Set<String> missedDepartmentNames = findMissedDepartments(systemDepartments, usersDepartmentNames);
-
-    if (!missedDepartmentNames.isEmpty()) {
-      String errorMessage = String.format(DEPARTMENTS_NOT_EXIST_MESSAGE, String.join(", ", missedDepartmentNames));
-      return Future.failedFuture(errorMessage);
-    }
-    importData.getSystemData().getDepartments().addAll(systemDepartments);
-    return succeededFuture();
-  }
-
-  private static Set<String> findMissedDepartments(Set<Department> systemDepartments, Set<String> usersDepartmentNames) {
-    Set<String> missedDepartmentNames = new TreeSet<>();
-    usersDepartmentNames.forEach(departmentName -> {
-      if (findDepartmentByName(systemDepartments, departmentName).isEmpty()) {
-        missedDepartmentNames.add(departmentName);
-      }
-    });
-    return missedDepartmentNames;
-  }
-
-  private static Set<String> fetchUsersDepartmentNames(UserImportData importData) {
-    return importData.getUsers().stream()
-      .map(User::getDepartments)
-      .flatMap(Collection::stream)
-      .collect(Collectors.toSet());
+      });
   }
 
   private static Future<Set<Department>> updateSystemDepartments(Set<Department> importDepartments,
@@ -100,20 +67,20 @@ public class DepartmentsManager {
   }
 
   private static Future<Set<Department>> getDepartments(Map<String, String> okapiHeaders) {
-    return RequestManager.get(okapiHeaders, DEPARTMENTS_ENDPOINT, FAILED_TO_LIST_DEPARTMENTS)
-      .map(DepartmentsManager::extractDepartments);
+    return HttpClientUtil.get(okapiHeaders, DEPARTMENTS_ENDPOINT, FAILED_TO_LIST_DEPARTMENTS)
+      .map(DepartmentsService::extractDepartments);
   }
 
   private static Future<Department> createDepartment(Department department, Map<String, String> okapiHeaders) {
     if (StringUtils.isBlank(department.getCode())) {
       department.setCode(generateCode(department.getName()));
     }
-    return RequestManager
+    return HttpClientUtil
       .post(okapiHeaders, DEPARTMENTS_ENDPOINT, Department.class, department, FAILED_TO_CREATE_DEPARTMENT_MESSAGE);
   }
 
   private static Future<Void> updateDepartment(Department existed, Department updated, Map<String, String> okapiHeaders) {
-    return RequestManager
+    return HttpClientUtil
       .put(okapiHeaders, DEPARTMENTS_ENDPOINT + "/" + existed.getId(), updated, FAILED_TO_UPDATE_DEPARTMENT_MESSAGE);
   }
 

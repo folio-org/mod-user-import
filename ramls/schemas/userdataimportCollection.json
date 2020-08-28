@@ -44,6 +44,15 @@
             "type": "object",
             "$ref": "department.json"
           }
+        },
+        "customFields": {
+          "description": "Custom fields entities that should be updated with users",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "$ref": "customField.json"
+          }
         }
       }
     }

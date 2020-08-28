@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Checkbox Field Schema",
+  "description": "Checkbox Field Schema",
+  "type": "object",
+  "javaType": "org.folio.rest.jaxrs.model.CheckboxField",
+  "additionalProperties": false,
+  "properties": {
+    "default": {
+      "type": "boolean",
+      "description": "Defines if the custom field is default",
+      "example": false,
+      "default": false
+    }
+  }
+}

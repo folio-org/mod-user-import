@@ -1,5 +1,10 @@
 package org.folio.rest.impl;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -12,7 +17,6 @@ import static org.folio.TestUtils.FAILED_RECORDS;
 import static org.folio.TestUtils.FAILED_USERS;
 import static org.folio.TestUtils.JSON_CONTENT_TYPE_HEADER;
 import static org.folio.TestUtils.MESSAGE;
-import static org.folio.TestUtils.OKAPI_URL_HEADER;
 import static org.folio.TestUtils.TENANT_HEADER;
 import static org.folio.TestUtils.TOKEN_HEADER;
 import static org.folio.TestUtils.TOTAL_RECORDS;
@@ -21,38 +25,52 @@ import static org.folio.TestUtils.USERNAME;
 import static org.folio.TestUtils.USER_ERROR_MESSAGE;
 import static org.folio.TestUtils.USER_IMPORT;
 import static org.folio.TestUtils.generateUser;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.RestAssured;
+import io.restassured.http.Header;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.internal.util.collections.Sets;
 
+import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.IncludedObjects;
 import org.folio.rest.jaxrs.model.RequestPreference;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.folio.rest.RestVerticle;
-import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.SelectField;
+import org.folio.rest.jaxrs.model.SelectFieldOption;
+import org.folio.rest.jaxrs.model.SelectFieldOptions;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.tools.client.test.HttpClientMock2;
-import org.folio.rest.util.UserImportAPIConstants;
-import org.mockito.internal.util.collections.Sets;
 
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
 
   public static final int PORT = 8081;
+  public static final String HOST = "http://127.0.0.1";
+
+  @Rule public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
+
   private Vertx vertx;
   private HttpClientMock2 mock;
 
@@ -71,8 +89,15 @@ public class UserImportAPITest {
     RestAssured.port = PORT;
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
-    mock = new HttpClientMock2("http://localhost:9130", "diku");
+    mock = new HttpClientMock2("http://localhost:9130", "import-test");
 
+    stubFor(
+      get(urlEqualTo("/_/proxy/tenants/diku/modules?provide=users"))
+        .willReturn(aResponse().withBody("[\n"
+          + "    {\n"
+          + "        \"id\": \"mod-users\"\n"
+          + "    }\n"
+          + "]")));
   }
 
   @After
@@ -92,7 +117,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -117,7 +142,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -150,7 +175,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -183,7 +208,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -214,7 +239,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -245,12 +270,12 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
-      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
@@ -258,8 +283,9 @@ public class UserImportAPITest {
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo("Patron group does not exist in the system: [nonExistingTestPatronGroup]"))
-      .statusCode(500);
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        equalTo("Patron group does not exist in the system: [nonExistingTestPatronGroup]"))
+      .statusCode(200);
   }
 
   @Test
@@ -279,7 +305,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -309,7 +335,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -344,7 +370,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -368,7 +394,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -397,7 +423,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -431,7 +457,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -477,7 +503,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -508,7 +534,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -538,7 +564,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -572,7 +598,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -604,7 +630,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -648,7 +674,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -698,7 +724,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -739,7 +765,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -770,7 +796,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -820,7 +846,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -861,7 +887,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -891,7 +917,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -922,7 +948,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -953,7 +979,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -984,7 +1010,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1015,7 +1041,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1046,7 +1072,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1083,7 +1109,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1117,7 +1143,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1168,7 +1194,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1183,7 +1209,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserPreferenceDeliveryIsFalseAndFulfillmentSpecified () throws IOException {
+  public void testImportWithUserPreferenceDeliveryIsFalseAndFulfillmentSpecified() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1205,7 +1231,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1217,12 +1243,13 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must be not specified"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must be not specified"))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserPreferenceDeliveryIsFalseAndAddressTypeSpecified () throws IOException {
+  public void testImportWithUserPreferenceDeliveryIsFalseAndAddressTypeSpecified() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1243,7 +1270,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1255,12 +1282,13 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "defaultDeliveryAddressTypeId must be not specified"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
+        UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "defaultDeliveryAddressTypeId must be not specified"))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserPreferenceInvalidDefaultServicePoint () throws IOException {
+  public void testImportWithUserPreferenceInvalidDefaultServicePoint() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1280,7 +1308,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1312,7 +1340,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1322,7 +1350,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserPreferenceDefaultServicePointNotFound () throws IOException {
+  public void testImportWithUserPreferenceDefaultServicePointNotFound() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1342,19 +1370,20 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultServicePointId value does not exist"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
+        UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultServicePointId value does not exist"))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserPreferenceDeliveryIsTrueAndAddressTypeNotFound () throws IOException {
+  public void testImportWithUserPreferenceDeliveryIsTrueAndAddressTypeNotFound() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1376,19 +1405,21 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value does not exist"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
+        UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION
+          + "Provided defaultDeliveryAddressTypeId value does not exist"))
       .statusCode(200);
   }
 
   @Test
-  public void testImportWithUserPreferenceDeliveryIsTrueAndFulfillmentIsNull () throws IOException {
+  public void testImportWithUserPreferenceDeliveryIsTrueAndFulfillmentIsNull() throws IOException {
     mock.setMockJsonContent("mock_user_creation_with_new_preference.json");
 
     List<User> users = new ArrayList<>();
@@ -1410,14 +1441,15 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must not be null"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "fulfillment must not be null"))
       .statusCode(200);
   }
 
@@ -1442,7 +1474,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1489,7 +1521,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1536,14 +1568,16 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION + "Provided defaultDeliveryAddressTypeId value does not exist in user addresses collection"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
+        UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION
+          + "Provided defaultDeliveryAddressTypeId value does not exist in user addresses collection"))
       .statusCode(200);
   }
 
@@ -1562,7 +1596,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1593,7 +1627,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1627,7 +1661,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1657,7 +1691,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1690,7 +1724,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1723,7 +1757,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1754,21 +1788,166 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(OKAPI_URL_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
-      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, containsString("Departments do not exist in the system: [Chemistry, Financial]"))
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString("Departments do not exist in the system: [Chemistry, Financial]"))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        containsString("Departments do not exist in the system: [Chemistry, Financial]"))
       .body(FAILED_USERS, hasSize(1))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithExistedCustomFieldOptions() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_custom_fields.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1", "Design"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithNotExistedCustomFieldOptions() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_custom_fields.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1", "Development"));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
+      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        containsString("Custom field's options do not exist in the system: [refId = department_1, options: [Development]]."))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithMultiFieldOptionsOneOfIsNotExist() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_multi_custom_fields.json");
+
+    String refId = "department_1";
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty(refId,
+        Arrays.asList("Development", "Design")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withIncluded(new IncludedObjects()
+        .withCustomFields(Set.of(new CustomField()
+            .withRefId(refId)
+            .withSelectField(new SelectField()
+              .withOptions(new SelectFieldOptions()
+                .withValues(
+                  List.of(new SelectFieldOption().withValue("Design"), new SelectFieldOption().withValue("Development"))
+                )
+              )
+            )
+          )
+        )
+      );
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(1))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUsersWithCustomFieldOptionsWithRequestError() throws IOException {
+    mock.setMockJsonContent("mock_user_creation_with_custom_fields_failed_get.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty("department_1",
+        Arrays.asList("Development", "Design")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(FAILED_TO_LIST_CUSTOM_FIELDS))
       .statusCode(500);
+  }
+
+  private String getWiremockUrl() {
+    return HOST + ":" + wireMockRule.port();
   }
 }

@@ -1,4 +1,4 @@
-package org.folio.rest.util;
+package org.folio.model;
 
 public enum UserRecordImportStatus {
   CREATED, UPDATED, FAILED
