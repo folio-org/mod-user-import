@@ -8,10 +8,14 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_IMPORT_USERS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USERS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT;
+import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_REGISTER_PERMISSIONS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
 import static org.folio.rest.impl.UserImportAPIConstants.IDLE_TO;
 import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.PERMS_USERS_ENDPOINT;
+import static org.folio.rest.impl.UserImportAPIConstants.USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
@@ -379,8 +383,7 @@ public class UserImportAPI implements UserImport {
     try {
       updateUserData(user, userImportData);
     } catch (RuntimeException e) {
-      SingleUserImportResponse failed =
-        getFailedUserResponse(user, e);
+      SingleUserImportResponse failed = getFailedUserResponse(user, e);
       return Future.succeededFuture(failed);
     }
 
@@ -449,9 +452,10 @@ public class UserImportAPI implements UserImport {
 
     Promise<SingleUserImportResponse> future = Promise.promise();
     try {
-      final String userUpdateQuery = UriBuilder.fromPath("/users/" + user.getId()).build().toString();
+      final String userUpdateQuery = UriBuilder.fromPath(USERS_ENDPOINT + "/" + user.getId()).build().toString();
 
-      Map<String, String> headers = createHeaders(okapiHeaders, "text/plain", HTTP_HEADER_VALUE_APPLICATION_JSON);
+      Map<String, String> headers =
+        createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
 
       httpClient.request(HttpMethod.PUT, JsonObject.mapFrom(user), userUpdateQuery, headers)
         .whenComplete((res, ex) -> {
@@ -460,8 +464,7 @@ public class UserImportAPI implements UserImport {
               future.complete(SingleUserImportResponse.updated(user.getExternalSystemId()));
             } catch (Exception e) {
               LOGGER.warn(FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
-              future.complete(
-                getFailedUserResponse(user, e));
+              future.complete(getFailedUserResponse(user, e));
             }
           } else {
             errorManagement(res, ex, future, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
@@ -488,7 +491,7 @@ public class UserImportAPI implements UserImport {
       user.setId(UUID.randomUUID().toString());
     }
 
-    final String userCreationQuery = UriBuilder.fromPath("/users").build().toString();
+    final String userCreationQuery = UriBuilder.fromPath(USERS_ENDPOINT).build().toString();
     Map<String, String> headers =
       createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
 
@@ -499,14 +502,13 @@ public class UserImportAPI implements UserImport {
             try {
               addEmptyPermissionSetForUser(httpClient, okapiHeaders, user).onComplete(futurePermissionHandler -> {
                 if (futurePermissionHandler.failed()) {
-                  LOGGER.error("Failed to register permissions for user with externalSystemId: " + user.getExternalSystemId());
+                  LOGGER.error(FAILED_TO_REGISTER_PERMISSIONS + user.getExternalSystemId());
                 }
                 future.complete(SingleUserImportResponse.created(user.getExternalSystemId()));
               });
             } catch (Exception e) {
-              LOGGER.warn("Failed to register permission for user with externalSystemId: " + user.getExternalSystemId());
-              future.complete(
-                getFailedUserResponse(user, e));
+              LOGGER.warn(FAILED_TO_REGISTER_PERMISSIONS + user.getExternalSystemId());
+              future.complete(getFailedUserResponse(user, e));
             }
           } else {
             errorManagement(userCreationResponse, ex, future,
@@ -573,7 +575,7 @@ public class UserImportAPI implements UserImport {
       object.put("userId", user.getId());
       object.put("permissions", new JsonArray());
 
-      final String permissionAddQuery = UriBuilder.fromPath("/perms/users").build().toString();
+      final String permissionAddQuery = UriBuilder.fromPath(PERMS_USERS_ENDPOINT).build().toString();
 
       httpClient.request(HttpMethod.POST, object, permissionAddQuery, headers)
         .whenComplete((response, ex) -> {
@@ -581,7 +583,8 @@ public class UserImportAPI implements UserImport {
             try {
               future.complete(response.getBody());
             } catch (Exception e) {
-              LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), e.getMessage());
+              LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(),
+                e.getMessage());
               future.fail(e);
             }
           } else {
@@ -590,7 +593,8 @@ public class UserImportAPI implements UserImport {
           }
         });
     } catch (Exception exc) {
-      LOGGER.error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
+      LOGGER
+        .error(FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId(), exc.getMessage());
       future.fail(exc);
     }
     return future.future();
@@ -721,7 +725,7 @@ public class UserImportAPI implements UserImport {
     Promise<Void> future = Promise.promise();
     List<Future> futures = new ArrayList<>();
     for (User user : existingUserMap.values()) {
-      if (user.getActive()) {
+      if (Boolean.TRUE.equals(user.getActive())) {
         user.setActive(Boolean.FALSE);
         Future<SingleUserImportResponse> userDeactivateAsyncResult
           = updateUser(httpClient, okapiHeaders, user);
@@ -750,7 +754,7 @@ public class UserImportAPI implements UserImport {
    * @return the build query string
    */
   private String generateUserSearchQuery(String query, int limit, int offset) {
-    return UriBuilder.fromPath("/users")
+    return UriBuilder.fromPath(USERS_ENDPOINT)
       .queryParam("query", query)
       .queryParam("limit", limit)
       .queryParam("offset", offset)

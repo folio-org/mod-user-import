@@ -14,17 +14,12 @@ public class CustomFieldMappingFailedException extends RuntimeException {
   private static final String CF_OPTIONS_MISSING_MESSAGE = "Custom field's options do not exist in the system: [%s].";
   private static final String MISSING_OPTIONS_SUB_MESSAGE = "refId = %s, options: [%s]";
 
-  private final Set<String> missingRefIds;
-  private final Map<String, Set<String>> missingOptions;
-
   public CustomFieldMappingFailedException(Set<String> missingRefIds) {
     this(missingRefIds, emptyMap());
   }
 
   public CustomFieldMappingFailedException(Set<String> missingRefIds, Map<String, Set<String>> missingOptions) {
     super(createMessage(missingRefIds, missingOptions));
-    this.missingRefIds = missingRefIds;
-    this.missingOptions = missingOptions;
   }
 
   private static String createMessage(Set<String> customFieldRefIds, Map<String, Set<String>> customFieldOptions) {
@@ -45,13 +40,5 @@ public class CustomFieldMappingFailedException extends RuntimeException {
 
   private static String createMissingOptionMessage(Map.Entry<String, Set<String>> entry) {
     return String.format(MISSING_OPTIONS_SUB_MESSAGE, entry.getKey(), String.join(", ", entry.getValue())).trim();
-  }
-
-  public Set<String> getDepartmentNames() {
-    return missingRefIds;
-  }
-
-  private Map<String, Set<String>> getMissingOptions() {
-    return missingOptions;
   }
 }

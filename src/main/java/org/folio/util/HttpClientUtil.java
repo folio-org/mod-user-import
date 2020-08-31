@@ -4,6 +4,7 @@ import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_ACCEPT;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_CONTENT_TYPE;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_URL_HEADER;
@@ -63,9 +64,11 @@ public class HttpClientUtil {
     return future.future();
   }
 
-  public static <T> Future<T> post(Map<String, String> okapiHeaders, String query,  Class<T> clazz, Object entity, String failedMessage){
+  public static <T> Future<T> post(Map<String, String> okapiHeaders, String query, Class<T> clazz, Object entity,
+                                   String failedMessage) {
 
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     Promise<T> promise = Promise.promise();
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
@@ -97,10 +100,11 @@ public class HttpClientUtil {
   public static Future<Void> put(Map<String, String> okapiHeaders, String query, Object entity, String failedMessage) {
 
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
-      LOGGER.info("Do PUT request: {}",  query);
+      LOGGER.info("Do PUT request: {}", query);
       httpClient.request(HttpMethod.PUT, JsonObject.mapFrom(entity), query, headers)
         .whenComplete(handleResponse(failedMessage, future, httpClient));
     } catch (Exception exc) {
@@ -112,10 +116,11 @@ public class HttpClientUtil {
 
   public static Future<Void> delete(Map<String, String> okapiHeaders, String query, String id, String failedMessage) {
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
-      LOGGER.info("Do DELETE request: {}",  query);
+      LOGGER.info("Do DELETE request: {}", query);
       httpClient.request(HttpMethod.DELETE, id, query, headers)
         .whenComplete(handleResponse(failedMessage, future, httpClient));
     } catch (Exception exc) {
@@ -137,7 +142,8 @@ public class HttpClientUtil {
   }
 
   @NotNull
-  public static BiConsumer<Response, Throwable> handleResponse(String failedMessage, Promise<Void> future, HttpClientInterface httpClient) {
+  public static BiConsumer<Response, Throwable> handleResponse(String failedMessage, Promise<Void> future,
+                                                               HttpClientInterface httpClient) {
     return (res, ex) -> {
       try {
         if (isSuccess(res, ex)) {
@@ -157,6 +163,10 @@ public class HttpClientUtil {
   public static Map<String, String> createHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
     Map<String, String> headers = new HashMap<>();
     headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    String moduleId = okapiHeaders.get(OKAPI_MODULE_ID_HEADER);
+    if (moduleId != null) {
+      headers.put(OKAPI_MODULE_ID_HEADER, moduleId);
+    }
     headers.put(HTTP_HEADER_ACCEPT, accept);
     if (!Strings.isNullOrEmpty(contentType)) {
       headers.put(HTTP_HEADER_CONTENT_TYPE, contentType);

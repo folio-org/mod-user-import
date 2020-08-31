@@ -30,6 +30,7 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_F
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -1944,6 +1945,53 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS, hasSize(1))
       .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(FAILED_TO_LIST_CUSTOM_FIELDS))
+      .statusCode(500);
+  }
+
+  @Test
+  public void testImportUsersWithCustomFieldAndTryingUpdateNotExistedCustomField() throws IOException {
+    mock.setMockJsonContent("mock_user_update_not_existed_custom_field.json");
+
+    List<User> users = new ArrayList<>();
+    String refId = "department_1";
+    User user = generateUser("1234567", "Amy", "Cabble", null)
+      .withCustomFields(new CustomFields().withAdditionalProperty(refId,
+        Collections.singletonList("Development")));
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withIncluded(new IncludedObjects()
+        .withCustomFields(Set.of(new CustomField()
+            .withRefId(refId)
+            .withSelectField(new SelectField()
+              .withOptions(new SelectFieldOptions()
+                .withValues(
+                  List.of(new SelectFieldOption().withValue("Design"), new SelectFieldOption().withValue("Development"))
+                )
+              )
+            )
+          )
+        )
+      );
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
+        containsString("Custom fields do not exist in the system: [department_1]."))
       .statusCode(500);
   }
 

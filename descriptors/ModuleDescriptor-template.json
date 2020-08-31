@@ -35,7 +35,7 @@
             "inventory-storage.service-points.collection.get",
             "perms.users.item.post",
             "user-settings.custom-fields.collection.get",
-            "user-settings.custom-fields.collection.put",
+            "user-settings.custom-fields.item.put",
             "usergroups.collection.get",
             "users.collection.get",
             "users.item.get",

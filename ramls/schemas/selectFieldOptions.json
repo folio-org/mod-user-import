@@ -21,8 +21,7 @@
         "CUSTOM"
       ],
       "description": "Defines sorting order for the custom field",
-      "example": "ASC",
-      "default": "CUSTOM"
+      "example": "ASC"
     }
   },
   "required": [

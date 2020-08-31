@@ -9,8 +9,7 @@
     "default": {
       "type": "boolean",
       "description": "Defines if the custom field is default",
-      "example": false,
-      "default": false
+      "example": false
     }
   }
 }

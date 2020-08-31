@@ -9,6 +9,8 @@ public class UserImportAPIConstants {
     "Failed to add permissions for user with externalSystemId: ";
   public static final String FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID =
     "Failed to create new user with externalSystemId: ";
+  public static final String FAILED_TO_REGISTER_PERMISSIONS =
+    "Failed to register permissions for user with externalSystemId: ";
   public static final String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: ";
   public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
@@ -42,6 +44,8 @@ public class UserImportAPIConstants {
   public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
   public static final String USERS_INTERFACE_NAME = "users";
 
+  public static final String USERS_ENDPOINT = "/users";
+  public static final String PERMS_USERS_ENDPOINT = "/perms/users";
   public static final String ADDRESS_TYPES_ENDPOINT = "/addresstypes";
   public static final String PATRON_GROUPS_ENDPOINT = "/groups";
   public static final String SERVICE_POINTS_ENDPOINT = "/service-points";

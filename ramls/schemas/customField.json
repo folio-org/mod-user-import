@@ -38,19 +38,16 @@
     "visible": {
       "type": "boolean",
       "description": "Defines visibility of the custom field",
-      "default": true,
       "example": true
     },
     "required": {
       "type": "boolean",
       "description": "Defines if the custom field is required",
-      "default": false,
       "example": true
     },
     "isRepeatable": {
       "type": "boolean",
       "description": "Defines if the custom field is repeatable",
-      "default": false,
       "example": true
     },
     "order": {
