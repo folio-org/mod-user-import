@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
@@ -116,21 +115,27 @@ public class UserImportAPI implements UserImport {
   private Future<UserImportData> prepareUserImportData(UserdataimportCollection userCollection,
                                                        Map<String, String> okapiHeaders, Vertx vertx) {
     UserImportData importData = new UserImportData(userCollection);
+
     UserSystemData.UserSystemDataBuilder systemDataBuilder = UserSystemData.builder();
-    AtomicReference<UserSystemData.UserSystemDataBuilder> dataBuilderRef = new AtomicReference<>(systemDataBuilder);
+
     Future<Map<String, String>> addressTypesFuture = getAddressTypes(okapiHeaders)
-      .onSuccess(addressTypes -> dataBuilderRef.updateAndGet(b -> b.addressTypes(addressTypes)));
+      .onSuccess(systemDataBuilder::addressTypes);
+
     Future<Map<String, String>> patronGroupsFuture = getPatronGroups(okapiHeaders)
-      .onSuccess(patronGroups -> dataBuilderRef.updateAndGet(b -> b.patronGroups(patronGroups)));
+      .onSuccess(systemDataBuilder::patronGroups);
+
     Future<Map<String, String>> servicePointsFuture = getServicePoints(okapiHeaders)
-      .onSuccess(servicePoints -> dataBuilderRef.updateAndGet(b -> b.servicePoints(servicePoints)));
+      .onSuccess(systemDataBuilder::servicePoints);
+
     Future<Set<CustomField>> customFieldsFuture = prepareCustomFields(importData, okapiHeaders, vertx)
-      .onSuccess(customFields -> dataBuilderRef.updateAndGet(b -> b.customFields(customFields)));
+      .onSuccess(systemDataBuilder::customFields);
+
     Future<Set<Department>> departmentsFuture = prepareDepartments(importData, okapiHeaders)
-      .onSuccess(departments -> dataBuilderRef.updateAndGet(b -> b.departments(departments)));
+      .onSuccess(systemDataBuilder::departments);
+
     return CompositeFuture
       .all(addressTypesFuture, patronGroupsFuture, servicePointsFuture, customFieldsFuture, departmentsFuture)
-      .map(o -> importData.withSystemData(dataBuilderRef.get().build()));
+      .map(o -> importData.withSystemData(systemDataBuilder.build()));
   }
 
   /**
