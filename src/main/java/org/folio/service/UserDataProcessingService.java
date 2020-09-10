@@ -49,9 +49,17 @@ public class UserDataProcessingService {
     preferredContactTypeIds.put("mobile", "005");
   }
 
-  private UserDataProcessingService() { }
+  private final CustomFieldsService customFieldsService;
+  private final DepartmentsService departmentService;
 
-  public static Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
+
+  public UserDataProcessingService(DepartmentsService departmentService,
+      CustomFieldsService customFieldsService) {
+    this.departmentService = departmentService;
+    this.customFieldsService = customFieldsService;
+  }
+
+  public Map<String, User> extractExistingUsers(List<Map> existingUserList) throws UserMappingFailedException {
     Map<String, User> existingUsers = new HashMap<>();
     for (Map existingUser : existingUserList) {
       JsonObject user = JsonObject.mapFrom(existingUser);
@@ -68,7 +76,7 @@ public class UserDataProcessingService {
     return existingUsers;
   }
 
-  public static void updateUserData(User user, UserImportData userImportData) {
+  public void updateUserData(User user, UserImportData userImportData) {
     if (StringUtils.isNotEmpty(userImportData.getSourceType())) {
       user.setExternalSystemId(userImportData.getSourceType() + "_" + user.getExternalSystemId());
     }
@@ -78,152 +86,15 @@ public class UserDataProcessingService {
     setCustomFields(user, userImportData);
   }
 
-  public static void updateUserPreference(RequestPreference preference, UserImportData userImportData) {
+  public void updateUserPreference(RequestPreference preference, UserImportData userImportData) {
     setPreferenceAddressType(preference, userImportData);
-  }
-
-  private static void setPersonalData(User user, UserImportData userImportData) {
-    if (user.getPersonal() != null) {
-      setAddressTypes(user, userImportData);
-      setPreferredContactType(user);
-    }
-  }
-
-  private static void setPreferredContactType(User user) {
-    String preferredContactTypeName = user.getPersonal().getPreferredContactTypeId();
-    user.getPersonal()
-      .setPreferredContactTypeId(preferredContactTypeIds.getOrDefault(preferredContactTypeName, null));
-  }
-
-  private static void setAddressTypes(User user, UserImportData userImportData) {
-    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
-    List<Address> addressList = user.getPersonal().getAddresses();
-    if (CollectionUtils.isNotEmpty(addressList)) {
-      List<Address> updatedAddresses = getExistingAddresses(addressTypes, addressList);
-      user.getPersonal().setAddresses(updatedAddresses);
-    }
-  }
-
-  private static void setPreferenceAddressType(RequestPreference preference, UserImportData userImportData) {
-    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
-    String addressTypeName = preference.getDefaultDeliveryAddressTypeId();
-    String addressTypeId = addressTypes.getOrDefault(addressTypeName, null);
-    preference.setDefaultDeliveryAddressTypeId(addressTypeId);
-  }
-
-  @NotNull
-  private static List<Address> getExistingAddresses(Map<String, String> addressTypes, List<Address> addressList) {
-    List<Address> updatedAddresses = new ArrayList<>();
-    addressList.stream()
-      .filter(address -> address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId()))
-      .forEach(address -> {
-        address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
-        updatedAddresses.add(address);
-      });
-    return updatedAddresses;
-  }
-
-  private static void setPatronGroup(User user, UserImportData userImportData) {
-    Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
-    String patronGroupName = user.getPatronGroup();
-    String patronGroupId = patronGroups.get(patronGroupName);
-    if (patronGroupId == null) {
-      throw new PatronGroupMappingFailedException(patronGroupName);
-    }
-    user.setPatronGroup(patronGroupId);
-  }
-
-  private static void setDepartments(User user, UserImportData userImportData) {
-    var departments = user.getDepartments();
-    if (CollectionUtils.isNotEmpty(departments)) {
-      var systemDepartments = userImportData.getSystemData().getDepartments();
-      Set<String> departmentIds = new HashSet<>();
-      Set<String> missedDepartmentNames = new TreeSet<>();
-
-      for (String departmentName : departments) {
-        DepartmentsService.findDepartmentByName(systemDepartments, departmentName)
-          .ifPresentOrElse(department -> departmentIds.add(department.getId()),
-            () -> missedDepartmentNames.add(departmentName)
-          );
-      }
-
-      if (missedDepartmentNames.isEmpty()) {
-        user.setDepartments(departmentIds);
-      } else {
-        throw new DepartmentMappingFailedException(missedDepartmentNames);
-      }
-    }
-  }
-
-  private static void setCustomFields(User user, UserImportData userImportData) {
-    CustomFields customFields = user.getCustomFields();
-    if (customFields == null)
-      return;
-    var systemCustomFields = userImportData.getSystemData().getCustomFields();
-    var userCustomFields = customFields.getAdditionalProperties();
-
-    Set<String> missingCustomFieldsRefIds = new TreeSet<>();
-    Map<String, Set<String>> missingOptions = new TreeMap<>();
-    userCustomFields.entrySet().forEach(customFieldEntry -> {
-        String refId = customFieldEntry.getKey();
-        CustomFieldsService.findCustomFieldByRefId(systemCustomFields, refId)
-          .ifPresentOrElse(customFieldDefinition ->
-              setOptionIds(userCustomFields, customFieldDefinition, customFieldEntry, missingOptions),
-            () -> missingCustomFieldsRefIds.add(refId)
-          );
-      }
-    );
-    if (!missingCustomFieldsRefIds.isEmpty()) {
-      throw new CustomFieldMappingFailedException(missingCustomFieldsRefIds, missingOptions);
-    } else if (!missingOptions.isEmpty()) {
-      throw new CustomFieldMappingFailedException(Collections.emptySet(), missingOptions);
-    }
-  }
-
-  private static void setOptionIds(Map<String, Object> userCustomFields, CustomField definition,
-                                   Map.Entry<String, Object> customFieldEntry,
-                                   Map<String, Set<String>> missingOptions) {
-    if (isSelectableField(definition)) {
-      String refId = customFieldEntry.getKey();
-      Object value = customFieldEntry.getValue();
-      if (value instanceof String) {
-        setOptionId(value, refId, definition, opt -> userCustomFields.put(refId, opt.getId()), missingOptions);
-      } else if (value instanceof List) {
-        @SuppressWarnings("unchecked")
-        List<String> values = (List<String>) value;
-        List<String> optIds = new ArrayList<>();
-        for (String v : values) {
-          setOptionId(v, refId, definition, opt -> optIds.add(opt.getId()), missingOptions);
-        }
-        userCustomFields.put(refId, optIds);
-      }
-    }
-  }
-
-  private static void setOptionId(Object value, String refId, CustomField definition,
-                                  Consumer<SelectFieldOption> optionConsumer,
-                                  Map<String, Set<String>> missingOptions) {
-    definition.getSelectField().getOptions().getValues().stream()
-      .filter(opt -> opt.getValue().equals(value))
-      .findFirst()
-      .ifPresentOrElse(optionConsumer, () -> getEntrySet(missingOptions, refId).add((String) value)
-      );
-  }
-
-  private static Set<String> getEntrySet(Map<String, Set<String>> missingCustomFieldOptions, String refId) {
-    return missingCustomFieldOptions.computeIfAbsent(refId, s -> new TreeSet<>());
-  }
-
-  private static boolean isSelectableField(CustomField customField) {
-    return customField.getType() == RADIO_BUTTON || customField.getType() == MULTI_SELECT_DROPDOWN || customField
-      .getType() == SINGLE_SELECT_DROPDOWN;
   }
 
   /*
    * Currently this deep copy only works for addresses.
    * If more embedded fields will raise a need for this feature this function needs to be updated.
    */
-  public static User updateExistingUserWithIncomingFields(User user, User existingUser) {
+  public User updateExistingUserWithIncomingFields(User user, User existingUser) {
     JsonObject current = JsonObject.mapFrom(user);
     JsonObject existing = JsonObject.mapFrom(existingUser);
 
@@ -259,6 +130,143 @@ public class UserDataProcessingService {
     }
 
     return response;
+  }
+
+  private void setPersonalData(User user, UserImportData userImportData) {
+    if (user.getPersonal() != null) {
+      setAddressTypes(user, userImportData);
+      setPreferredContactType(user);
+    }
+  }
+
+  private void setPreferredContactType(User user) {
+    String preferredContactTypeName = user.getPersonal().getPreferredContactTypeId();
+    user.getPersonal()
+      .setPreferredContactTypeId(preferredContactTypeIds.getOrDefault(preferredContactTypeName, null));
+  }
+
+  private void setAddressTypes(User user, UserImportData userImportData) {
+    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
+    List<Address> addressList = user.getPersonal().getAddresses();
+    if (CollectionUtils.isNotEmpty(addressList)) {
+      List<Address> updatedAddresses = getExistingAddresses(addressTypes, addressList);
+      user.getPersonal().setAddresses(updatedAddresses);
+    }
+  }
+
+  private void setPreferenceAddressType(RequestPreference preference, UserImportData userImportData) {
+    Map<String, String> addressTypes = userImportData.getSystemData().getAddressTypes();
+    String addressTypeName = preference.getDefaultDeliveryAddressTypeId();
+    String addressTypeId = addressTypes.getOrDefault(addressTypeName, null);
+    preference.setDefaultDeliveryAddressTypeId(addressTypeId);
+  }
+
+  @NotNull
+  private List<Address> getExistingAddresses(Map<String, String> addressTypes, List<Address> addressList) {
+    List<Address> updatedAddresses = new ArrayList<>();
+    addressList.stream()
+      .filter(address -> address.getAddressTypeId() != null && addressTypes.containsKey(address.getAddressTypeId()))
+      .forEach(address -> {
+        address.setAddressTypeId(addressTypes.get(address.getAddressTypeId()));
+        updatedAddresses.add(address);
+      });
+    return updatedAddresses;
+  }
+
+  private void setPatronGroup(User user, UserImportData userImportData) {
+    Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
+    String patronGroupName = user.getPatronGroup();
+    String patronGroupId = patronGroups.get(patronGroupName);
+    if (patronGroupId == null) {
+      throw new PatronGroupMappingFailedException(patronGroupName);
+    }
+    user.setPatronGroup(patronGroupId);
+  }
+
+  private void setDepartments(User user, UserImportData userImportData) {
+    var departments = user.getDepartments();
+    if (CollectionUtils.isNotEmpty(departments)) {
+      var systemDepartments = userImportData.getSystemData().getDepartments();
+      Set<String> departmentIds = new HashSet<>();
+      Set<String> missedDepartmentNames = new TreeSet<>();
+
+      for (String departmentName : departments) {
+        departmentService.findDepartmentByName(systemDepartments, departmentName)
+          .ifPresentOrElse(department -> departmentIds.add(department.getId()),
+            () -> missedDepartmentNames.add(departmentName)
+          );
+      }
+
+      if (missedDepartmentNames.isEmpty()) {
+        user.setDepartments(departmentIds);
+      } else {
+        throw new DepartmentMappingFailedException(missedDepartmentNames);
+      }
+    }
+  }
+
+  private void setCustomFields(User user, UserImportData userImportData) {
+    CustomFields customFields = user.getCustomFields();
+    if (customFields == null)
+      return;
+    var systemCustomFields = userImportData.getSystemData().getCustomFields();
+    var userCustomFields = customFields.getAdditionalProperties();
+
+    Set<String> missingCustomFieldsRefIds = new TreeSet<>();
+    Map<String, Set<String>> missingOptions = new TreeMap<>();
+    userCustomFields.entrySet().forEach(customFieldEntry -> {
+        String refId = customFieldEntry.getKey();
+        customFieldsService.findCustomFieldByRefId(systemCustomFields, refId)
+          .ifPresentOrElse(customFieldDefinition ->
+              setOptionIds(userCustomFields, customFieldDefinition, customFieldEntry, missingOptions),
+            () -> missingCustomFieldsRefIds.add(refId)
+          );
+      }
+    );
+    if (!missingCustomFieldsRefIds.isEmpty()) {
+      throw new CustomFieldMappingFailedException(missingCustomFieldsRefIds, missingOptions);
+    } else if (!missingOptions.isEmpty()) {
+      throw new CustomFieldMappingFailedException(Collections.emptySet(), missingOptions);
+    }
+  }
+
+  private void setOptionIds(Map<String, Object> userCustomFields, CustomField definition,
+                                   Map.Entry<String, Object> customFieldEntry,
+                                   Map<String, Set<String>> missingOptions) {
+    if (isSelectableField(definition)) {
+      String refId = customFieldEntry.getKey();
+      Object value = customFieldEntry.getValue();
+      if (value instanceof String) {
+        setOptionId(value, refId, definition, opt -> userCustomFields.put(refId, opt.getId()), missingOptions);
+      } else if (value instanceof List) {
+        @SuppressWarnings("unchecked")
+        List<String> values = (List<String>) value;
+        List<String> optIds = new ArrayList<>();
+        for (String v : values) {
+          setOptionId(v, refId, definition, opt -> optIds.add(opt.getId()), missingOptions);
+        }
+        userCustomFields.put(refId, optIds);
+      }
+    }
+  }
+
+  private void setOptionId(Object value, String refId, CustomField definition,
+                                  Consumer<SelectFieldOption> optionConsumer,
+                                  Map<String, Set<String>> missingOptions) {
+    definition.getSelectField().getOptions().getValues().stream()
+      .filter(opt -> opt.getValue().equals(value))
+      .findFirst()
+      .ifPresentOrElse(optionConsumer, () -> getEntrySet(missingOptions, refId).add((String) value)
+      );
+  }
+
+  private Set<String> getEntrySet(Map<String, Set<String>> missingCustomFieldOptions, String refId) {
+    return missingCustomFieldOptions.computeIfAbsent(refId, s -> new TreeSet<>());
+  }
+
+  private boolean isSelectableField(CustomField customField) {
+    return customField.getType() == RADIO_BUTTON || customField.getType() == MULTI_SELECT_DROPDOWN || customField
+      .getType() == SINGLE_SELECT_DROPDOWN;
   }
 
 }

@@ -18,15 +18,14 @@ public class PatronGroupService {
   private static final String USER_GROUPS_ARRAY_KEY = "usergroups";
   private static final String USER_GROUP_NAME_OBJECT_KEY = "group";
 
-  private PatronGroupService() {}
 
-  public static Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
+  public Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
     final String query = UriBuilder.fromPath(PATRON_GROUPS_ENDPOINT).queryParam("limit", "2147483647").build().toString();
     return HttpClientUtil.get(okapiHeaders, query, FAILED_TO_LIST_PATRON_GROUPS)
-      .map(PatronGroupService::extractPatronGroups);
+      .map(this::extractPatronGroups);
   }
 
-  private static Map<String, String> extractPatronGroups(JsonObject result) {
+  private Map<String, String> extractPatronGroups(JsonObject result) {
     return JsonObjectUtil.extractMap(result, USER_GROUPS_ARRAY_KEY, USER_GROUP_NAME_OBJECT_KEY);
   }
 }

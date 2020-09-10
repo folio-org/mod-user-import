@@ -1,5 +1,7 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.succeededFuture;
+
 import static org.folio.rest.impl.UserImportAPIConstants.CONN_TO;
 import static org.folio.rest.impl.UserImportAPIConstants.ERROR_MESSAGE;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
@@ -19,14 +21,6 @@ import static org.folio.rest.impl.UserImportAPIConstants.USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
-import static org.folio.service.AddressTypeService.getAddressTypes;
-import static org.folio.service.CustomFieldsService.prepareCustomFields;
-import static org.folio.service.DepartmentsService.prepareDepartments;
-import static org.folio.service.PatronGroupService.getPatronGroups;
-import static org.folio.service.ServicePointsService.getServicePoints;
-import static org.folio.service.UserDataProcessingService.extractExistingUsers;
-import static org.folio.service.UserDataProcessingService.updateExistingUserWithIncomingFields;
-import static org.folio.service.UserDataProcessingService.updateUserData;
 import static org.folio.util.HttpClientUtil.createHeaders;
 import static org.folio.util.HttpClientUtil.getOkapiUrl;
 
@@ -74,12 +68,36 @@ import org.folio.rest.jaxrs.model.UserdataimportCollection;
 import org.folio.rest.jaxrs.resource.UserImport;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
+import org.folio.service.AddressTypeService;
+import org.folio.service.CustomFieldsService;
+import org.folio.service.DepartmentsService;
+import org.folio.service.PatronGroupService;
+import org.folio.service.ServicePointsService;
 import org.folio.service.UserDataProcessingService;
 import org.folio.service.UserPreferenceService;
 
 public class UserImportAPI implements UserImport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
+
+  private final CustomFieldsService cfService;
+  private final UserDataProcessingService udpService;
+  private final UserPreferenceService prefService;
+  private final AddressTypeService addressService;
+  private final DepartmentsService depService;
+  private final PatronGroupService pgService;
+  private final ServicePointsService spService;
+
+
+  public UserImportAPI() {
+    cfService = new CustomFieldsService();
+    depService = new DepartmentsService();
+    udpService = new UserDataProcessingService(depService, cfService);
+    prefService = new UserPreferenceService();
+    addressService = new AddressTypeService();
+    pgService = new PatronGroupService();
+    spService = new ServicePointsService();
+  }
 
   /**
    * User import entry point.
@@ -95,7 +113,7 @@ public class UserImportAPI implements UserImport {
         .withMessage("No users to import.")
         .withTotalRecords(0);
       asyncResultHandler
-        .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
+        .handle(succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
     } else {
       prepareUserImportData(userCollection, okapiHeaders, vertxContext.owner())
         .compose(importData -> startUserImport(importData, okapiHeaders))
@@ -103,10 +121,10 @@ public class UserImportAPI implements UserImport {
         .onComplete(handler -> {
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
+              .handle(succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
           } else {
             asyncResultHandler
-              .handle(Future.succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
+              .handle(succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
           }
         });
     }
@@ -118,19 +136,19 @@ public class UserImportAPI implements UserImport {
 
     UserSystemData.UserSystemDataBuilder systemDataBuilder = UserSystemData.builder();
 
-    Future<Map<String, String>> addressTypesFuture = getAddressTypes(okapiHeaders)
+    Future<Map<String, String>> addressTypesFuture = addressService.getAddressTypes(okapiHeaders)
       .onSuccess(systemDataBuilder::addressTypes);
 
-    Future<Map<String, String>> patronGroupsFuture = getPatronGroups(okapiHeaders)
+    Future<Map<String, String>> patronGroupsFuture = pgService.getPatronGroups(okapiHeaders)
       .onSuccess(systemDataBuilder::patronGroups);
 
-    Future<Map<String, String>> servicePointsFuture = getServicePoints(okapiHeaders)
+    Future<Map<String, String>> servicePointsFuture = spService.getServicePoints(okapiHeaders)
       .onSuccess(systemDataBuilder::servicePoints);
 
-    Future<Set<CustomField>> customFieldsFuture = prepareCustomFields(importData, okapiHeaders, vertx)
+    Future<Set<CustomField>> customFieldsFuture = cfService.prepareCustomFields(importData, okapiHeaders, vertx)
       .onSuccess(systemDataBuilder::customFields);
 
-    Future<Set<Department>> departmentsFuture = prepareDepartments(importData, okapiHeaders)
+    Future<Set<Department>> departmentsFuture = depService.prepareDepartments(importData, okapiHeaders)
       .onSuccess(systemDataBuilder::departments);
 
     return CompositeFuture
@@ -181,7 +199,7 @@ public class UserImportAPI implements UserImport {
       } else {
         List<Map> existingUsers = handler.result();
         try {
-          final Map<String, User> existingUserMap = extractExistingUsers(existingUsers);
+          final Map<String, User> existingUserMap = udpService.extractExistingUsers(existingUsers);
 
           List<Future> futures = processAllUsersInPartitions(httpClient, userImportData, existingUserMap, okapiHeaders);
 
@@ -278,7 +296,7 @@ public class UserImportAPI implements UserImport {
     listUsers(httpClient, currentPartition, userImportData.getSourceType()).onComplete(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
         try {
-          Map<String, User> existingUsers = extractExistingUsers(userSearchAsyncResponse.result());
+          Map<String, User> existingUsers = udpService.extractExistingUsers(userSearchAsyncResponse.result());
 
           processUserSearchResult(httpClient, okapiHeaders, existingUsers, currentPartition, userImportData)
             .onComplete(response -> {
@@ -386,15 +404,15 @@ public class UserImportAPI implements UserImport {
                                                        Map<String, User> existingUsers, HttpClientInterface httpClient,
                                                        Map<String, String> okapiHeaders) {
     try {
-      updateUserData(user, userImportData);
+      udpService.updateUserData(user, userImportData);
     } catch (RuntimeException e) {
       SingleUserImportResponse failed = getFailedUserResponse(user, e);
-      return Future.succeededFuture(failed);
+      return succeededFuture(failed);
     }
 
     if (existingUsers.containsKey(user.getExternalSystemId())) {
       if (userImportData.isUpdateOnlyPresentFields()) {
-        user = updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
+        user = udpService.updateExistingUserWithIncomingFields(user, existingUsers.get(user.getExternalSystemId()));
       } else {
         user.setId(existingUsers.get(user.getExternalSystemId()).getId());
       }
@@ -535,32 +553,32 @@ public class UserImportAPI implements UserImport {
     RequestPreference requestPreference = userImportData.getRequestPreferences().get(user.getUsername());
     if (Objects.nonNull(requestPreference)) {
       requestPreference.setUserId(user.getId());
-      return UserPreferenceService.validate(requestPreference, userImportData, user)
+      return prefService.validate(requestPreference, userImportData, user)
         .compose(o -> {
-          UserDataProcessingService.updateUserPreference(requestPreference, userImportData);
-          return UserPreferenceService.create(okapiHeaders, requestPreference);
+          udpService.updateUserPreference(requestPreference, userImportData);
+          return prefService.create(okapiHeaders, requestPreference);
         });
     } else {
-      return Future.succeededFuture().mapEmpty();
+      return succeededFuture().mapEmpty();
     }
   }
 
   private Future<RequestPreference> updateUserPreference(User user, UserImportData userImportData,
                                                          Map<String, String> okapiHeaders) {
-    return UserPreferenceService.get(okapiHeaders, user.getId())
+    return prefService.get(okapiHeaders, user.getId())
       .compose(result -> {
         if (Objects.nonNull(result)) {
           RequestPreference requestPreference = userImportData.getRequestPreferences().get(user.getUsername());
           if (Objects.nonNull(requestPreference)) {
             requestPreference.setId(result.getId());
             requestPreference.setUserId(result.getUserId());
-            return UserPreferenceService.validate(requestPreference, userImportData, user)
+            return prefService.validate(requestPreference, userImportData, user)
               .compose(o -> {
-                UserDataProcessingService.updateUserPreference(requestPreference, userImportData);
-                return UserPreferenceService.update(okapiHeaders, requestPreference).mapEmpty();
+                udpService.updateUserPreference(requestPreference, userImportData);
+                return prefService.update(okapiHeaders, requestPreference).mapEmpty();
               });
           } else {
-            return UserPreferenceService.delete(okapiHeaders, result.getId()).mapEmpty();
+            return prefService.delete(okapiHeaders, result.getId()).mapEmpty();
           }
         } else {
           return createUserPreference(user, userImportData, okapiHeaders);

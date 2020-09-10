@@ -34,12 +34,9 @@ import org.folio.rest.jaxrs.model.SelectFieldOptions;
 import org.folio.util.HttpClientUtil;
 import org.folio.util.OkapiUtil;
 
-public final class CustomFieldsService {
+public class CustomFieldsService {
 
-  private CustomFieldsService() {
-  }
-
-  public static Future<Set<CustomField>> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders,
+  public Future<Set<CustomField>> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders,
                                                              Vertx vertx) {
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
     return OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, vertx)
@@ -54,7 +51,13 @@ public final class CustomFieldsService {
       });
   }
 
-  private static Future<Set<CustomField>> updateCustomFields(Set<CustomField> importCustomFields,
+  public Optional<CustomField> findCustomFieldByRefId(Set<CustomField> customFields, String refId) {
+    return customFields.stream()
+        .filter(customField -> customField.getRefId().equals(refId))
+        .findAny();
+  }
+
+  private Future<Set<CustomField>> updateCustomFields(Set<CustomField> importCustomFields,
                                                              Set<CustomField> systemCustomFields,
                                                              Map<String, String> okapiHeaders) {
     List<Future<Void>> futures = new ArrayList<>();
@@ -69,7 +72,7 @@ public final class CustomFieldsService {
     return CompositeFutureImpl.all(futures.toArray(new Future[0])).map(systemCustomFields);
   }
 
-  private static void updateValues(CustomField target, CustomField source) {
+  private void updateValues(CustomField target, CustomField source) {
     updateCommonValues(target, source);
     switch (target.getType()) {
       case SINGLE_CHECKBOX:
@@ -85,7 +88,7 @@ public final class CustomFieldsService {
     }
   }
 
-  private static void updateCommonValues(CustomField target, CustomField source) {
+  private void updateCommonValues(CustomField target, CustomField source) {
     target.setMetadata(null);
     target.setName(extractValue(source, target, CustomField::getName));
     target.setVisible(extractValue(source, target, CustomField::getVisible));
@@ -93,12 +96,12 @@ public final class CustomFieldsService {
     target.setHelpText(extractValue(source, target, CustomField::getHelpText));
   }
 
-  private static void updateCheckboxFieldValues(CustomField target, CustomField source) {
+  private void updateCheckboxFieldValues(CustomField target, CustomField source) {
     CheckboxField checkboxField = target.getCheckboxField();
     checkboxField.setDefault(extractValue(checkboxField, source.getCheckboxField(), CheckboxField::getDefault));
   }
 
-  private static void updateSelectableFieldValues(CustomField target, CustomField source) {
+  private void updateSelectableFieldValues(CustomField target, CustomField source) {
     if (source.getSelectField() != null && source.getSelectField().getOptions() != null) {
       SelectFieldOptions targetOptions = target.getSelectField().getOptions();
       SelectFieldOptions sourceOptions = source.getSelectField().getOptions();
@@ -113,12 +116,12 @@ public final class CustomFieldsService {
     }
   }
 
-  private static void addNewOption(SelectFieldOptions options, SelectFieldOption newOption) {
+  private void addNewOption(SelectFieldOptions options, SelectFieldOption newOption) {
     newOption.setId(createOptionId(options));
     options.getValues().add(newOption);
   }
 
-  private static String createOptionId(SelectFieldOptions options) {
+  private String createOptionId(SelectFieldOptions options) {
     int maxOptId = options.getValues().stream()
       .map(SelectFieldOption::getId)
       .map(s -> StringUtils.substringAfter(s, "_"))
@@ -127,25 +130,19 @@ public final class CustomFieldsService {
     return "opt_" + ++maxOptId;
   }
 
-  private static Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
+  private Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
     String query = PUT_CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
     return HttpClientUtil.put(okapiHeaders, query, customField, FAILED_TO_UPDATE_CUSTOM_FIELD);
   }
 
-  private static <E, T> T extractValue(E o1, E o2, Function<E, T> extractFunc) {
+  private <E, T> T extractValue(E o1, E o2, Function<E, T> extractFunc) {
     if (o2 == null) {
       return extractFunc.apply(o1);
     }
     return ObjectUtils.defaultIfNull(extractFunc.apply(o1), extractFunc.apply(o2));
   }
 
-  public static Optional<CustomField> findCustomFieldByRefId(Set<CustomField> customFields, String refId) {
-    return customFields.stream()
-      .filter(customField -> customField.getRefId().equals(refId))
-      .findAny();
-  }
-
-  private static Future<Void> updateHeaders(List<String> moduleIds, Map<String, String> headers) {
+  private Future<Void> updateHeaders(List<String> moduleIds, Map<String, String> headers) {
     if (moduleIds.size() != 1) {
       return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
     } else {
@@ -154,12 +151,12 @@ public final class CustomFieldsService {
     }
   }
 
-  private static Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
+  private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
     return HttpClientUtil.get(headers, GET_CUSTOM_FIELDS_ENDPOINT, FAILED_TO_LIST_CUSTOM_FIELDS)
-      .map(CustomFieldsService::extractCustomFields);
+      .map(this::extractCustomFields);
   }
 
-  private static Set<CustomField> extractCustomFields(JsonObject json) {
+  private Set<CustomField> extractCustomFields(JsonObject json) {
     return json.getJsonArray("customFields").stream()
       .map(o -> Json.decodeValue(o.toString(), CustomField.class))
       .collect(Collectors.toSet());
