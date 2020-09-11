@@ -4,11 +4,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.folio.model.UserImportData;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.RequestPreference;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.model.UserImportData;
-import org.folio.rest.util.ValidationUtil;
+import org.folio.util.ValidationUtil;
 
 public class UserRequestManagerValidator {
 

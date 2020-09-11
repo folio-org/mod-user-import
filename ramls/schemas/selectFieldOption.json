@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Select Field Option",
+  "description": "Select Field Option Schema",
+  "additionalProperties": false,
+  "javaType": "org.folio.rest.jaxrs.model.SelectFieldOption",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the option",
+      "pattern": "opt_\\d{1,5}",
+      "example": "opt_1"
+    },
+    "value": {
+      "type": "string",
+      "description": "Possible value of the custom field",
+      "example": "Engineering"
+    },
+    "default": {
+      "type": "boolean",
+      "description": "Indicates that this value is default",
+      "default": false,
+      "example": false
+    }
+  },
+  "required": [
+    "value"
+  ]
+}

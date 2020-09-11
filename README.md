@@ -116,6 +116,23 @@ The default <code>okapiUrl</code> is <code>http://localhost:9130</code>. The def
       {
         "name": "Finance"
       }
+    ],
+    "customFields":[
+      {
+        "refId": "specialization",
+        "selectField": {
+          "options": {
+            "values": [
+              {
+                "value": "Business"
+              },
+              {
+                "value": "Jurisprudence"
+              }
+            ]
+          }
+        }
+      }
     ]
   },
   "totalRecords": 1,
@@ -150,6 +167,7 @@ A prefix for the <code>externalSystemId</code> to be stored in the system. This 
 
 ### requestPreference
 Use this attribute to populate the user Request preference. The Request Preference contains following properties:
+
 <code>holdShelf</code> - required field, should always be true;
 <code>delivery</code> - required field, could be <code>true</code> or <code>false</code>;
 <code>defaultServicePointId</code> - optional, the id of user's default service point
@@ -174,7 +192,9 @@ Can be populated with pairs:
 where <code>refId</code> - refId of an existing custom field,
 <code>value</code> - one value or set of values.
 
-**Note:** In case of setting values to one of RADIO_BUTTON, SINGLE_SELECT_DROPDOWN, MULTI_SELECT_DROPDOWN type of custom field - use option names
+**Note 1:** In case of setting values to one of RADIO_BUTTON, SINGLE_SELECT_DROPDOWN, MULTI_SELECT_DROPDOWN type of custom field - use option names. If one or more option names are not existed in related by `refId` custom field definition than the system will return an error.
+
+**Note 2:** To manage custom fields updating use attribute <code>departments</code> in <code>included</code>. Specifying in this section custom field's `refId` with one or more another fields will update custom fields definition. To update the selectable field's options it is required to specify ALL options.
 ## Additional information
 
 ### Issue tracker

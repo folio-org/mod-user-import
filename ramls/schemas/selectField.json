@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Select Field Schema",
+  "description": "Select Field Schema",
+  "type": "object",
+  "javaType": "org.folio.rest.jaxrs.model.SelectField",
+  "additionalProperties": false,
+  "properties": {
+    "multiSelect": {
+      "type": "boolean",
+      "description": "Defines if the custom field is a multi select",
+      "example": false,
+      "readonly": true
+    },
+    "options": {
+      "type": "object",
+      "description": "Defines the options for the custom field",
+      "$ref": "selectFieldOptions.json"
+    }
+  },
+  "required": [
+    "options"
+  ]
+}

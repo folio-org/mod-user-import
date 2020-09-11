@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Textbox Field Schema",
+  "description": "Textbox Field Schema",
+  "type": "object",
+  "javaType": "org.folio.rest.jaxrs.model.TextField",
+  "additionalProperties": false,
+  "properties": {
+    "fieldFormat": {
+      "type": "string",
+      "$ref": "format.json",
+      "description": "Defines custom field format option",
+      "readonly": true
+    }
+  },
+  "required": [
+    "fieldFormat"
+  ]
+}

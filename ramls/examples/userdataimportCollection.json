@@ -60,6 +60,23 @@
       {
         "name": "Finance"
       }
+    ],
+    "customFields":[
+      {
+        "refId": "specialization",
+        "selectField": {
+          "options": {
+            "values": [
+              {
+                "value": "Business"
+              },
+              {
+                "value": "Jurisprudence"
+              }
+            ]
+          }
+        }
+      }
     ]
   },
   "totalRecords": 1,

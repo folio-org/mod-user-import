@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Custom Field Types Schema",
+  "description": "Custom Field Types Schema",
+  "type": "string",
+  "additionalProperties": false,
+  "enum": [
+    "RADIO_BUTTON",
+    "SINGLE_CHECKBOX",
+    "SINGLE_SELECT_DROPDOWN",
+    "MULTI_SELECT_DROPDOWN",
+    "TEXTBOX_SHORT",
+    "TEXTBOX_LONG"
+  ]
+}

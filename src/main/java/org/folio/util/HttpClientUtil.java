@@ -1,14 +1,19 @@
-package org.folio.rest.util;
+package org.folio.util;
 
-import static org.folio.rest.util.HttpClientUtil.createHeaders;
-import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
-import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
-import static org.folio.rest.util.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
-import static org.folio.rest.util.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_ACCEPT;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_CONTENT_TYPE;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
+import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_URL_HEADER;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import com.google.common.base.Strings;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
@@ -23,17 +28,18 @@ import org.folio.rest.tools.client.Response;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
 import org.folio.rest.tools.utils.TenantTool;
 
-public class RequestManager {
+public class HttpClientUtil {
 
-  private RequestManager() {}
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientUtil.class);
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RequestManager.class);
+  private HttpClientUtil() {
+  }
 
   public static Future<JsonObject> get(Map<String, String> okapiHeaders, String query,
                                        String failedMessage) {
     Promise<JsonObject> future = Promise.promise();
     Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
-    LOGGER.info("Do GET request: {}",  query);
+    LOGGER.info("Do GET request: {}", query);
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
       httpClient.request(query, headers)
@@ -58,9 +64,11 @@ public class RequestManager {
     return future.future();
   }
 
-  public static <T> Future<T> post(Map<String, String> okapiHeaders, String query,  Class<T> clazz, Object entity, String failedMessage){
+  public static <T> Future<T> post(Map<String, String> okapiHeaders, String query, Class<T> clazz, Object entity,
+                                   String failedMessage) {
 
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     Promise<T> promise = Promise.promise();
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
@@ -92,10 +100,11 @@ public class RequestManager {
   public static Future<Void> put(Map<String, String> okapiHeaders, String query, Object entity, String failedMessage) {
 
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
-      LOGGER.info("Do PUT request: {}",  query);
+      LOGGER.info("Do PUT request: {}", query);
       httpClient.request(HttpMethod.PUT, JsonObject.mapFrom(entity), query, headers)
         .whenComplete(handleResponse(failedMessage, future, httpClient));
     } catch (Exception exc) {
@@ -107,10 +116,11 @@ public class RequestManager {
 
   public static Future<Void> delete(Map<String, String> okapiHeaders, String query, String id, String failedMessage) {
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers = createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
+    Map<String, String> headers =
+      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
-      LOGGER.info("Do DELETE request: {}",  query);
+      LOGGER.info("Do DELETE request: {}", query);
       httpClient.request(HttpMethod.DELETE, id, query, headers)
         .whenComplete(handleResponse(failedMessage, future, httpClient));
     } catch (Exception exc) {
@@ -132,7 +142,8 @@ public class RequestManager {
   }
 
   @NotNull
-  public static BiConsumer<Response, Throwable> handleResponse(String failedMessage, Promise<Void> future, HttpClientInterface httpClient) {
+  public static BiConsumer<Response, Throwable> handleResponse(String failedMessage, Promise<Void> future,
+                                                               HttpClientInterface httpClient) {
     return (res, ex) -> {
       try {
         if (isSuccess(res, ex)) {
@@ -147,5 +158,23 @@ public class RequestManager {
         httpClient.closeClient();
       }
     };
+  }
+
+  public static Map<String, String> createHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
+    String moduleId = okapiHeaders.get(OKAPI_MODULE_ID_HEADER);
+    if (moduleId != null) {
+      headers.put(OKAPI_MODULE_ID_HEADER, moduleId);
+    }
+    headers.put(HTTP_HEADER_ACCEPT, accept);
+    if (!Strings.isNullOrEmpty(contentType)) {
+      headers.put(HTTP_HEADER_CONTENT_TYPE, contentType);
+    }
+    return headers;
+  }
+
+  public static String getOkapiUrl(Map<String, String> okapiHeaders) {
+    return okapiHeaders.get(OKAPI_URL_HEADER);
   }
 }

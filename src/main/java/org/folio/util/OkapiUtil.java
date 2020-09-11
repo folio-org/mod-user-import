@@ -1,7 +1,7 @@
-package org.folio.rest.util;
+package org.folio.util;
 
-import static org.folio.rest.util.HttpClientUtil.getOkapiUrl;
-import static org.folio.rest.util.UserImportAPIConstants.GET_MODULE_ID_ENDPOINT;
+import static org.folio.rest.impl.UserImportAPIConstants.GET_MODULE_ID_ENDPOINT;
+import static org.folio.util.HttpClientUtil.getOkapiUrl;
 
 import java.util.List;
 import java.util.Map;

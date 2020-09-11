@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Defines custom field format option",
+  "type": "string",
+  "enum": [
+    "TEXT",
+    "EMAIL",
+    "URL",
+    "NUMBER"
+  ],
+  "example": "EMAIL",
+  "default": "TEXT"
+}
