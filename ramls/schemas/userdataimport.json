@@ -34,6 +34,14 @@
         "type": "string"
       }
     },
+    "departments": {
+      "description": "Names of departments the user belongs to",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
     "personal": {
       "type": "object",
       "properties": {
