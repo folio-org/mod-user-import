@@ -10,6 +10,10 @@
         "creation_date": "2016-11-05T0723",
         "last_login_date": ""
       },
+      "departments": [
+        "foo",
+        "bar"
+      ],
       "personal": {
         "lastName": "Handey",
         "firstName": "Jack",
