@@ -54,6 +54,10 @@
         "middleName": {
           "type": "string"
         },
+        "preferredFirstName": {
+          "description": "The user's preferred name",
+          "type": "string"
+        },
         "email": {
           "type": "string"
         },
