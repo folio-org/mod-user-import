@@ -1,3 +1,14 @@
+## 3.3.0 2020-12-18
+ * MODUIMP-28 Upgrade to RMB 31.1.1
+ * MODUIMP-21 Update custom field import
+ * MODUIMP-22 Migrate to Java 11 and RMB v31.0.2
+ * MODUIMP-20 Update patron group mapping handling
+ * MODUIMP-18 Update documentation
+ * MODUIMP-18 Create departments on import
+ * MODUIMP-16 Add Department field to mod-user-import
+ * MODUIMP-13 Support loading of Delivery request fields via mod-user-import
+ * MODUIMP-15 Implement support of preferred first name
+
 ## 3.2.0 2020-03-13
 
  * MODUIMP-9 Upgrade to RAML 1.0 and RMB 29
