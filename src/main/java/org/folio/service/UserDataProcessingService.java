@@ -16,11 +16,11 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.model.UserImportData;
@@ -37,7 +37,7 @@ import org.folio.rest.jaxrs.model.User;
 
 public class UserDataProcessingService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserDataProcessingService.class);
+  private static final Logger LOGGER = LogManager.getLogger(UserDataProcessingService.class);
 
   private static final Map<String, String> preferredContactTypeIds = new CaseInsensitiveMap<>();
 

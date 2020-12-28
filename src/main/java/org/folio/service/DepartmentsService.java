@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
-import io.vertx.core.impl.CompositeFutureImpl;
+import io.vertx.core.impl.future.CompositeFutureImpl;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
