@@ -29,13 +29,13 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder.version>31.1.1</raml-module-builder.version>
+    <raml-module-builder.version>32.0.1</raml-module-builder.version>
     <lombok.version>1.18.12</lombok.version>
-    <aspectj.version>1.9.5</aspectj.version>
-    <log4j-slf4j-impl.version>2.13.3</log4j-slf4j-impl.version>
+    <aspectj.version>1.9.6</aspectj.version>
+    <log4j-slf4j-impl.version>2.14.0</log4j-slf4j-impl.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
-    <vertx.version>3.9.3</vertx.version>
-    <junit.version>4.13</junit.version>
+    <vertx.version>4.0.0</vertx.version>
+    <junit.version>4.13.1</junit.version>
     <rest-assured.version>4.3.0</rest-assured.version>
     <wiremock.version>2.26.3</wiremock.version>
   </properties>
@@ -332,7 +332,7 @@
               <properties>
                 <property>
                   <name>log4j.configurationFile</name>
-                  <value>${project.baseUri}src/main/resources/log4j2.xml</value>
+                  <value>${project.baseUri}src/main/resources/log4j2.properties</value>
                 </property>
               </properties>
             </configuration>
@@ -356,6 +356,7 @@
                   <manifestEntries>
                     <Main-Class>org.folio.rest.RestLauncher</Main-Class>
                     <Main-Verticle>org.folio.rest.RestVerticle</Main-Verticle>
+                    <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>
               </transformers>

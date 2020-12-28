@@ -16,8 +16,8 @@ import javax.validation.ValidationException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.model.UserImportData;
@@ -29,7 +29,7 @@ import org.folio.util.HttpClientUtil;
 public class UserPreferenceService {
 
   public static final String REQUEST_PREFERENCES_ARRAY_KEY = "requestPreferences";
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserPreferenceService.class);
+  private static final Logger LOGGER = LogManager.getLogger(UserPreferenceService.class);
 
 
   public Future<RequestPreference> get(Map<String, String> okapiHeaders, String userId) {

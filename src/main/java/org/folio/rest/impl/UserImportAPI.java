@@ -45,13 +45,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.impl.CompositeFutureImpl;
+import io.vertx.core.impl.future.CompositeFutureImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.model.SingleUserImportResponse;
 import org.folio.model.UserImportData;
 import org.folio.model.UserRecordImportStatus;
@@ -78,7 +78,7 @@ import org.folio.service.UserPreferenceService;
 
 public class UserImportAPI implements UserImport {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserImportAPI.class);
+  private static final Logger LOGGER = LogManager.getLogger(UserImportAPI.class);
 
   private final CustomFieldsService cfService;
   private final UserDataProcessingService udpService;
