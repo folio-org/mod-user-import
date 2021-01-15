@@ -293,7 +293,7 @@ public class UserImportAPI implements UserImport {
                                                   List<User> currentPartition, UserImportData userImportData) {
 
     Promise<ImportResponse> future = Promise.promise();
-    listUsers(httpClient, currentPartition, userImportData.getSourceType()).onComplete(userSearchAsyncResponse -> {
+    listUsers(httpClient, okapiHeaders, currentPartition, userImportData.getSourceType()).onComplete(userSearchAsyncResponse -> {
       if (userSearchAsyncResponse.succeeded()) {
         try {
           Map<String, User> existingUsers = udpService.extractExistingUsers(userSearchAsyncResponse.result());
@@ -337,7 +337,8 @@ public class UserImportAPI implements UserImport {
   /**
    * List a batch of users.
    */
-  private Future<List<Map>> listUsers(HttpClientInterface userSearchClient, List<User> users, String sourceType) {
+  private Future<List<Map>> listUsers(HttpClientInterface userSearchClient, Map<String, String> okapiHeaders,
+                                      List<User> users, String sourceType) {
     Promise<List<Map>> future = Promise.promise();
 
     StringBuilder userQueryBuilder = new StringBuilder("externalSystemId==(");
@@ -357,8 +358,9 @@ public class UserImportAPI implements UserImport {
 
     final String userSearchQuery = generateUserSearchQuery(query, users.size() * 2, 0);
 
+    // TODO: Adamm
     try {
-      userSearchClient.request(userSearchQuery)
+      userSearchClient.request(userSearchQuery, okapiHeaders)
         .whenComplete((userSearchQueryResponse, ex) -> {
           if (isSuccess(userSearchQueryResponse, ex)) {
             JsonObject resultObject = userSearchQueryResponse.getBody();
@@ -644,7 +646,7 @@ public class UserImportAPI implements UserImport {
     try {
 
       final String userSearchQuery = generateUserSearchQuery(query, limit, 0);
-      httpClient.request(HttpMethod.GET, userSearchQuery, headers)
+      httpClient.request(userSearchQuery, headers)
         .whenComplete((response, ex) -> {
           if (isSuccess(response, ex)) {
             listAllUsers(future, response.getBody(), httpClient, okapiHeaders, query, limit);
