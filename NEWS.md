@@ -1,3 +1,7 @@
+## 3.3.1 2021-01-15
+
+ * [MODUIMP-40](https://issues.folio.org/browse/MODUIMP-40) Fix permissions error when loading users
+
 ## 3.3.0 2020-12-18
  * MODUIMP-28 Upgrade to RMB 31.1.1
  * MODUIMP-21 Update custom field import
