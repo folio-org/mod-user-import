@@ -358,7 +358,6 @@ public class UserImportAPI implements UserImport {
 
     final String userSearchQuery = generateUserSearchQuery(query, users.size() * 2, 0);
 
-    // TODO: Adamm
     try {
       userSearchClient.request(userSearchQuery, okapiHeaders)
         .whenComplete((userSearchQueryResponse, ex) -> {
