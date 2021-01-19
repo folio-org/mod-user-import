@@ -92,7 +92,8 @@ public class HttpClientUtil {
           return null;
         });
     } catch (Exception e) {
-      LOGGER.error("Cannot perform a request: {} with body: {}. ", query, JsonObject.mapFrom(entity), e.getMessage(), e);
+      LOGGER.error("Cannot perform a request: {} with body: {}. {} ", query, JsonObject.mapFrom(entity),
+          e.getMessage(), e);
       promise.fail(e);
     }
     return promise.future();

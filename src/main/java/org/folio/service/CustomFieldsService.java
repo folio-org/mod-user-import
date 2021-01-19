@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.future.CompositeFutureImpl;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -27,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
 import org.folio.model.exception.CustomFieldMappingFailedException;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.CheckboxField;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -69,7 +69,7 @@ public class CustomFieldsService {
       futures.add(updateCustomField(systemCustomField, okapiHeaders));
 
     }
-    return CompositeFutureImpl.all(futures.toArray(new Future[0])).map(systemCustomFields);
+    return GenericCompositeFuture.all(futures).map(systemCustomFields);
   }
 
   private void updateValues(CustomField target, CustomField source) {

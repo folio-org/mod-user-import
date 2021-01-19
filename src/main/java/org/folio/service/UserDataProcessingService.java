@@ -68,7 +68,7 @@ public class UserDataProcessingService {
         LOGGER.trace("The external system id of the user is: " + mappedUser.getExternalSystemId());
         existingUsers.put(mappedUser.getExternalSystemId(), mappedUser);
       } catch (Exception ex) {
-        LOGGER.error("Failed to map user ", user);
+        LOGGER.error("Failed to map user {}", user, ex);
         throw new UserMappingFailedException("Failed to map user " + user.toString());
       }
     }
