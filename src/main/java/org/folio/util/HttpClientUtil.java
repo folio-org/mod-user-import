@@ -36,28 +36,25 @@ public class HttpClientUtil {
   public static Future<JsonObject> get(Map<String, String> okapiHeaders, String query,
                                        String failedMessage) {
     Promise<JsonObject> future = Promise.promise();
-    Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
-    LOGGER.info("Do GET request: {}", query);
     try {
+      Map<String, String> headers = HttpClientUtil.createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, null);
+      LOGGER.info("Do GET request: {}", query);
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
-      httpClient.request(query, headers)
-        .whenComplete((response, ex) -> {
-          if (ex != null) {
-            LOGGER.error(failedMessage, ex.getMessage());
-            LOGGER.debug(ex.getMessage());
-            future.fail(failedMessage + ex.getMessage());
-          } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
-            LOGGER.warn(failedMessage + response.getError());
-            future.fail(failedMessage + response.getError());
-          } else {
-            JsonObject resultObject = response.getBody();
-            future.complete(resultObject);
-          }
-        });
-
-    } catch (Exception exc) {
-      LOGGER.warn(failedMessage + exc.getMessage());
-      future.fail(exc);
+      httpClient.request(query, headers).whenComplete((response, ex) -> {
+            if (ex != null) {
+              LOGGER.error(failedMessage, ex.getMessage());
+              future.fail(failedMessage + ex.getMessage());
+            } else if (!org.folio.rest.tools.client.Response.isSuccess(response.getCode())) {
+              LOGGER.warn(failedMessage + response.getError());
+              future.fail(failedMessage + response.getError());
+            } else {
+              JsonObject resultObject = response.getBody();
+              future.complete(resultObject);
+            }
+          });
+    } catch (Exception e) {
+      LOGGER.warn(e.getMessage(), e);
+      future.fail(e);
     }
     return future.future();
   }
@@ -65,66 +62,65 @@ public class HttpClientUtil {
   public static <T> Future<T> post(Map<String, String> okapiHeaders, String query, Class<T> clazz, Object entity,
                                    String failedMessage) {
 
-    Map<String, String> headers =
-      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
-    Promise<T> promise = Promise.promise();
     try {
+      Map<String, String> headers =
+          createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
+      Promise<T> promise = Promise.promise();
       httpClient.request(HttpMethod.POST, JsonObject.mapFrom(entity), query, headers)
-        .thenApply(response -> {
-          try {
-            if (Response.isSuccess(response.getCode())) {
-              return Json.decodeValue(response.getBody().toString(), clazz);
-            } else {
-              LOGGER.error(failedMessage + response.getError().toString(), response.getException());
-              throw new IllegalStateException(failedMessage + response.getError().toString());
+          .thenApply(response -> {
+            try {
+              if (Response.isSuccess(response.getCode())) {
+                return Json.decodeValue(response.getBody().toString(), clazz);
+              } else {
+                LOGGER.error(failedMessage + response.getError().toString(), response.getException());
+                throw new IllegalStateException(failedMessage + response.getError().toString());
+              }
+            } finally {
+              httpClient.closeClient();
             }
-          } finally {
-            httpClient.closeClient();
-          }
-        })
-        .thenAccept(promise::complete)
-        .exceptionally(e -> {
-          promise.fail(e.getCause());
-          return null;
-        });
+          })
+          .thenAccept(promise::complete)
+          .exceptionally(e -> {
+            promise.fail(e.getCause());
+            return null;
+          });
+      return promise.future();
     } catch (Exception e) {
-      LOGGER.error("Cannot perform a request: {} with body: {}. {} ", query, JsonObject.mapFrom(entity),
-          e.getMessage(), e);
-      promise.fail(e);
+      LOGGER.error(e.getMessage(), e);
+      return Future.failedFuture(e);
     }
-    return promise.future();
   }
 
   public static Future<Void> put(Map<String, String> okapiHeaders, String query, Object entity, String failedMessage) {
 
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers =
-      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
+      Map<String, String> headers =
+          createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
       LOGGER.info("Do PUT request: {}", query);
       httpClient.request(HttpMethod.PUT, JsonObject.mapFrom(entity), query, headers)
-        .whenComplete(handleResponse(failedMessage, future, httpClient));
-    } catch (Exception exc) {
-      LOGGER.error(failedMessage, exc.getMessage());
-      future.fail(failedMessage + exc.getMessage());
+          .whenComplete(handleResponse(failedMessage, future, httpClient));
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      future.fail(e);
     }
     return future.future();
   }
 
   public static Future<Void> delete(Map<String, String> okapiHeaders, String query, String id, String failedMessage) {
     Promise<Void> future = Promise.promise();
-    Map<String, String> headers =
-      createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
     try {
+      Map<String, String> headers =
+          createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
       LOGGER.info("Do DELETE request: {}", query);
       httpClient.request(HttpMethod.DELETE, id, query, headers)
-        .whenComplete(handleResponse(failedMessage, future, httpClient));
-    } catch (Exception exc) {
-      LOGGER.error(failedMessage, exc.getMessage());
-      future.fail(failedMessage + exc.getMessage());
+          .whenComplete(handleResponse(failedMessage, future, httpClient));
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      future.fail(e);
     }
     return future.future();
   }

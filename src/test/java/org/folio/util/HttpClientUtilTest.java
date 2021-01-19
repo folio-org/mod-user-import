@@ -8,23 +8,52 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(VertxUnitRunner.class)
 public class HttpClientUtilTest {
 
   @Test
-  public void postDoubleException(TestContext context) {
-    String msg = null;
-    try {
-      HttpClientUtil.post(new HashMap<>(), "/a", Integer.class, "{}", "myFail");
-    } catch (Exception ex) {
-      msg = ex.getMessage();
-    }
-    context.assertTrue(msg.startsWith("Cannot construct instance"), msg);
+  public void getException(TestContext context) {
+    HttpClientUtil.get(null, "/a", "fail")
+        .onComplete(context.asyncAssertFailure(cause ->
+            context.assertNull(cause.getMessage(), cause.getMessage())));
   }
 
   @Test
-  public void postNormalException(TestContext context) {
+  public void getError(TestContext context) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(XOkapiHeaders.URL, "http://localhost:9230");
+    headers.put(XOkapiHeaders.TENANT, "tenant");
+    HttpClientUtil.get(headers, "/a", "fail")
+        .onComplete(context.asyncAssertFailure(cause ->
+            context.assertTrue(cause.getMessage().startsWith("fail"), cause.getMessage())));
+  }
+
+  @Test
+  public void deleteException(TestContext context) {
+    HttpClientUtil.delete(null, "/a", "1234", "fail")
+        .onComplete(context.asyncAssertFailure(cause ->
+            context.assertNull(cause.getMessage(), cause.getMessage())));
+  }
+
+  @Test
+  public void postPutException(TestContext context) {
+    HttpClientUtil.put(null, "/a", null, "fail")
+        .onComplete(context.asyncAssertFailure(cause ->
+            context.assertNull(cause.getMessage(), cause.getMessage())));
+  }
+
+  @Test
+  public void postBadEntityException(TestContext context) {
+    HttpClientUtil.post(new HashMap<>(), "/a", Integer.class, "{}", "myFail")
+        .onComplete(context.asyncAssertFailure(cause ->
+            context.assertTrue(cause.getMessage().startsWith("Cannot construct instance of"), cause.getMessage())
+        ));
+  }
+
+  @Test
+  public void postNullEntityException(TestContext context) {
     HttpClientUtil.post(new HashMap<>(), "/a", Integer.class, null, "myFail")
         .onComplete(context.asyncAssertFailure()); // mock and real http client returns different messages!
   }
