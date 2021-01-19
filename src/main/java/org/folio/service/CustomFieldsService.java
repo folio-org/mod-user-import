@@ -4,7 +4,6 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_GET_USER_MODU
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPOINT;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_INTERFACE_NAME;
 
@@ -27,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.model.UserImportData;
 import org.folio.model.exception.CustomFieldMappingFailedException;
 import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CheckboxField;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -146,7 +146,7 @@ public class CustomFieldsService {
     if (moduleIds.size() != 1) {
       return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
     } else {
-      headers.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
+      headers.put(XOkapiHeaders.MODULE_ID, moduleIds.get(0));
       return Future.succeededFuture();
     }
   }

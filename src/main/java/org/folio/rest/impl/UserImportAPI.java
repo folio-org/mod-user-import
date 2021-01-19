@@ -15,7 +15,6 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_USER_W
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
 import static org.folio.rest.impl.UserImportAPIConstants.IDLE_TO;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.PERMS_USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
@@ -58,6 +57,7 @@ import org.folio.model.UserRecordImportStatus;
 import org.folio.model.UserSystemData;
 import org.folio.model.exception.UserMappingFailedException;
 import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.Department;
@@ -164,7 +164,7 @@ public class UserImportAPI implements UserImport {
   private Future<ImportResponse> startUserImport(UserImportData importData, Map<String, String> okapiHeaders) {
     Promise<ImportResponse> future = Promise.promise();
     HttpClientInterface httpClient = HttpClientFactory
-      .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(OKAPI_TENANT_HEADER),
+      .getHttpClient(getOkapiUrl(okapiHeaders), -1, okapiHeaders.get(XOkapiHeaders.TENANT),
         true, CONN_TO, IDLE_TO, false, 30L);
 
     return importUsers(importData, httpClient, okapiHeaders, future);

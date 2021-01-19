@@ -4,10 +4,6 @@ import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_ACCEPT;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_CONTENT_TYPE;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_APPLICATION_JSON;
 import static org.folio.rest.impl.UserImportAPIConstants.HTTP_HEADER_VALUE_TEXT_PLAIN;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TENANT_HEADER;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_URL_HEADER;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +18,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 
 import org.apache.logging.log4j.Logger;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.jetbrains.annotations.NotNull;
 
 import org.folio.rest.tools.client.HttpClientFactory;
@@ -134,7 +131,7 @@ public class HttpClientUtil {
 
   public static HttpClientInterface getHttpClient(Map<String, String> okapiHeaders) {
     final String okapiURL = getOkapiUrl(okapiHeaders);
-    final String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER));
+    final String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(XOkapiHeaders.TENANT));
 
     return HttpClientFactory.getHttpClient(okapiURL, tenantId, true);
   }
@@ -164,10 +161,10 @@ public class HttpClientUtil {
 
   public static Map<String, String> createHeaders(Map<String, String> okapiHeaders, String accept, String contentType) {
     Map<String, String> headers = new HashMap<>();
-    headers.put(OKAPI_TOKEN_HEADER, okapiHeaders.get(OKAPI_TOKEN_HEADER));
-    String moduleId = okapiHeaders.get(OKAPI_MODULE_ID_HEADER);
+    headers.put(XOkapiHeaders.TOKEN, okapiHeaders.get(XOkapiHeaders.TOKEN));
+    String moduleId = okapiHeaders.get(XOkapiHeaders.MODULE_ID);
     if (moduleId != null) {
-      headers.put(OKAPI_MODULE_ID_HEADER, moduleId);
+      headers.put(XOkapiHeaders.MODULE_ID, moduleId);
     }
     headers.put(HTTP_HEADER_ACCEPT, accept);
     if (!Strings.isNullOrEmpty(contentType)) {
@@ -177,6 +174,6 @@ public class HttpClientUtil {
   }
 
   public static String getOkapiUrl(Map<String, String> okapiHeaders) {
-    return okapiHeaders.get(OKAPI_URL_HEADER);
+    return okapiHeaders.get(XOkapiHeaders.URL);
   }
 }
