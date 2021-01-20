@@ -1,3 +1,7 @@
+## 3.3.2 2021-01-20
+
+ * [MODUIMP-44](https://issues.folio.org/browse/MODUIMP-44) Fix logging issues (no loggin at all!)
+
 ## 3.3.1 2021-01-15
 
  * [MODUIMP-40](https://issues.folio.org/browse/MODUIMP-40) Fix permissions error when loading users
