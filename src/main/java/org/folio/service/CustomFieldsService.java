@@ -4,7 +4,6 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_GET_USER_MODU
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPOINT;
-import static org.folio.rest.impl.UserImportAPIConstants.OKAPI_MODULE_ID_HEADER;
 import static org.folio.rest.impl.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_INTERFACE_NAME;
 
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.future.CompositeFutureImpl;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -27,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
 import org.folio.model.exception.CustomFieldMappingFailedException;
+import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CheckboxField;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -69,7 +69,7 @@ public class CustomFieldsService {
       futures.add(updateCustomField(systemCustomField, okapiHeaders));
 
     }
-    return CompositeFutureImpl.all(futures.toArray(new Future[0])).map(systemCustomFields);
+    return GenericCompositeFuture.all(futures).map(systemCustomFields);
   }
 
   private void updateValues(CustomField target, CustomField source) {
@@ -146,7 +146,7 @@ public class CustomFieldsService {
     if (moduleIds.size() != 1) {
       return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
     } else {
-      headers.put(OKAPI_MODULE_ID_HEADER, moduleIds.get(0));
+      headers.put(XOkapiHeaders.MODULE_ID, moduleIds.get(0));
       return Future.succeededFuture();
     }
   }

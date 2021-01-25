@@ -21,7 +21,6 @@ public class TestUtils {
   public static final String MESSAGE = "message";
   public static final Header TENANT_HEADER = new Header("X-Okapi-Tenant", "diku");
   public static final Header TOKEN_HEADER = new Header("X-Okapi-Token", "import-test");
-  public static final Header OKAPI_URL_HEADER = new Header("X-Okapi-Url", "http://localhost:9130");
   public static final Header JSON_CONTENT_TYPE_HEADER = new Header("Content-Type", "application/json");
 
   public static User generateUser(String barcode, String firstName, String lastName, String id) {
