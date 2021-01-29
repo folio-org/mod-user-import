@@ -34,10 +34,6 @@ public class UserImportAPIConstants {
   public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
   public static final String HTTP_HEADER_VALUE_TEXT_PLAIN = "text/plain";
   public static final String HTTP_HEADER_ACCEPT = "Accept";
-  public static final String OKAPI_URL_HEADER = "X-Okapi-URL";
-  public static final String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
-  public static final String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
-  public static final String OKAPI_MODULE_ID_HEADER = "X-Okapi-Module-Id";
 
   public static final String PUT_CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
   public static final String GET_CUSTOM_FIELDS_ENDPOINT = "/custom-fields?offset=0&limit=" + Integer.MAX_VALUE;

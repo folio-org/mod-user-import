@@ -13,12 +13,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
-import io.vertx.core.impl.future.CompositeFutureImpl;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.util.HttpClientUtil;
 
@@ -73,7 +73,7 @@ public class DepartmentsService {
         }
       }
     }
-    return CompositeFutureImpl.all(futures.toArray(new Future[0])).map(o -> systemDepartments);
+    return GenericCompositeFuture.all(futures).map(o -> systemDepartments);
   }
 
   private Future<Set<Department>> getDepartments(Map<String, String> okapiHeaders) {
