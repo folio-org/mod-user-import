@@ -16,11 +16,10 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
-
 import org.apache.logging.log4j.Logger;
-import org.folio.okapi.common.XOkapiHeaders;
 import org.jetbrains.annotations.NotNull;
 
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.tools.client.HttpClientFactory;
 import org.folio.rest.tools.client.Response;
 import org.folio.rest.tools.client.interfaces.HttpClientInterface;
@@ -109,14 +108,14 @@ public class HttpClientUtil {
     return future.future();
   }
 
-  public static Future<Void> delete(Map<String, String> okapiHeaders, String query, String id, String failedMessage) {
+  public static Future<Void> delete(Map<String, String> okapiHeaders, String query, String failedMessage) {
     Promise<Void> future = Promise.promise();
     try {
       Map<String, String> headers =
           createHeaders(okapiHeaders, HTTP_HEADER_VALUE_TEXT_PLAIN, HTTP_HEADER_VALUE_APPLICATION_JSON);
       final HttpClientInterface httpClient = getHttpClient(okapiHeaders);
       LOGGER.info("Do DELETE request: {}", query);
-      httpClient.request(HttpMethod.DELETE, id, query, headers)
+      httpClient.request(HttpMethod.DELETE, query, headers)
           .whenComplete(handleResponse(failedMessage, future, httpClient));
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);

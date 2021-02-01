@@ -1534,6 +1534,87 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(0))
       .body(FAILED_USERS, hasSize(0))
       .statusCode(200);
+
+  }
+
+  @Test
+  public void testImportUserWithNoPreferencesWithUpdateOnlyPresentFieldAndExistingPreferenceNotDelete() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_preference_not_delete.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Returns")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withUpdateOnlyPresentFields(true);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
+  }
+
+  @Test
+  public void testImportUserWithNoPreferencesWithoutUpdateOnlyPresentFieldAndExistingPreferenceDelete() throws IOException {
+    mock.setMockJsonContent("mock_user_update_with_preference_delete.json");
+
+    List<User> users = new ArrayList<>();
+    User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
+    Address address = new Address()
+      .withAddressLine1("Test first line")
+      .withCity("Test city")
+      .withRegion("Test region")
+      .withPostalCode("12345")
+      .withAddressTypeId("Returns")
+      .withPrimaryAddress(Boolean.FALSE);
+    List<Address> addresses = new ArrayList<>();
+    addresses.add(address);
+    user.getPersonal().setAddresses(addresses);
+    users.add(user);
+
+    UserdataimportCollection collection = new UserdataimportCollection()
+      .withUsers(users)
+      .withTotalRecords(1)
+      .withUpdateOnlyPresentFields(false);
+
+    given()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .body(collection)
+      .post(USER_IMPORT)
+      .then()
+      .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
+      .body(TOTAL_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
+      .body(UPDATED_RECORDS, equalTo(1))
+      .body(FAILED_RECORDS, equalTo(0))
+      .body(FAILED_USERS, hasSize(0))
+      .statusCode(200);
   }
 
   @Test
