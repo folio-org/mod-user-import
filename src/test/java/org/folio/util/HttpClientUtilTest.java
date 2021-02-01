@@ -1,14 +1,15 @@
 package org.folio.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.rest.jaxrs.model.Department;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.rest.jaxrs.model.Department;
 
 @RunWith(VertxUnitRunner.class)
 public class HttpClientUtilTest {
@@ -32,7 +33,7 @@ public class HttpClientUtilTest {
 
   @Test
   public void deleteException(TestContext context) {
-    HttpClientUtil.delete(null, "/a", "1234", "fail")
+    HttpClientUtil.delete(null, "/a", "fail")
         .onComplete(context.asyncAssertFailure(cause ->
             context.assertNull(cause.getMessage(), cause.getMessage())));
   }

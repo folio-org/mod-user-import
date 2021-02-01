@@ -53,7 +53,7 @@ public class UserPreferenceService {
 
   public Future<Void> delete(Map<String, String> okapiHeaders, String id) {
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT, "/" + id);
-    return HttpClientUtil.delete(okapiHeaders, query, id, FAILED_TO_DELETE_USER_PREFERENCE);
+    return HttpClientUtil.delete(okapiHeaders, query, FAILED_TO_DELETE_USER_PREFERENCE);
   }
 
   public Future<RequestPreference> create(Map<String, String> okapiHeaders, RequestPreference entity) {

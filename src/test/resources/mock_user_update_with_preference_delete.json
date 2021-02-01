@@ -1,0 +1,208 @@
+{
+  "mocks": [
+    {
+      "url": "/addressTypes",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "addressTypes": [
+          {
+            "addressType": "Returns",
+            "desc": "Returns Address",
+            "id": "71628bf4-1962-4dff-a8f2-11108ab532cc"
+          },
+          {
+            "addressType": "Claim",
+            "desc": "Claim Address",
+            "id": "16be835b-c0c7-4454-b1a1-6de1edb82fde"
+          },
+          {
+            "addressType": "Order",
+            "desc": "Order Address",
+            "id": "2f8a8728-00bc-4dda-ae27-b8648186fc27"
+          },
+          {
+            "addressType": "Work",
+            "desc": "Work Address",
+            "id": "9d4ec448-e43a-4528-b257-5e2b4bb4cf0c"
+          },
+          {
+            "addressType": "Home",
+            "desc": "Home Address",
+            "id": "cb9860de-adc2-453c-b449-2328a7a6e651"
+          },
+          {
+            "addressType": "Payment",
+            "desc": "Payment Address",
+            "id": "6c6e8b50-ea63-422b-b882-77ac33021813"
+          }
+        ],
+        "totalRecords": 6
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/groups?limit=2147483647",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "usergroups": [
+          {
+            "group": "undergrad",
+            "desc": "Undergraduate Student",
+            "id": "fd0f9901-2566-4287-bc3c-0cea42eb5963"
+          },
+          {
+            "group": "graduate",
+            "desc": "Graduate Student",
+            "id": "746f7123-193c-48b2-8154-cbc796ab1552"
+          },
+          {
+            "group": "faculty",
+            "desc": "Faculty Member",
+            "id": "c6f61a8d-a86a-4ba3-a112-51925e2f9353"
+          },
+          {
+            "group": "staff",
+            "desc": "Staff Member",
+            "id": "705e1d12-cf84-4d93-9c09-0337958c5cb2"
+          }
+        ],
+        "totalRecords": 4
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/service-points",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "servicepoints": [{
+          "id": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+          "name": "Test one"
+        },
+          {
+            "id": "b3e8cd45-dd4b-477c-b194-23b9a3afe4cc",
+            "name": "Test two"
+          },
+          {
+            "id": "179c85ac-aef3-4466-8310-30094bc750ce",
+            "name": "Test three"
+          }
+        ]
+      }
+    },
+    {
+      "url": "/departments",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "departments": [],
+        "totalRecords": 0
+      }
+    },
+    {
+      "url": "/custom-fields?offset=0&limit=2147483647",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "customFields": [],
+        "totalRecords": 0
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users?query=externalSystemId%3D%3D%28user_update%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "users": [
+          {
+            "id": "58512926-9a29-483b-b801-d36aced855d3",
+            "externalSystemId": "user_update",
+            "personal": {
+            "firstName": "User",
+            "lastName": "Update",
+            "email": "user_update@user.org",
+            "preferredContactTypeId": "email"
+          },
+          "barcode": "89101112",
+          "username": "user_update",
+          "active": true,
+          "patronGroup": "undergrad"
+        }],
+        "totalRecords": 1
+      },
+      "receivedPath": "",
+      "sendData": {}
+    },
+    {
+      "url": "/users/58512926-9a29-483b-b801-d36aced855d3",
+      "method": "put",
+      "status": 204,
+      "receivedData": {
+        "id": "58512926-9a29-483b-b801-d36aced855d3",
+        "proxyFor": [],
+        "externalSystemId": "user_update",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Update",
+          "preferredFirstName": "Preferred User",
+          "email": "user_update@user.org",
+          "preferredContactTypeId": "email",
+          "addresses": []
+        },
+        "barcode": "89101112",
+        "username": "user_update",
+        "active": true,
+        "patronGroup": "undergrad"
+      },
+      "receivedPath": "",
+      "sendData": {
+        "externalSystemId": "user_update",
+        "personal": {
+          "firstName": "User",
+          "lastName": "Update",
+          "email": "user_update@user.org",
+          "preferredContactTypeId": "email"
+        },
+        "barcode": "89101112",
+        "username": "user_update",
+        "active": true,
+        "patronGroup": "undergrad"
+      }
+    },
+    {
+      "url": "/request-preference-storage/request-preference?query=userId==58512926-9a29-483b-b801-d36aced855d3",
+      "method": "get",
+      "status": 200,
+      "receivedData": {
+        "requestPreferences": [
+          {
+            "id": "9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
+            "userId": "58512926-9a29-483b-b801-d36aced855d3",
+            "holdShelf": true,
+            "delivery": false,
+            "defaultServicePointId": "59646a99-4074-4ee5-bfd4-86f3fc7717da",
+            "metadata": {
+              "createdDate": "2020-07-09T18:15:05.005+0000",
+              "createdByUserId": "58512926-9a29-483b-b801-d36aced855d3",
+              "updatedDate": "2020-09-14T18:15:05.005+0000",
+              "updatedByUserId": "58512926-9a29-483b-b801-d36aced855d3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "/request-preference-storage/request-preference/9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
+      "method": "delete",
+      "status": 204,
+      "receivedData": {
+      }
+    }
+  ]
+}

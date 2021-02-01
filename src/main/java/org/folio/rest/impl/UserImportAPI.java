@@ -48,9 +48,9 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.folio.model.SingleUserImportResponse;
 import org.folio.model.UserImportData;
 import org.folio.model.UserRecordImportStatus;
@@ -580,8 +580,10 @@ public class UserImportAPI implements UserImport {
                 udpService.updateUserPreference(requestPreference, userImportData);
                 return prefService.update(okapiHeaders, requestPreference).mapEmpty();
               });
-          } else {
+          } else if (!userImportData.isUpdateOnlyPresentFields()) {
             return prefService.delete(okapiHeaders, result.getId()).mapEmpty();
+          } else {
+            return Future.succeededFuture(null);
           }
         } else {
           return createUserPreference(user, userImportData, okapiHeaders);
