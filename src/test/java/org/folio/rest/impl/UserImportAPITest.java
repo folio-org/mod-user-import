@@ -47,7 +47,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.internal.util.collections.Sets;
 
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.RestVerticle;
@@ -1699,7 +1698,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Accounting"));
+    user.setDepartments(Set.of("Accounting"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
@@ -1733,7 +1732,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Accounting"));
+    user.setDepartments(Set.of("Accounting"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
@@ -1763,7 +1762,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("89101112", "User", "Update", "58512926-9a29-483b-b801-d36aced855d3");
-    user.setDepartments(Sets.newSet("Accounting", "History"));
+    user.setDepartments(Set.of("Accounting", "History"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
@@ -1793,13 +1792,13 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Financial"));
+    user.setDepartments(Set.of("Financial"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withIncluded(new IncludedObjects().withDepartments(
-        Sets.newSet(new Department().withName("Financial").withCode("FIN"))
+        Set.of(new Department().withName("Financial").withCode("FIN"))
       ))
       .withTotalRecords(1);
 
@@ -1826,13 +1825,13 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Financial Accounting"));
+    user.setDepartments(Set.of("Financial Accounting"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
       .withIncluded(new IncludedObjects().withDepartments(
-        Sets.newSet(new Department().withName("Financial Accounting").withCode("ACC"))
+        Set.of(new Department().withName("Financial Accounting").withCode("ACC"))
       ))
       .withTotalRecords(1);
 
@@ -1860,7 +1859,7 @@ public class UserImportAPITest {
 
     List<User> users = new ArrayList<>();
     User user = generateUser("1234567", "Amy", "Cabble", null);
-    user.setDepartments(Sets.newSet("Financial", "Chemistry"));
+    user.setDepartments(Set.of("Financial", "Chemistry"));
     users.add(user);
 
     UserdataimportCollection collection = new UserdataimportCollection()
