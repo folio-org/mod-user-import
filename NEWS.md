@@ -1,3 +1,10 @@
+## 3.5.0 2021-05-24
+
+ * [MODUIMP-42](https://issues.folio.org/browse/MODUIMP-44) Request Preferences are erroneously being deleted
+ * [MODUIMP-44](https://issues.folio.org/browse/MODUIMP-44) Logging issues
+ * [MODUIMP-47](https://issues.folio.org/browse/MODUIMP-47) Upgrade mod-user-import to RMB v33.x
+ * [MODUIMP-35](https://issues.folio.org/browse/MODUIMP-35) Add personal data disclosure form
+
 ## 3.4.0 2021-01-29
 
  * [MODUIMP-41](https://issues.folio.org/browse/MODUIMP-41) Refactor: use GenericCompositeFuture rather than internal one
