@@ -37,12 +37,12 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder-version>33.0.0-pre4</raml-module-builder-version>
+    <raml-module-builder-version>33.0.0</raml-module-builder-version>
     <lombok.version>1.18.12</lombok.version>
     <aspectj.version>1.9.6</aspectj.version>
     <log4j-slf4j-impl.version>2.14.0</log4j-slf4j-impl.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
-    <vertx.version>4.1.0.Beta1</vertx.version>
+    <vertx.version>4.1.0.CR1</vertx.version>
     <junit.version>4.13.1</junit.version>
     <rest-assured.version>4.3.0</rest-assured.version>
     <wiremock.version>2.26.3</wiremock.version>
