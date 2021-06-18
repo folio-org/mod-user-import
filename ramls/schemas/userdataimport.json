@@ -9,7 +9,7 @@
       "type": "string"
     },
     "id": {
-      "description": "A globally unique (UUID) identifier for the user",
+      "description" : "A globally unique (UUID) identifier for the user",
       "type": "string"
     },
     "externalSystemId": {
@@ -29,18 +29,27 @@
       "type": "string"
     },
     "patronGroup": {
-      "description": "A name of the corresponding group the user belongs to",
+      "description": "A UUID corresponding to the group the user belongs to",
       "type": "string"
+    },
+    "departments": {
+      "description": "A UUIDs corresponding to the departments the user belongs to",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "$ref": "raml-util/schemas/uuid.schema"
+      }
     },
     "meta": {
       "description": "Deprecated",
       "type": "object"
     },
     "proxyFor": {
-      "description": "Deprecated",
+      "description" : "Deprecated",
       "type": "array",
       "items": {
-        "type": "string"
+      "type": "string"
       }
     },
     "personal": {
@@ -116,7 +125,7 @@
                 "type": "string"
               },
               "addressTypeId": {
-                "description": "A name of the corresponding address type",
+                "description": "A UUID that corresponds with an address type object",
                 "type": "string"
               },
               "primaryAddress": {
@@ -128,7 +137,7 @@
           }
         },
         "preferredContactTypeId": {
-          "description": "Name of user's preferred contact type",
+          "description": "Id of user's preferred contact type",
           "type": "string"
         }
       },
@@ -138,12 +147,12 @@
       ]
     },
     "enrollmentDate": {
-      "description": "The date when the user joined the organization",
+      "description": "The date in which the user joined the organization",
       "type": "string",
       "format": "date-time"
     },
     "expirationDate": {
-      "description": "The date when the user becomes inactive",
+      "description": "The date for when the user becomes inactive",
       "type": "string",
       "format": "date-time"
     },
@@ -158,27 +167,24 @@
       "format": "date-time"
     },
     "metadata": {
-      "description": "Metadata about creation and changes to records, provided by the server (client should not provide)",
       "type": "object",
-      "$ref": "../raml-util/schemas/metadata.schema"
+      "$ref": "raml-util/schemas/metadata.schema"
     },
-    "customFields": {
+    "tags": {
+      "type": "object",
+      "$ref": "raml-util/schemas/tags.schema"
+    },
+    "customFields" : {
       "description": "Object that contains custom field",
       "type": "object",
       "additionalProperties": true
     },
+
+
     "requestPreference": {
       "description": "User request preferences",
       "type": "object",
       "$ref": "userImportRequestPreference.json"
-    },
-    "departments": {
-      "description": "Names of departments the user belongs to",
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string"
-      }
     }
   },
   "additionalProperties": false,
