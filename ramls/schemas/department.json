@@ -8,7 +8,7 @@
   "properties": {
     "id": {
       "description": "A UUID identifying this department",
-      "$ref": "../raml-util/schemas/uuid.schema",
+      "$ref": "raml-util/schemas/uuid.schema",
       "example": "f973c3b6-85fc-4d35-bda8-f31b568957bf",
       "readonly": true,
       "excludedFromEqualsAndHashCode" : true

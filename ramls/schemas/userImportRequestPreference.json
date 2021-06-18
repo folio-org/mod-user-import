@@ -6,12 +6,12 @@
     "id": {
       "description": "Unique request preference ID",
       "type": "string",
-      "$ref": "../raml-util/schemas/uuid.schema"
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "userId": {
       "description": "UUID of user associated with this request preference",
       "type": "string",
-      "$ref": "../raml-util/schemas/uuid.schema"
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "holdShelf": {
       "description": "Whether 'Hold Shelf' option is available to the user.",
@@ -28,7 +28,7 @@
     "defaultServicePointId": {
       "description": "UUID of default service point for 'Hold Shelf' option",
       "type": "string",
-      "$ref": "../raml-util/schemas/uuid.schema"
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "defaultDeliveryAddressTypeId": {
       "description": "Name of user's address type",
@@ -42,7 +42,7 @@
     },
     "metadata": {
       "description": "Metadata about creation and changes to request preference",
-      "$ref": "../raml-util/schemas/metadata.schema",
+      "$ref": "raml-util/schemas/metadata.schema",
       "readonly": true
     }
   },
