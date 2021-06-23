@@ -1,8 +1,10 @@
 buildMvn {
   publishModDescriptor = 'yes'
-  publishAPI = 'yes'
+  doApiDoc = true
+  doApiLint = true
+  apiTypes = 'RAML'
+  apiDirectories = 'ramls'
   mvnDeploy = 'yes'
-  runLintRamlCop = 'yes'
   doKubeDeploy = true
   buildNode = 'jenkins-agent-java11'
 
