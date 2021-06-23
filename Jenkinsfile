@@ -5,7 +5,6 @@ buildMvn {
   apiTypes = 'RAML'
   apiDirectories = 'ramls'
   mvnDeploy = 'yes'
-  runLintRamlCop = 'yes'
   doKubeDeploy = true
   buildNode = 'jenkins-agent-java11'
 
