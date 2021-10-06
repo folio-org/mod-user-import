@@ -1,3 +1,7 @@
+## 3.6.2 2021-10-05
+
+[MODUIMP-56](https://issues.folio.org/browse/MODUIMP-56) Update RMB to 33.1.1 and Vert.x to 4.1.4
+
 ## 3.6.1 2021-06-22
 
  * [MODUIMP-52](https://issues.folio.org/browse/MODUIMP-52) RMB 33.0.2, fixes HttpClientMock2 not enabled due to race condition
