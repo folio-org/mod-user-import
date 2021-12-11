@@ -40,13 +40,25 @@
     <raml-module-builder-version>33.1.1</raml-module-builder-version>
     <lombok.version>1.18.12</lombok.version>
     <aspectj.version>1.9.6</aspectj.version>
-    <log4j-slf4j-impl.version>2.14.0</log4j-slf4j-impl.version>
+    <log4j.version>2.15.0</log4j.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
     <vertx.version>4.1.4</vertx.version>
     <junit.version>4.13.2</junit.version>
     <rest-assured.version>4.3.0</rest-assured.version>
     <wiremock.version>2.26.3</wiremock.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -63,7 +75,6 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j-slf4j-impl.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jetbrains</groupId>
