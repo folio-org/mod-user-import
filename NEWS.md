@@ -1,6 +1,11 @@
+## 3.6.3 2021-12-17
+
+ * [MODUIMP-60](https://issues.folio.org/browse/MODUIMP-60) Log4j 2.16.0, Vert.x 4.2.2, RMB 33.2.2 (CVE-2021-45046)
+ * [MODUIMP-58](https://issues.folio.org/browse/MODUIMP-58) Log4j 2.15.0 fixing remote execution (CVE-2021-44228)
+
 ## 3.6.2 2021-10-05
 
-[MODUIMP-56](https://issues.folio.org/browse/MODUIMP-56) Update RMB to 33.1.1 and Vert.x to 4.1.4
+ * [MODUIMP-56](https://issues.folio.org/browse/MODUIMP-56) Update RMB to 33.1.1 and Vert.x to 4.1.4
 
 ## 3.6.1 2021-06-22
 
