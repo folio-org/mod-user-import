@@ -1,10 +1,10 @@
 package org.folio.service;
 
+import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_GET_USER_MODULE_ID;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
-import static org.folio.rest.impl.UserImportAPIConstants.GET_CUSTOM_FIELDS_ENDPOINT;
-import static org.folio.rest.impl.UserImportAPIConstants.PUT_CUSTOM_FIELDS_ENDPOINT;
+import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_INTERFACE_NAME;
 
 import java.util.ArrayList;
@@ -131,7 +131,7 @@ public class CustomFieldsService {
   }
 
   private Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
-    String query = PUT_CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
+    String query = CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
     return HttpClientUtil.put(okapiHeaders, query, customField, FAILED_TO_UPDATE_CUSTOM_FIELD);
   }
 
@@ -152,7 +152,7 @@ public class CustomFieldsService {
   }
 
   private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
-    return HttpClientUtil.get(headers, GET_CUSTOM_FIELDS_ENDPOINT, FAILED_TO_LIST_CUSTOM_FIELDS)
+    return HttpClientUtil.get(headers, CUSTOM_FIELDS_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_CUSTOM_FIELDS)
       .map(this::extractCustomFields);
   }
 

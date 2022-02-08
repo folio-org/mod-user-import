@@ -1,6 +1,7 @@
 package org.folio.service;
 
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_SERVICE_POINTS;
+import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 import static org.folio.rest.impl.UserImportAPIConstants.SERVICE_POINTS_ENDPOINT;
 
 import java.util.Map;
@@ -18,7 +19,7 @@ public class ServicePointsService {
 
 
   public Future<Map<String, String>> getServicePoints(Map<String, String> okapiHeaders) {
-    return HttpClientUtil.get(okapiHeaders, SERVICE_POINTS_ENDPOINT, FAILED_TO_LIST_SERVICE_POINTS)
+    return HttpClientUtil.get(okapiHeaders, SERVICE_POINTS_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_SERVICE_POINTS)
       .map(this::extractServicePoints);
   }
 

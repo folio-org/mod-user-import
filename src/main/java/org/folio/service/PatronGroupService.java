@@ -1,11 +1,10 @@
 package org.folio.service;
 
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS;
+import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 import static org.folio.rest.impl.UserImportAPIConstants.PATRON_GROUPS_ENDPOINT;
 
 import java.util.Map;
-
-import javax.ws.rs.core.UriBuilder;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -20,7 +19,7 @@ public class PatronGroupService {
 
 
   public Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
-    final String query = UriBuilder.fromPath(PATRON_GROUPS_ENDPOINT).queryParam("limit", "2147483647").build().toString();
+    final String query = PATRON_GROUPS_ENDPOINT + LIMIT_ALL;
     return HttpClientUtil.get(okapiHeaders, query, FAILED_TO_LIST_PATRON_GROUPS)
       .map(this::extractPatronGroups);
   }

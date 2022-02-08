@@ -42,6 +42,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,8 +67,8 @@ import org.folio.rest.tools.client.test.HttpClientMock2;
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
 
-  public static final int PORT = 8081;
-  public static final String HOST = "http://127.0.0.1";
+  public static final int PORT = NetworkUtils.nextFreePort();
+  public static final String HOST = "http://localhost";
 
   @Rule public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
 

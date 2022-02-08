@@ -1,0 +1,7 @@
+{
+  "srvcId": "${artifactId}-${version}",
+  "nodeId": "localhost",
+  "descriptor": {
+    "exec": "java -jar ../mod-user-import/target/mod-user-import-fat.jar -Dhttp.port=%p"
+  }
+}
