@@ -2,6 +2,7 @@ package org.folio.service;
 
 import static org.folio.rest.impl.UserImportAPIConstants.ADDRESS_TYPES_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES;
+import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class AddressTypeService {
 
 
   public Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
-    return HttpClientUtil.get(okapiHeaders, ADDRESS_TYPES_ENDPOINT, FAILED_TO_LIST_ADDRESS_TYPES)
+    return HttpClientUtil.get(okapiHeaders, ADDRESS_TYPES_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_ADDRESS_TYPES)
       .map(this::extractAddressTypes);
   }
 

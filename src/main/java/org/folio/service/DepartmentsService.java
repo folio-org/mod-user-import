@@ -4,6 +4,7 @@ import static io.vertx.core.Future.succeededFuture;
 
 import static org.folio.rest.impl.UserImportAPIConstants.DEPARTMENTS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS;
+import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
 import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.rest.impl.UserImportAPIConstants;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.util.HttpClientUtil;
 
@@ -77,7 +79,7 @@ public class DepartmentsService {
   }
 
   private Future<Set<Department>> getDepartments(Map<String, String> okapiHeaders) {
-    return HttpClientUtil.get(okapiHeaders, DEPARTMENTS_ENDPOINT, FAILED_TO_LIST_DEPARTMENTS)
+    return HttpClientUtil.get(okapiHeaders, DEPARTMENTS_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_DEPARTMENTS)
       .map(this::extractDepartments);
   }
 

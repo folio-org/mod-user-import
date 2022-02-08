@@ -36,7 +36,8 @@ public class UserImportAPIConstants {
   public static final String HTTP_HEADER_ACCEPT = "Accept";
 
   public static final String PUT_CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
-  public static final String GET_CUSTOM_FIELDS_ENDPOINT = "/custom-fields?offset=0&limit=" + Integer.MAX_VALUE;
+  public static final String LIMIT_ALL = "?limit=" + Integer.MAX_VALUE;
+  public static final String GET_CUSTOM_FIELDS_ENDPOINT = "/custom-fields" + LIMIT_ALL;
   public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
   public static final String USERS_INTERFACE_NAME = "users";
 

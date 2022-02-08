@@ -1,7 +1,7 @@
 {
   "mocks": [
     {
-      "url": "/addressTypes",
+      "url": "/addressTypes?limit=2147483647",
       "method": "get",
       "status": 500,
       "receivedData": "Internal server error",
@@ -9,7 +9,7 @@
       "sendData": {}
     },
     {
-      "url": "/departments",
+      "url": "/departments?limit=2147483647",
       "method": "get",
       "status": 200,
       "receivedData": {
@@ -18,7 +18,7 @@
       }
     },
     {
-      "url": "/custom-fields?offset=0&limit=2147483647",
+      "url": "/custom-fields?limit=2147483647",
       "method": "get",
       "status": 200,
       "receivedData": {
