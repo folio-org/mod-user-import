@@ -53,17 +53,11 @@ public class MockJson extends AbstractVerticle {
     HttpServerResponse response = context.response();
     String method = request.method().name();
     String uri = request.uri();
-    for (int i = 0; i < all.size(); i++) {
-      JsonObject entry = all.getJsonObject(i);
-      if (extracted(response, method, uri, entry)) {
-        return;
-      }
+    if (lookupEntries(response, method, uri, all)) {
+      return;
     }
-    for (int i = 0; i < mocks.size(); i++) {
-      JsonObject entry = mocks.getJsonObject(i);
-      if (extracted(response, method, uri, entry)) {
-        return;
-      }
+    if (lookupEntries(response, method, uri, mocks)) {
+      return ;
     }
     log.info("Not found in mock={} method={} uri={}", resource, method, uri);
     response.setStatusCode(404);
@@ -71,33 +65,37 @@ public class MockJson extends AbstractVerticle {
     response.end("Not found in mock");
   }
 
-  private boolean extracted(HttpServerResponse response, String method, String uri, JsonObject entry) {
-    if (!method.equalsIgnoreCase(entry.getString("method", "get"))
-      || !uri.equals(entry.getString("url"))) {
-      return false;
-    }
-    response.setStatusCode(entry.getInteger("status", 200));
-    JsonArray headers = entry.getJsonArray("headers");
-    if (headers != null) {
-      for (int j = 0; j < headers.size(); j++) {
-        JsonObject headObject = headers.getJsonObject(j);
-        response.putHeader(headObject.getString("name"), headObject.getString("value"));
+  private boolean lookupEntries(HttpServerResponse response, String method, String uri, JsonArray entries) {
+    for (int i = 0; i < entries.size(); i++) {
+      JsonObject entry = entries.getJsonObject(i);
+      if (!method.equalsIgnoreCase(entry.getString("method", "get"))
+        || !uri.equals(entry.getString("url"))) {
+        continue;
       }
+      response.setStatusCode(entry.getInteger("status", 200));
+      JsonArray headers = entry.getJsonArray("headers");
+      if (headers != null) {
+        for (int j = 0; j < headers.size(); j++) {
+          JsonObject headObject = headers.getJsonObject(j);
+          response.putHeader(headObject.getString("name"), headObject.getString("value"));
+        }
+      }
+      Object responseData = entry.getValue("receivedData");
+      if (responseData instanceof JsonObject) {
+        response.putHeader("Content-Type", "application/json");
+        response.end(((JsonObject) responseData).encodePrettily());
+      } else if (responseData instanceof JsonArray) {
+        response.putHeader("Content-Type", "application/json");
+        response.end(((JsonArray) responseData).encodePrettily());
+      } else if (responseData instanceof String) {
+        response.putHeader("Content-Type", "text/plain");
+        response.end((String) responseData);
+      } else {
+        response.end();
+      }
+      return true;
     }
-    Object responseData = entry.getValue("receivedData");
-    if (responseData instanceof JsonObject) {
-      response.putHeader("Content-Type", "application/json");
-      response.end(((JsonObject) responseData).encodePrettily());
-    } else if (responseData instanceof JsonArray) {
-      response.putHeader("Content-Type", "application/json");
-      response.end(((JsonArray) responseData).encodePrettily());
-    } else if (responseData instanceof String) {
-      response.putHeader("Content-Type", "text/plain");
-      response.end((String) responseData);
-    } else {
-      response.end();
-    }
-    return true;
+    return false;
   }
 
   public void start(Promise<Void> promise) {
