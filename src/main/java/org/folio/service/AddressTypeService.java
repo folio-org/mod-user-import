@@ -10,7 +10,6 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.util.HttpClientUtil;
 import org.folio.util.JsonObjectUtil;
@@ -20,8 +19,8 @@ public class AddressTypeService {
   private static final String ADDRESS_TYPES_ARRAY_KEY = "addressTypes";
   private static final String ADDRESS_TYPE_NAME_OBJECT_KEY = "addressType";
 
-  public Future<Map<String, String>> getAddressTypes(WebClient webClient, Map<String, String> okapiHeaders) {
-    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.GET, okapiHeaders, ADDRESS_TYPES_ENDPOINT + LIMIT_ALL)
+  public Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
+    return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, ADDRESS_TYPES_ENDPOINT + LIMIT_ALL)
         .expect(ResponsePredicate.SC_OK)
         .send()
         .map(res -> extractAddressTypes(res.bodyAsJsonObject()))

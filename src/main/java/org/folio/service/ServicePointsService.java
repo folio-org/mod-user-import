@@ -9,8 +9,6 @@ import java.util.Map;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.util.HttpClientUtil;
 import org.folio.util.JsonObjectUtil;
@@ -21,8 +19,8 @@ public class ServicePointsService {
   public static final String SERVICE_POINT_NAME_OBJECT_KEY = "name";
 
 
-  public Future<Map<String, String>> getServicePoints(WebClient webClient, Map<String, String> okapiHeaders) {
-    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.GET, okapiHeaders, SERVICE_POINTS_ENDPOINT + LIMIT_ALL)
+  public Future<Map<String, String>> getServicePoints(Map<String, String> okapiHeaders) {
+    return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, SERVICE_POINTS_ENDPOINT + LIMIT_ALL)
         .expect(ResponsePredicate.SC_OK)
         .send()
         .map(res -> extractServicePoints(res.bodyAsJsonObject()))

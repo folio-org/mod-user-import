@@ -9,8 +9,6 @@ import java.util.Map;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.util.HttpClientUtil;
 import org.folio.util.JsonObjectUtil;
@@ -20,10 +18,10 @@ public class PatronGroupService {
   private static final String USER_GROUPS_ARRAY_KEY = "usergroups";
   private static final String USER_GROUP_NAME_OBJECT_KEY = "group";
 
-  public Future<Map<String, String>> getPatronGroups(WebClient webClient, Map<String, String> okapiHeaders) {
+  public Future<Map<String, String>> getPatronGroups(Map<String, String> okapiHeaders) {
     final String query = PATRON_GROUPS_ENDPOINT + LIMIT_ALL;
 
-    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.GET, okapiHeaders, query)
+    return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, query)
         .expect(ResponsePredicate.SC_OK)
         .send()
         .map(res -> extractPatronGroups(res.bodyAsJsonObject()))
