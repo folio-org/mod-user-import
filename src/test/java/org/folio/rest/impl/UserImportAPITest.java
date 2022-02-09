@@ -504,7 +504,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserUpdate() throws IOException {
+  public void testImportWithUserUpdate()  {
 
     mock.setMockJsonContent("mock_user_update.json");
 

@@ -36,6 +36,10 @@ public class HttpClientUtil {
   private HttpClientUtil() {
   }
 
+  public static <T> Future<T> errorManagement(Throwable cause, String msg) {
+    LOGGER.error("{} {}", msg, cause.getMessage(), cause);
+    return Future.failedFuture(msg + ": " + cause.getMessage());
+  }
 
   public static HttpRequest<Buffer> webClientOkapi(WebClient webClient, HttpMethod method, Map<String,String> okapiHeaders, String path) {
     HttpRequest<Buffer> bufferHttpRequest = webClient.requestAbs(method, okapiHeaders.get(XOkapiHeaders.URL) + path);

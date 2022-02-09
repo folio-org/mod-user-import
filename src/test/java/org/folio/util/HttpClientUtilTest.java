@@ -18,7 +18,7 @@ public class HttpClientUtilTest {
   public void getException(TestContext context) {
     HttpClientUtil.get(null, "/a", "fail")
         .onComplete(context.asyncAssertFailure(cause ->
-            context.assertNull(cause.getMessage(), cause.getMessage())));
+            context.assertEquals("Cannot invoke \"java.util.Map.get(Object)\" because \"okapiHeaders\" is null", cause.getMessage())));
   }
 
   @Test
@@ -35,21 +35,22 @@ public class HttpClientUtilTest {
   public void deleteException(TestContext context) {
     HttpClientUtil.delete(null, "/a", "fail")
         .onComplete(context.asyncAssertFailure(cause ->
-            context.assertNull(cause.getMessage(), cause.getMessage())));
+            context.assertEquals("Cannot invoke \"java.util.Map.get(Object)\" because \"okapiHeaders\" is null" , cause.getMessage())));
   }
 
   @Test
   public void postPutException(TestContext context) {
     HttpClientUtil.put(null, "/a", null, "fail")
         .onComplete(context.asyncAssertFailure(cause ->
-            context.assertNull(cause.getMessage(), cause.getMessage())));
+            context.assertEquals("Cannot invoke \"java.util.Map.get(Object)\" because \"okapiHeaders\" is null", cause.getMessage())));
   }
 
   @Test
   public void postBadEntityException(TestContext context) {
     HttpClientUtil.post(new HashMap<>(), "/a", Integer.class, "{}", "myFail")
         .onComplete(context.asyncAssertFailure(cause ->
-            context.assertTrue(cause.getMessage().startsWith("Cannot construct instance of"), cause.getMessage())
+            context.assertEquals("Cannot construct instance of `java.util.LinkedHashMap` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('{}')\n" +
+                " at [Source: UNKNOWN; byte offset: #UNKNOWN]", cause.getMessage())
         ));
   }
 

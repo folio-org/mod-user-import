@@ -17,8 +17,11 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,18 +39,19 @@ import org.folio.util.OkapiUtil;
 
 public class CustomFieldsService {
 
-  public Future<Set<CustomField>> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders,
-                                                             Vertx vertx) {
+  public Future<Set<CustomField>> prepareCustomFields(UserImportData importData, WebClient webClient,
+      Map<String, String> okapiHeaders, Vertx vertx) {
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
-    return OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, vertx)
+
+    return OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers, webClient)
       .compose(moduleIds -> updateHeaders(moduleIds, headers))
-      .compose(o -> getCustomFields(headers))
+      .compose(o -> getCustomFields(webClient, headers))
       .compose(systemCustomFields -> {
         Set<CustomField> importCustomFields = importData.getCustomFields();
         if (importCustomFields.isEmpty()) {
           return Future.succeededFuture(systemCustomFields);
         }
-        return updateCustomFields(importCustomFields, systemCustomFields, headers);
+        return updateCustomFields(importCustomFields, systemCustomFields, webClient, headers);
       });
   }
 
@@ -58,16 +62,15 @@ public class CustomFieldsService {
   }
 
   private Future<Set<CustomField>> updateCustomFields(Set<CustomField> importCustomFields,
-                                                             Set<CustomField> systemCustomFields,
-                                                             Map<String, String> okapiHeaders) {
+      Set<CustomField> systemCustomFields, WebClient webClient, Map<String, String> okapiHeaders) {
+
     List<Future<Void>> futures = new ArrayList<>();
     for (CustomField importCustomField : importCustomFields) {
       CustomField systemCustomField = findCustomFieldByRefId(systemCustomFields, importCustomField.getRefId())
-        .orElseThrow(() -> new CustomFieldMappingFailedException(Set.of(importCustomField.getRefId())));
+          .orElseThrow(() -> new CustomFieldMappingFailedException(Set.of(importCustomField.getRefId())));
 
       updateValues(systemCustomField, importCustomField);
-      futures.add(updateCustomField(systemCustomField, okapiHeaders));
-
+      futures.add(updateCustomField(systemCustomField, webClient, okapiHeaders));
     }
     return GenericCompositeFuture.all(futures).map(systemCustomFields);
   }
@@ -130,9 +133,13 @@ public class CustomFieldsService {
     return "opt_" + ++maxOptId;
   }
 
-  private Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
+  private Future<Void> updateCustomField(CustomField customField, WebClient webClient, Map<String, String> okapiHeaders) {
     String query = CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
-    return HttpClientUtil.put(okapiHeaders, query, customField, FAILED_TO_UPDATE_CUSTOM_FIELD);
+    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.PUT, okapiHeaders, query)
+        .expect(ResponsePredicate.SC_NO_CONTENT)
+        .send()
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_CUSTOM_FIELD))
+        .mapEmpty();
   }
 
   private <E, T> T extractValue(E o1, E o2, Function<E, T> extractFunc) {
@@ -151,9 +158,12 @@ public class CustomFieldsService {
     }
   }
 
-  private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
-    return HttpClientUtil.get(headers, CUSTOM_FIELDS_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_CUSTOM_FIELDS)
-      .map(this::extractCustomFields);
+  private Future<Set<CustomField>> getCustomFields(WebClient webClient, Map<String, String> headers) {
+    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.GET, headers, CUSTOM_FIELDS_ENDPOINT + LIMIT_ALL)
+        .expect(ResponsePredicate.SC_OK)
+        .send()
+        .map(res -> extractCustomFields(res.bodyAsJsonObject()))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_CUSTOM_FIELDS));
   }
 
   private Set<CustomField> extractCustomFields(JsonObject json) {

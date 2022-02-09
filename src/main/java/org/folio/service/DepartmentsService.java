@@ -14,13 +14,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Future;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.rest.impl.UserImportAPIConstants;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.util.HttpClientUtil;
 
@@ -31,12 +33,12 @@ public class DepartmentsService {
   private static final String FAILED_TO_UPDATE_DEPARTMENT_MESSAGE = "Failed to update department";
 
 
-  public Future<Set<Department>> prepareDepartments(UserImportData importData, Map<String, String> okapiHeaders) {
-    return getDepartments(okapiHeaders)
+  public Future<Set<Department>> prepareDepartments(UserImportData importData, WebClient webClient, Map<String, String> okapiHeaders) {
+    return getDepartments(webClient, okapiHeaders)
       .compose(systemDepartments -> {
         Set<Department> importDepartments = importData.getDepartments();
         if (!importDepartments.isEmpty()) {
-          return updateSystemDepartments(importDepartments, systemDepartments, okapiHeaders);
+          return updateSystemDepartments(importDepartments, systemDepartments, webClient, okapiHeaders);
         } else {
           return succeededFuture(systemDepartments);
         }
@@ -57,6 +59,7 @@ public class DepartmentsService {
 
   private Future<Set<Department>> updateSystemDepartments(Set<Department> importDepartments,
                                                                  Set<Department> systemDepartments,
+                                                                 WebClient webClient,
                                                                  Map<String, String> okapiHeaders) {
     List<Future<Void>> futures = new ArrayList<>();
     for (Department importDepartment : importDepartments) {
@@ -66,10 +69,10 @@ public class DepartmentsService {
           findDepartmentByCode(systemDepartments, importDepartment.getCode());
         if (existedDepartmentByCode.isPresent()) {
           Department systemDepartment = existedDepartmentByCode.get();
-          futures.add(updateDepartment(systemDepartment, importDepartment, okapiHeaders));
+          futures.add(updateDepartment(systemDepartment, importDepartment, webClient, okapiHeaders));
           systemDepartment.setName(importDepartment.getName());
         } else {
-          futures.add(createDepartment(importDepartment, okapiHeaders)
+          futures.add(createDepartment(importDepartment, webClient, okapiHeaders)
             .onSuccess(systemDepartments::add)
             .map(department -> null));
         }
@@ -78,22 +81,31 @@ public class DepartmentsService {
     return GenericCompositeFuture.all(futures).map(o -> systemDepartments);
   }
 
-  private Future<Set<Department>> getDepartments(Map<String, String> okapiHeaders) {
-    return HttpClientUtil.get(okapiHeaders, DEPARTMENTS_ENDPOINT + LIMIT_ALL, FAILED_TO_LIST_DEPARTMENTS)
-      .map(this::extractDepartments);
+  private Future<Set<Department>> getDepartments(WebClient webClient, Map<String, String> okapiHeaders) {
+    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.GET, okapiHeaders, DEPARTMENTS_ENDPOINT + LIMIT_ALL)
+        .expect(ResponsePredicate.SC_OK)
+        .send()
+        .map(res -> extractDepartments(res.bodyAsJsonObject()))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_DEPARTMENTS));
   }
 
-  private Future<Department> createDepartment(Department department, Map<String, String> okapiHeaders) {
+  private Future<Department> createDepartment(Department department, WebClient webClient, Map<String, String> okapiHeaders) {
     if (StringUtils.isBlank(department.getCode())) {
       department.setCode(generateCode(department.getName()));
     }
-    return HttpClientUtil
-      .post(okapiHeaders, DEPARTMENTS_ENDPOINT, Department.class, department, FAILED_TO_CREATE_DEPARTMENT_MESSAGE);
+    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.POST, okapiHeaders, DEPARTMENTS_ENDPOINT)
+        .expect(ResponsePredicate.SC_CREATED)
+        .sendJsonObject(JsonObject.mapFrom(department))
+        .map(res -> res.bodyAsJsonObject().mapTo(Department.class))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_CREATE_DEPARTMENT_MESSAGE));
   }
 
-  private Future<Void> updateDepartment(Department existed, Department updated, Map<String, String> okapiHeaders) {
-    return HttpClientUtil
-      .put(okapiHeaders, DEPARTMENTS_ENDPOINT + "/" + existed.getId(), updated, FAILED_TO_UPDATE_DEPARTMENT_MESSAGE);
+  private Future<Void> updateDepartment(Department existed, Department updated, WebClient webClient, Map<String, String> okapiHeaders) {
+    return HttpClientUtil.webClientOkapi(webClient, HttpMethod.PUT, okapiHeaders, DEPARTMENTS_ENDPOINT + "/" + existed.getId())
+        .expect(ResponsePredicate.SC_NO_CONTENT)
+        .sendJsonObject(JsonObject.mapFrom(updated))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_DEPARTMENT_MESSAGE))
+        .mapEmpty();
   }
 
   private String generateCode(String name) {

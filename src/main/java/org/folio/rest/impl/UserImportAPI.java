@@ -1,8 +1,5 @@
 package org.folio.rest.impl;
 
-import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.succeededFuture;
-
 import static org.folio.rest.impl.UserImportAPIConstants.ERROR_MESSAGE;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID;
@@ -112,45 +109,46 @@ public class UserImportAPI implements UserImport {
           .withMessage("No users to import.")
           .withTotalRecords(0);
       asyncResultHandler
-          .handle(succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
+          .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
       return;
     }
     WebClient webClient = WebClient.create(vertxContext.owner());
     LOGGER.info("okapi-url={}", okapiHeaders.get(XOkapiHeaders.URL));
-    prepareUserImportData(userCollection, okapiHeaders, vertxContext.owner())
+    prepareUserImportData(userCollection, webClient, okapiHeaders, vertxContext.owner())
         .compose(importData -> startUserImport(importData, webClient, okapiHeaders))
         .otherwise(throwable -> processErrorResponse(userCollection.getUsers(), throwable.getMessage()))
         .onComplete(handler -> {
           webClient.close();
           if (handler.succeeded() && handler.result() != null && handler.result().getError() == null) {
             asyncResultHandler
-                .handle(succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
+                .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(handler.result())));
           } else {
             asyncResultHandler
-                .handle(succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
+                .handle(Future.succeededFuture(PostUserImportResponse.respond500WithApplicationJson(handler.result())));
           }
         });
   }
 
   private Future<UserImportData> prepareUserImportData(UserdataimportCollection userCollection,
+                                                       WebClient webClient,
                                                        Map<String, String> okapiHeaders, Vertx vertx) {
     UserImportData importData = new UserImportData(userCollection);
 
     UserSystemData.UserSystemDataBuilder systemDataBuilder = UserSystemData.builder();
 
-    Future<Map<String, String>> addressTypesFuture = addressService.getAddressTypes(okapiHeaders)
+    Future<Map<String, String>> addressTypesFuture = addressService.getAddressTypes(webClient, okapiHeaders)
       .onSuccess(systemDataBuilder::addressTypes);
 
-    Future<Map<String, String>> patronGroupsFuture = pgService.getPatronGroups(okapiHeaders)
+    Future<Map<String, String>> patronGroupsFuture = pgService.getPatronGroups(webClient, okapiHeaders)
       .onSuccess(systemDataBuilder::patronGroups);
 
-    Future<Map<String, String>> servicePointsFuture = spService.getServicePoints(okapiHeaders)
+    Future<Map<String, String>> servicePointsFuture = spService.getServicePoints(webClient, okapiHeaders)
       .onSuccess(systemDataBuilder::servicePoints);
 
-    Future<Set<CustomField>> customFieldsFuture = cfService.prepareCustomFields(importData, okapiHeaders, vertx)
+    Future<Set<CustomField>> customFieldsFuture = cfService.prepareCustomFields(importData, webClient, okapiHeaders, vertx)
       .onSuccess(systemDataBuilder::customFields);
 
-    Future<Set<Department>> departmentsFuture = depService.prepareDepartments(importData, okapiHeaders)
+    Future<Set<Department>> departmentsFuture = depService.prepareDepartments(importData, webClient, okapiHeaders)
       .onSuccess(systemDataBuilder::departments);
 
     return CompositeFuture
@@ -349,7 +347,7 @@ public class UserImportAPI implements UserImport {
         .send()
         .compose(
             res -> Future.succeededFuture(getUsersFromResult(res.bodyAsJsonObject())),
-            e -> errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
+            e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
   }
 
   /**
@@ -385,7 +383,7 @@ public class UserImportAPI implements UserImport {
       udpService.updateUserData(user, userImportData);
     } catch (RuntimeException e) {
       SingleUserImportResponse failed = getFailedUserResponse(user, e);
-      return succeededFuture(failed);
+      return Future.succeededFuture(failed);
     }
 
     if (existingUsers.containsKey(user.getExternalSystemId())) {
@@ -397,14 +395,14 @@ public class UserImportAPI implements UserImport {
       existingUsers.remove(user.getExternalSystemId());
       User finalUser = user;
       return updateUser(webClient, okapiHeaders, user)
-        .compose(singleUserImportResponse -> updateUserPreference(finalUser, userImportData, okapiHeaders)
+        .compose(singleUserImportResponse -> updateUserPreference(finalUser, userImportData, webClient, okapiHeaders)
           .map(o -> singleUserImportResponse)
           .otherwise(e -> getFailedUserResponse(finalUser, e))
         );
     } else {
       User finalUser = user;
       return createNewUser(webClient, okapiHeaders, user)
-        .compose(singleUserImportResponse -> createUserPreference(finalUser, userImportData, okapiHeaders)
+        .compose(singleUserImportResponse -> createUserPreference(finalUser, userImportData, webClient, okapiHeaders)
           .map(o -> singleUserImportResponse)
           .otherwise(e -> getFailedUserResponse(finalUser, e))
         );
@@ -461,7 +459,7 @@ public class UserImportAPI implements UserImport {
         .sendJson(JsonObject.mapFrom(user))
         .compose(
             res -> Future.succeededFuture(SingleUserImportResponse.updated(user.getExternalSystemId()))
-            , e -> errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
+            , e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
   }
 
   /**
@@ -470,7 +468,6 @@ public class UserImportAPI implements UserImport {
   private Future<SingleUserImportResponse> createNewUser(WebClient webClient,
       Map<String, String> okapiHeaders, User user) {
 
-    LOGGER.info("createNewUser 1");
     if (user.getId() == null) {
       user.setId(UUID.randomUUID().toString());
     }
@@ -479,7 +476,6 @@ public class UserImportAPI implements UserImport {
     Map<String, String> headers =
         createHeaders(okapiHeaders, HTTP_HEADER_VALUE_APPLICATION_JSON, HTTP_HEADER_VALUE_APPLICATION_JSON);
 
-    LOGGER.info("createNewUser 2");
     // create permission before user object to avoid user without permission
     // a dangling permission user object does not hurt.
     return addEmptyPermissionSetForUser(webClient, okapiHeaders, user).compose(x ->
@@ -494,24 +490,24 @@ public class UserImportAPI implements UserImport {
   }
 
   private Future<RequestPreference> createUserPreference(User user, UserImportData userImportData,
-                                                         Map<String, String> okapiHeaders) {
+      WebClient webClient, Map<String, String> okapiHeaders) {
 
     RequestPreference requestPreference = userImportData.getRequestPreferences().get(user.getUsername());
     if (Objects.nonNull(requestPreference)) {
       requestPreference.setUserId(user.getId());
       return prefService.validate(requestPreference, userImportData, user)
-        .compose(o -> {
-          udpService.updateUserPreference(requestPreference, userImportData);
-          return prefService.create(okapiHeaders, requestPreference);
-        });
+          .compose(o -> {
+            udpService.updateUserPreference(requestPreference, userImportData);
+            return prefService.create(okapiHeaders, webClient, requestPreference);
+          });
     } else {
-      return succeededFuture().mapEmpty();
+      return Future.succeededFuture().mapEmpty();
     }
   }
 
   private Future<RequestPreference> updateUserPreference(User user, UserImportData userImportData,
-                                                         Map<String, String> okapiHeaders) {
-    return prefService.get(okapiHeaders, user.getId())
+                                                         WebClient webClient, Map<String, String> okapiHeaders) {
+    return prefService.get(okapiHeaders, webClient, user.getId())
       .compose(result -> {
         if (Objects.nonNull(result)) {
           RequestPreference requestPreference = userImportData.getRequestPreferences().get(user.getUsername());
@@ -521,15 +517,15 @@ public class UserImportAPI implements UserImport {
             return prefService.validate(requestPreference, userImportData, user)
               .compose(o -> {
                 udpService.updateUserPreference(requestPreference, userImportData);
-                return prefService.update(okapiHeaders, requestPreference).mapEmpty();
+                return prefService.update(okapiHeaders, webClient, requestPreference).mapEmpty();
               });
           } else if (!userImportData.isUpdateOnlyPresentFields()) {
-            return prefService.delete(okapiHeaders, result.getId()).mapEmpty();
+            return prefService.delete(okapiHeaders, webClient, result.getId()).mapEmpty();
           } else {
-            return Future.succeededFuture(null);
+            return Future.succeededFuture();
           }
         } else {
-          return createUserPreference(user, userImportData, okapiHeaders);
+          return createUserPreference(user, userImportData, webClient, okapiHeaders);
         }
       });
   }
@@ -551,7 +547,7 @@ public class UserImportAPI implements UserImport {
         .sendJsonObject(object)
         .compose(
             res -> Future.succeededFuture(res.bodyAsJsonObject())
-            , e -> errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId())
+            , e -> HttpClientUtil.errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId())
         );
   }
 
@@ -576,13 +572,9 @@ public class UserImportAPI implements UserImport {
       .expect(ResponsePredicate.SC_OK)
       .send()
       .compose(res -> listAllUsers(res.bodyAsJsonObject(), webClient, okapiHeaders, query, limit),
-        ex -> errorManagement(ex, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
+        ex -> HttpClientUtil.errorManagement(ex, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
   }
 
-  static <T> Future<T> errorManagement(Throwable cause, String msg) {
-    LOGGER.error("{} {}", msg, cause.getMessage(), cause);
-    return Future.failedFuture(msg + ": " + cause.getMessage());
-  }
   /**
    * List all users.
    */
@@ -606,7 +598,7 @@ public class UserImportAPI implements UserImport {
     return GenericCompositeFuture.all(futures)
         .compose(
             x -> Future.succeededFuture(existingUserList),
-            e -> failedFuture(FAILED_TO_PROCESS_USERS + extractErrorMessage(e)));
+            e -> Future.failedFuture(FAILED_TO_PROCESS_USERS + extractErrorMessage(e)));
   }
 
 
@@ -626,7 +618,7 @@ public class UserImportAPI implements UserImport {
               existingUserList.addAll(users);
               return Future.succeededFuture();
               },
-            e -> errorManagement(e,FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
+            e -> HttpClientUtil.errorManagement(e,FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
   }
 
   /**
@@ -650,7 +642,7 @@ public class UserImportAPI implements UserImport {
     }
     return GenericCompositeFuture.all(futures).compose(
         res -> Future.succeededFuture(),
-        e -> errorManagement(e, "Failed to deactivate users"));
+        e -> HttpClientUtil.errorManagement(e, "Failed to deactivate users"));
   }
 
   /**
