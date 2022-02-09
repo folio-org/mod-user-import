@@ -387,10 +387,10 @@ public class UserImportAPITest {
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body(TOTAL_RECORDS, equalTo(1))
-      .body(CREATED_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
-      .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_USERS, hasSize(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
 
@@ -429,7 +429,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserCreationError() throws IOException {
+  public void testImportWithUserCreationError()  {
 
     mock.setMockJsonContent("mock_user_creation_error.json");
 
@@ -602,7 +602,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserUpdateError() throws IOException {
+  public void testImportWithUserUpdateError() {
 
     mock.setMockJsonContent("mock_user_update_error.json");
 
@@ -629,7 +629,7 @@ public class UserImportAPITest {
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
       .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
-        equalTo(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+        containsString(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }

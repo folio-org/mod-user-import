@@ -9,8 +9,6 @@ public class UserImportAPIConstants {
     "Failed to add permissions for user with externalSystemId: ";
   public static final String FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID =
     "Failed to create new user with externalSystemId: ";
-  public static final String FAILED_TO_REGISTER_PERMISSIONS =
-    "Failed to register permissions for user with externalSystemId: ";
   public static final String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: ";
   public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";

@@ -144,7 +144,19 @@
         "active": true,
         "patronGroup": "undergrad"
       }
+    },
+    {
+      "url": "/perms/users",
+      "method": "post",
+      "status": 201,
+      "receivedData": {},
+      "receivedPath": "",
+      "sendData": {
+        "userId": "1ad737b0-d847-11e6-bf26-cec0c932ce01",
+        "permissions": []
+      }
     }
+
 
    ]
 }
