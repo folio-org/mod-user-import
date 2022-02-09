@@ -1,7 +1,7 @@
 {
   "mocks": [
     {
-      "url": "/addressTypes?limit=2147483647",
+      "url": "/addresstypes?limit=2147483647",
       "method": "get",
       "status": 500,
       "receivedData": "Internal server error",
