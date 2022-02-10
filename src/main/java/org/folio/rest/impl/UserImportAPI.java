@@ -33,11 +33,11 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,7 +106,7 @@ public class UserImportAPI implements UserImport {
           .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
       return;
     }
-    prepareUserImportData(userCollection, okapiHeaders, vertxContext.owner())
+    prepareUserImportData(userCollection, okapiHeaders)
         .compose(importData -> startUserImport(importData, okapiHeaders))
         .otherwise(throwable -> processErrorResponse(userCollection.getUsers(), throwable.getMessage()))
         .onComplete(handler -> {
@@ -121,7 +121,7 @@ public class UserImportAPI implements UserImport {
   }
 
   private Future<UserImportData> prepareUserImportData(UserdataimportCollection userCollection,
-      Map<String, String> okapiHeaders, Vertx vertx) {
+      Map<String, String> okapiHeaders) {
 
     UserImportData importData = new UserImportData(userCollection);
     UserSystemData.UserSystemDataBuilder systemDataBuilder = UserSystemData.builder();
@@ -172,8 +172,7 @@ public class UserImportAPI implements UserImport {
       Map<String, String> okapiHeaders) {
 
     return listAllUsersWithExternalSystemId(okapiHeaders, userImportData.getSourceType())
-        .compose(res -> {
-          List<Map> existingUsers = res;
+        .compose(existingUsers -> {
           final Map<String, User> existingUserMap;
           try {
             existingUserMap = udpService.extractExistingUsers(existingUsers);
@@ -336,11 +335,9 @@ public class UserImportAPI implements UserImport {
       .collect(Collectors.toList());
 
     return GenericCompositeFuture.all(futures)
-        .compose(ar -> {
-          LOGGER.info("User creation and update has finished for the current batch.");
-          ImportResponse successResponse = processSuccessfulImportResponse(futures);
-          return Future.succeededFuture(successResponse);
-        }, e -> HttpClientUtil.errorManagement(e, FAILED_TO_IMPORT_USERS));
+        .onSuccess(x -> LOGGER.info("User creation and update has finished for the current batch."))
+        .map(x -> processSuccessfulImportResponse(futures))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_IMPORT_USERS));
   }
 
   private Future<SingleUserImportResponse> processUser(User user, UserImportData userImportData,
@@ -421,9 +418,9 @@ public class UserImportAPI implements UserImport {
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, userUpdateQuery)
         .expect(ResponsePredicate.SC_NO_CONTENT)
         .sendJson(JsonObject.mapFrom(user))
-        .compose(
-            res -> Future.succeededFuture(SingleUserImportResponse.updated(user.getExternalSystemId()))
-            , e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
+        .map(x -> SingleUserImportResponse.updated(user.getExternalSystemId()))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID
+            + user.getExternalSystemId()));
   }
 
   /**
@@ -443,10 +440,11 @@ public class UserImportAPI implements UserImport {
         HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
             .expect(ResponsePredicate.SC_CREATED)
             .sendJsonObject(JsonObject.mapFrom(user))
-            .compose(
-                res -> Future.succeededFuture(SingleUserImportResponse.created(user.getExternalSystemId())),
-                e -> Future.succeededFuture(SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
-                    500, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()))));
+            .map(res -> SingleUserImportResponse.created(user.getExternalSystemId()))
+            .otherwise(e -> SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
+                    500, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID
+                    + user.getExternalSystemId())
+            ));
     // e.getMessage() not used
   }
 
@@ -454,16 +452,15 @@ public class UserImportAPI implements UserImport {
       Map<String, String> okapiHeaders) {
 
     RequestPreference requestPreference = userImportData.getRequestPreferences().get(user.getUsername());
-    if (Objects.nonNull(requestPreference)) {
-      requestPreference.setUserId(user.getId());
-      return prefService.validate(requestPreference, userImportData, user)
-          .compose(o -> {
-            udpService.updateUserPreference(requestPreference, userImportData);
-            return prefService.create(okapiHeaders, requestPreference);
-          });
-    } else {
-      return Future.succeededFuture().mapEmpty();
+    if (requestPreference == null) {
+      return Future.succeededFuture();
     }
+    requestPreference.setUserId(user.getId());
+    return prefService.validate(requestPreference, userImportData, user)
+        .compose(o -> {
+          udpService.updateUserPreference(requestPreference, userImportData);
+          return prefService.create(okapiHeaders, requestPreference);
+        });
   }
 
   private Future<RequestPreference> updateUserPreference(User user, UserImportData userImportData,
@@ -504,9 +501,9 @@ public class UserImportAPI implements UserImport {
     return HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, permissionAddQuery)
         .expect(ResponsePredicate.SC_CREATED)
         .sendJsonObject(object)
-        .compose(
-            res -> Future.succeededFuture(res.bodyAsJsonObject())
-            , e -> HttpClientUtil.errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId())
+        .map(HttpResponse::bodyAsJsonObject)
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID
+            + user.getExternalSystemId())
         );
   }
 
@@ -525,10 +522,10 @@ public class UserImportAPI implements UserImport {
     int limit = 10;
     final String userSearchQuery = generateUserSearchQuery(query, limit, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-      .expect(ResponsePredicate.SC_OK)
-      .send()
-      .compose(res -> listAllUsers(res.bodyAsJsonObject(), okapiHeaders, query, limit),
-        ex -> HttpClientUtil.errorManagement(ex, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
+        .expect(ResponsePredicate.SC_OK)
+        .send()
+        .compose(res -> listAllUsers(res.bodyAsJsonObject(), okapiHeaders, query, limit))
+        .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
   }
 
   /**
@@ -552,9 +549,8 @@ public class UserImportAPI implements UserImport {
       futures.add(processResponse(existingUserList, okapiHeaders, query, limit, offset * limit));
     }
     return GenericCompositeFuture.all(futures)
-        .compose(
-            x -> Future.succeededFuture(existingUserList),
-            e -> Future.failedFuture(FAILED_TO_PROCESS_USERS + extractErrorMessage(e)));
+        .map(x -> existingUserList)
+        .recover(e -> Future.failedFuture(FAILED_TO_PROCESS_USERS + extractErrorMessage(e)));
   }
 
 
@@ -568,13 +564,13 @@ public class UserImportAPI implements UserImport {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
         .expect(ResponsePredicate.SC_OK)
         .send()
-        .compose(
+        .<Void>map(
             res -> {
               List<Map> users = getUsersFromResult(res.bodyAsJsonObject());
               existingUserList.addAll(users);
-              return Future.succeededFuture();
-              },
-            e -> HttpClientUtil.errorManagement(e,FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
+              return null;
+              })
+        .recover(e -> HttpClientUtil.errorManagement(e,FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
   }
 
   /**
@@ -595,9 +591,9 @@ public class UserImportAPI implements UserImport {
         futures.add(updateUser(okapiHeaders, user));
       }
     }
-    return GenericCompositeFuture.all(futures).compose(
-        res -> Future.succeededFuture(),
-        e -> HttpClientUtil.errorManagement(e, "Failed to deactivate users"));
+    return GenericCompositeFuture.all(futures)
+        .<Void>mapEmpty()
+        .recover(e -> HttpClientUtil.errorManagement(e, "Failed to deactivate users"));
   }
 
   /**
@@ -629,16 +625,6 @@ public class UserImportAPI implements UserImport {
       return Collections.EMPTY_LIST;
     }
     return array.getList();
-  }
-
-  /**
-   * Extract error message from result.
-   *
-   * @param asyncResult the result
-   * @return the extracted error message
-   */
-  private String extractErrorMessage(AsyncResult asyncResult) {
-    return extractErrorMessage(asyncResult.cause());
   }
 
   private String extractErrorMessage(Throwable cause) {
