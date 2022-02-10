@@ -8,6 +8,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -15,6 +16,8 @@ import org.folio.okapi.common.XOkapiHeaders;
 public class HttpClientUtil {
 
   private static final Logger LOGGER =  LogManager.getLogger(HttpClientUtil.class);
+  private static final int CONN_TO = 5000;
+  private static final int IDLE_TO = 10000;
 
   private HttpClientUtil() {
   }
@@ -26,7 +29,11 @@ public class HttpClientUtil {
     if (clients.containsKey(vertx)) {
       return clients.get(vertx);
     }
-    WebClient webClient = WebClient.create(vertx);
+    WebClientOptions options = new WebClientOptions()
+        .setConnectTimeout(CONN_TO)
+        .setIdleTimeout(IDLE_TO);
+
+    WebClient webClient = WebClient.create(vertx, options);
     clients.put(vertx, webClient);
     return webClient;
   }

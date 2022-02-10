@@ -22,8 +22,7 @@ public class UserRequestManagerValidator {
 
   private UserRequestManagerValidator() { }
 
-  public static void validate(RequestPreference requestPreference, UserImportData importData, User user){
-
+  public static void validate(RequestPreference requestPreference, UserImportData importData, User user) {
     validateDefaultServicePoint(requestPreference, importData.getSystemData().getServicePoints());
     validateDelivery(requestPreference, importData.getSystemData().getAddressTypes(), user);
   }

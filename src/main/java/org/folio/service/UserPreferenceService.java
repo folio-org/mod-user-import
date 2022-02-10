@@ -34,8 +34,9 @@ public class UserPreferenceService {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, query)
         .expect(ResponsePredicate.SC_OK)
         .send()
-        .map(res -> res.bodyAsJsonObject().getJsonArray(REQUEST_PREFERENCES_ARRAY_KEY).getJsonObject(0).mapTo(RequestPreference.class))
-        .otherwiseEmpty();
+        .map(res -> res.bodyAsJsonObject().getJsonArray(REQUEST_PREFERENCES_ARRAY_KEY)
+            .getJsonObject(0).mapTo(RequestPreference.class))
+        .otherwiseEmpty(); // if not OK, return, success null.
   }
 
   public Future<Void> update(Map<String, String> okapiHeaders, RequestPreference entity) {
