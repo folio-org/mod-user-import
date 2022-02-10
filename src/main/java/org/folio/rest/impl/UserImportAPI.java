@@ -110,7 +110,6 @@ public class UserImportAPI implements UserImport {
           .handle(Future.succeededFuture(PostUserImportResponse.respond200WithApplicationJson(emptyResponse)));
       return;
     }
-    LOGGER.info("okapi-url={}", okapiHeaders.get(XOkapiHeaders.URL));
     prepareUserImportData(userCollection, okapiHeaders, vertxContext.owner())
         .compose(importData -> startUserImport(importData, okapiHeaders))
         .otherwise(throwable -> processErrorResponse(userCollection.getUsers(), throwable.getMessage()))
