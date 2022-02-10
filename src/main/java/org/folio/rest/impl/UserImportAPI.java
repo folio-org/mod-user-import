@@ -33,7 +33,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
@@ -265,46 +264,38 @@ public class UserImportAPI implements UserImport {
   private Future<ImportResponse> processUserBatch(Map<String, String> okapiHeaders,
       List<User> currentPartition, UserImportData userImportData) {
 
-    Promise<ImportResponse> future = Promise.promise();
-    listUsers(okapiHeaders, currentPartition, userImportData.getSourceType()).onComplete(userSearchAsyncResponse -> {
-      if (userSearchAsyncResponse.succeeded()) {
-        try {
-          Map<String, User> existingUsers = udpService.extractExistingUsers(userSearchAsyncResponse.result());
+    return listUsers(okapiHeaders, currentPartition, userImportData.getSourceType())
+        .compose(res -> {
+          try {
+            Map<String, User> existingUsers = udpService.extractExistingUsers(res);
 
-          processUserSearchResult(okapiHeaders, existingUsers, currentPartition, userImportData)
-            .onComplete(response -> {
-              if (response.succeeded()) {
-                future.complete(response.result());
-              } else {
-                LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-                UserdataimportCollection userCollection = new UserdataimportCollection();
-                userCollection.setTotalRecords(currentPartition.size());
-                userCollection.setUsers(currentPartition);
-                ImportResponse userSearchFailureResponse = processErrorResponse(userImportData.getUsers(),
-                  FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(response));
-                future.complete(userSearchFailureResponse);
-              }
-            });
-        } catch (UserMappingFailedException exc) {
+            return processUserSearchResult(okapiHeaders, existingUsers, currentPartition, userImportData)
+                .recover(e -> {
+                  LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(e));
+                  UserdataimportCollection userCollection = new UserdataimportCollection();
+                  userCollection.setTotalRecords(currentPartition.size());
+                  userCollection.setUsers(currentPartition);
+                  ImportResponse userSearchFailureResponse = processErrorResponse(userImportData.getUsers(),
+                      FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(e));
+                  return Future.succeededFuture(userSearchFailureResponse);
+                });
+          } catch (UserMappingFailedException exc) {
+            UserdataimportCollection userCollection = new UserdataimportCollection();
+            userCollection.setTotalRecords(currentPartition.size());
+            userCollection.setUsers(currentPartition);
+            ImportResponse userMappingFailureResponse =
+                processErrorResponse(userImportData.getUsers(), FAILED_TO_PROCESS_USER_SEARCH_RESULT + USER_SCHEMA_MISMATCH);
+            return Future.succeededFuture(userMappingFailureResponse);
+          }})
+        .recover(e -> {
+          LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(e));
           UserdataimportCollection userCollection = new UserdataimportCollection();
           userCollection.setTotalRecords(currentPartition.size());
           userCollection.setUsers(currentPartition);
-          ImportResponse userMappingFailureResponse =
-            processErrorResponse(userImportData.getUsers(), FAILED_TO_PROCESS_USER_SEARCH_RESULT + USER_SCHEMA_MISMATCH);
-          future.complete(userMappingFailureResponse);
-        }
-
-      } else {
-        LOGGER.error(FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
-        UserdataimportCollection userCollection = new UserdataimportCollection();
-        userCollection.setTotalRecords(currentPartition.size());
-        userCollection.setUsers(currentPartition);
-        ImportResponse userSearchFailureResponse = processErrorResponse(userImportData.getUsers(),
-          FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(userSearchAsyncResponse));
-        future.complete(userSearchFailureResponse);
-      }
-    });
-    return future.future();
+          ImportResponse userSearchFailureResponse = processErrorResponse(userImportData.getUsers(),
+              FAILED_TO_PROCESS_USER_SEARCH_RESULT + extractErrorMessage(e));
+          return Future.succeededFuture(userSearchFailureResponse);
+        });
   }
 
   /**
