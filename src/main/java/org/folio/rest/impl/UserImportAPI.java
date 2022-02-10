@@ -49,7 +49,6 @@ import org.folio.model.UserRecordImportStatus;
 import org.folio.model.UserSystemData;
 import org.folio.model.exception.UserMappingFailedException;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.Department;
@@ -90,8 +89,6 @@ public class UserImportAPI implements UserImport {
     pgService = new PatronGroupService();
     spService = new ServicePointsService();
   }
-
-
 
   /**
    * User import entry point.
@@ -175,52 +172,47 @@ public class UserImportAPI implements UserImport {
   private Future<ImportResponse> startImportWithDeactivatingUsers(UserImportData userImportData,
       Map<String, String> okapiHeaders) {
 
-    Promise<ImportResponse> future = Promise.promise();
-    listAllUsersWithExternalSystemId(okapiHeaders, userImportData.getSourceType()).onComplete(handler -> {
-      if (handler.failed()) {
-        LOGGER.error("Failed to list users with externalSystemId (and specific sourceType)");
-        ImportResponse userListingFailureResponse =
-            processErrorResponse(userImportData.getUsers(), FAILED_TO_IMPORT_USERS + extractErrorMessage(handler));
-        future.complete(userListingFailureResponse);
-      } else {
-        List<Map> existingUsers = handler.result();
-        try {
-          final Map<String, User> existingUserMap = udpService.extractExistingUsers(existingUsers);
-
+    return listAllUsersWithExternalSystemId(okapiHeaders, userImportData.getSourceType())
+        .compose(res -> {
+          List<Map> existingUsers = res;
+          final Map<String, User> existingUserMap;
+          try {
+            existingUserMap = udpService.extractExistingUsers(existingUsers);
+          } catch (UserMappingFailedException e) {
+            ImportResponse userMappingFailureResponse = processErrorResponse(userImportData.getUsers(), USER_SCHEMA_MISMATCH);
+            return Future.succeededFuture(userMappingFailureResponse);
+          }
           List<Future<ImportResponse>> futures = processAllUsersInPartitions(userImportData, existingUserMap, okapiHeaders);
-
-          GenericCompositeFuture.all(futures).onComplete(ar -> {
-            if (ar.succeeded()) {
-              LOGGER.info("Processing user search result.");
-              ImportResponse compositeResponse = processFutureResponses(futures);
-
-              if (existingUserMap.isEmpty()) {
-                compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
-                future.complete(compositeResponse);
-              } else if (compositeResponse.getFailedRecords() > 0) {
-                LOGGER.warn("Failed to import all users, skipping deactivation.");
-                compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
-                future.complete(compositeResponse);
-              } else {
-                deactivateUsers(okapiHeaders, existingUserMap).onComplete(deactivateHandler -> {
-                  compositeResponse.setMessage("Deactivated missing users.");
-                  future.complete(compositeResponse);
-                });
-              }
-            } else {
-              ImportResponse userProcessFailureResponse =
-                  processErrorResponse(userImportData.getUsers(), FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-              future.complete(userProcessFailureResponse);
-            }
-          });
-        } catch (UserMappingFailedException exc) {
-          ImportResponse userMappingFailureResponse = processErrorResponse(userImportData.getUsers(), USER_SCHEMA_MISMATCH);
-          future.complete(userMappingFailureResponse);
-        }
-      }
-    });
-    return future.future();
-  }
+          return GenericCompositeFuture.all(futures)
+              .compose(ar -> {
+                LOGGER.info("Processing user search result.");
+                ImportResponse compositeResponse = processFutureResponses(futures);
+                if (existingUserMap.isEmpty()) {
+                  compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
+                  return Future.succeededFuture(compositeResponse);
+                } else if (compositeResponse.getFailedRecords() > 0) {
+                  LOGGER.warn("Failed to import all users, skipping deactivation.");
+                  compositeResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY + " " + USER_DEACTIVATION_SKIPPED);
+                  return Future.succeededFuture(compositeResponse);
+                } else {
+                  return deactivateUsers(okapiHeaders, existingUserMap)
+                      .recover(e -> {
+                        LOGGER.warn("Ignore error for deactivate user {}", e.getMessage());
+                        return Future.succeededFuture();
+                      })
+                      .compose(deactivateHandler -> {
+                        compositeResponse.setMessage("Deactivated missing users.");
+                        return Future.succeededFuture(compositeResponse);
+                      });
+                }
+              });
+        })
+        .recover(e -> {
+          ImportResponse userListingFailureResponse =
+              processErrorResponse(userImportData.getUsers(), FAILED_TO_IMPORT_USERS + extractErrorMessage(e));
+          return Future.succeededFuture(userListingFailureResponse);
+        });
+}
 
   /**
    * Create partitions from all users, process them and return the list of
