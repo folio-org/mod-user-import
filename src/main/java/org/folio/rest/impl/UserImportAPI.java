@@ -340,22 +340,16 @@ public class UserImportAPI implements UserImport {
   private Future<ImportResponse> processUserSearchResult(Map<String, String> okapiHeaders,
       Map<String, User> existingUsers, List<User> usersToImport, UserImportData userImportData) {
 
-    Promise<ImportResponse> future = Promise.promise();
     List<Future<SingleUserImportResponse>> futures = usersToImport.stream()
       .map(user -> processUser(user, userImportData, existingUsers, okapiHeaders))
       .collect(Collectors.toList());
 
-    GenericCompositeFuture.all(futures).onComplete(ar -> {
-      if (ar.succeeded()) {
-        LOGGER.info("User creation and update has finished for the current batch.");
-        ImportResponse successResponse = processSuccessfulImportResponse(futures);
-        future.complete(successResponse);
-      } else {
-        LOGGER.error(FAILED_TO_IMPORT_USERS);
-        future.fail(FAILED_TO_IMPORT_USERS + extractErrorMessage(ar));
-      }
-    });
-    return future.future();
+    return GenericCompositeFuture.all(futures)
+        .compose(ar -> {
+          LOGGER.info("User creation and update has finished for the current batch.");
+          ImportResponse successResponse = processSuccessfulImportResponse(futures);
+          return Future.succeededFuture(successResponse);
+        }, e -> HttpClientUtil.errorManagement(e, FAILED_TO_IMPORT_USERS));
   }
 
   private Future<SingleUserImportResponse> processUser(User user, UserImportData userImportData,
@@ -718,34 +712,5 @@ public class UserImportAPI implements UserImport {
       .withFailedUsers(failedUsers);
   }
 
-  private boolean isSuccess(org.folio.rest.tools.client.Response response, Throwable ex) {
-    return ex == null && org.folio.rest.tools.client.Response.isSuccess(response.getCode());
-  }
-
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> future,
-                                   String errorMessage) {
-    errorManagement(response, ex, future, errorMessage, null);
-  }
-
-  private <T> void errorManagement(org.folio.rest.tools.client.Response response, Throwable ex, Promise<T> future,
-                                   String errorMessage, T completeObj) {
-    if (ex != null) {
-      LOGGER.error(errorMessage);
-      LOGGER.error(ex.getMessage());
-      future.fail(ex.getMessage());
-    } else {
-      LOGGER.error(errorMessage);
-      StringBuilder errorBuilder = new StringBuilder(errorMessage);
-      if (response.getError() != null) {
-        errorBuilder.append(" ").append(response.getError().toString());
-        LOGGER.error(response.getError());
-      }
-      if (completeObj == null) {
-        future.fail(errorBuilder.toString());
-      } else {
-        future.complete(completeObj);
-      }
-    }
-  }
 
 }
