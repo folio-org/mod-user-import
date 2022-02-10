@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-user-import</artifactId>
-  <version>3.6.4</version>
+  <version>3.6.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -140,7 +140,7 @@
      <url>https://github.com/folio-org/mod-user-import</url>
      <connection>scm:git:git://github.com/folio-org/mod-user-import.git</connection>
      <developerConnection>scm:git:git@github.com:folio-org/mod-user-import.git</developerConnection>
-     <tag>v3.6.4</tag>
+     <tag>HEAD</tag>
    </scm>
 
   <build>
