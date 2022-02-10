@@ -1,3 +1,12 @@
+## 3.6.4 2022-02-10
+
+Fixes:
+
+ * [MODUIMP-62](https://issues.folio.org/browse/MODUIMP-62) Fetch all for
+departments, service-points, addressTypes (instead of the default: 10).
+RMB 33.2.5, Vert.x 4.2.4, RA 4.4.0.
+Add DeploymentDescriptor
+
 ## 3.6.3 2021-12-17
 
  * [MODUIMP-60](https://issues.folio.org/browse/MODUIMP-60) Log4j 2.16.0, Vert.x 4.2.2, RMB 33.2.2 (CVE-2021-45046)
