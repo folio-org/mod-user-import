@@ -28,15 +28,10 @@ public class UserImportAPIConstants {
   public static final String USER_DEACTIVATION_SKIPPED = "Users were not deactivated because of import failures.";
   public static final String USER_SCHEMA_MISMATCH = "Failed to map existing users. This could be caused by schema mismatch.";
 
-  public static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
-  public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
-  public static final String HTTP_HEADER_VALUE_TEXT_PLAIN = "text/plain";
-  public static final String HTTP_HEADER_ACCEPT = "Accept";
-
   public static final String CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
   public static final String LIMIT_ALL = "?limit=" + Integer.MAX_VALUE;
-  public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
-  public static final String USERS_INTERFACE_NAME = "users";
+  public static final String GET_MODULES_WITH_INTERFACE = "/_/proxy/tenants/%s/interfaces/%s";
+  public static final String CUSTOM_FIELDS_INTERFACE_NAME = "custom-fields";
 
   public static final String USERS_ENDPOINT = "/users";
   public static final String PERMS_USERS_ENDPOINT = "/perms/users";

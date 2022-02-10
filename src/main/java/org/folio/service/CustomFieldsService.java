@@ -5,7 +5,7 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_GET_USER_MODU
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
-import static org.folio.rest.impl.UserImportAPIConstants.USERS_INTERFACE_NAME;
+import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_INTERFACE_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ public class CustomFieldsService {
   public Future<Set<CustomField>> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders) {
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
 
-    return OkapiUtil.getModulesProvidingInterface(USERS_INTERFACE_NAME, headers)
+    return OkapiUtil.getModulesProvidingInterface(CUSTOM_FIELDS_INTERFACE_NAME, headers)
       .compose(moduleIds -> updateHeaders(moduleIds, headers))
       .compose(o -> getCustomFields(headers))
       .compose(systemCustomFields -> {

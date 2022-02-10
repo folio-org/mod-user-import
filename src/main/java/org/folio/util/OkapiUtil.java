@@ -1,6 +1,6 @@
 package org.folio.util;
 
-import static org.folio.rest.impl.UserImportAPIConstants.GET_MODULE_ID_ENDPOINT;
+import static org.folio.rest.impl.UserImportAPIConstants.GET_MODULES_WITH_INTERFACE;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +20,7 @@ public final class OkapiUtil {
 
   public static Future<List<String>> getModulesProvidingInterface(String interfaceName, Map<String, String> okapiHeaders) {
 
-    String requestUri = String.format(GET_MODULE_ID_ENDPOINT, TenantTool.tenantId(okapiHeaders), interfaceName);
+    String requestUri = String.format(GET_MODULES_WITH_INTERFACE, TenantTool.tenantId(okapiHeaders), interfaceName);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
         .expect(ResponsePredicate.SC_OK)
         .send()
