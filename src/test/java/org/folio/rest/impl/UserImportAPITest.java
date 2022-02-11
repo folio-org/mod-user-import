@@ -1,10 +1,5 @@
 package org.folio.rest.impl;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.vertx.core.DeploymentOptions;
@@ -43,6 +37,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.util.MockJson;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -62,43 +57,33 @@ import org.folio.rest.jaxrs.model.SelectFieldOption;
 import org.folio.rest.jaxrs.model.SelectFieldOptions;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataimportCollection;
-import org.folio.rest.tools.client.test.HttpClientMock2;
 
 @RunWith(VertxUnitRunner.class)
 public class UserImportAPITest {
 
   public static final int PORT = NetworkUtils.nextFreePort();
+  public static final int MOCK_PORT = NetworkUtils.nextFreePort();
   public static final String HOST = "http://localhost";
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
-
   private Vertx vertx;
-  private HttpClientMock2 mock;
+  private MockJson mock = new MockJson("mock_standard.json");
 
   @Before
   public void setUp(TestContext context) {
-    vertx = Vertx.vertx();
-
-    DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", PORT)
-        .put(HttpClientMock2.MOCK_MODE, "true"));
-
-    vertx.deployVerticle(new RestVerticle(),
-      options,
-      context.asyncAssertSuccess());
-
     RestAssured.port = PORT;
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
-    mock = new HttpClientMock2("http://localhost:9130", "import-test");
+    vertx = Vertx.vertx();
 
-    stubFor(
-      get(urlEqualTo("/_/proxy/tenants/diku/modules?provide=users"))
-        .willReturn(aResponse().withBody("[\n"
-          + "    {\n"
-          + "        \"id\": \"mod-users\"\n"
-          + "    }\n"
-          + "]")));
+    DeploymentOptions options = new DeploymentOptions()
+      .setConfig(new JsonObject().put("http.port", PORT));
+
+    DeploymentOptions mockOptions = new DeploymentOptions()
+      .setConfig(new JsonObject().put("http.port", MOCK_PORT));
+
+    vertx.deployVerticle(new RestVerticle(), options)
+      .compose(x -> vertx.deployVerticle(mock, mockOptions))
+      .onComplete(context.asyncAssertSuccess());
   }
 
   @After
@@ -107,7 +92,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithoutUsers() throws IOException {
+  public void testImportWithoutUsers() {
 
     mock.setMockJsonContent("mock_content.json");
 
@@ -118,7 +103,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -143,7 +128,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -176,7 +161,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -209,7 +194,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -240,7 +225,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -271,7 +256,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -306,7 +291,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -336,7 +321,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -371,7 +356,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -395,17 +380,17 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body(TOTAL_RECORDS, equalTo(1))
-      .body(CREATED_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
-      .body(FAILED_RECORDS, equalTo(0))
-      .body(FAILED_USERS, hasSize(0))
+      .body(FAILED_RECORDS, equalTo(1))
+      .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
 
@@ -424,7 +409,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -436,7 +421,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
         UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT + UserImportAPIConstants.ERROR_MESSAGE
           + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESPONSE))
       .body(FAILED_USERS, hasSize(1))
@@ -444,7 +429,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserCreationError() throws IOException {
+  public void testImportWithUserCreationError()  {
 
     mock.setMockJsonContent("mock_user_creation_error.json");
 
@@ -458,7 +443,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -504,7 +489,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -519,7 +504,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserUpdate() throws IOException {
+  public void testImportWithUserUpdate()  {
 
     mock.setMockJsonContent("mock_user_update.json");
 
@@ -535,7 +520,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -565,7 +550,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -599,7 +584,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -617,7 +602,7 @@ public class UserImportAPITest {
   }
 
   @Test
-  public void testImportWithUserUpdateError() throws IOException {
+  public void testImportWithUserUpdateError() {
 
     mock.setMockJsonContent("mock_user_update_error.json");
 
@@ -631,7 +616,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -644,7 +629,7 @@ public class UserImportAPITest {
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
       .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
-        equalTo(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
+        containsString(UserImportAPIConstants.FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID + users.get(0).getExternalSystemId()))
       .body(FAILED_USERS, hasSize(1))
       .statusCode(200);
   }
@@ -675,7 +660,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -725,7 +710,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -766,7 +751,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -797,7 +782,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -847,7 +832,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -888,7 +873,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -918,7 +903,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -949,7 +934,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -980,7 +965,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1011,7 +996,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1042,7 +1027,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1073,13 +1058,13 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, equalTo(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE
+      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE
         + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
@@ -1087,7 +1072,7 @@ public class UserImportAPITest {
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, equalTo(
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(
         UserImportAPIConstants.FAILED_TO_IMPORT_USERS + UserImportAPIConstants.ERROR_MESSAGE
           + UserImportAPIConstants.FAILED_TO_PROCESS_USER_SEARCH_RESULT))
       .body(FAILED_USERS, hasSize(1))
@@ -1110,7 +1095,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1144,7 +1129,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1195,7 +1180,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1232,7 +1217,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1271,7 +1256,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1309,7 +1294,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1341,7 +1326,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1371,7 +1356,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1406,7 +1391,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1442,7 +1427,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1475,7 +1460,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1522,7 +1507,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1563,7 +1548,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1603,7 +1588,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1650,7 +1635,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1678,7 +1663,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1709,7 +1694,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1743,7 +1728,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1773,7 +1758,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1806,7 +1791,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1839,7 +1824,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1870,7 +1855,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1904,7 +1889,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1934,7 +1919,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -1983,7 +1968,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -2014,7 +1999,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -2060,7 +2045,7 @@ public class UserImportAPITest {
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
-      .header(new Header(XOkapiHeaders.URL, getWiremockUrl()))
+      .header(new Header(XOkapiHeaders.URL, getOkapiUrl()))
       .header(JSON_CONTENT_TYPE_HEADER)
       .body(collection)
       .post(USER_IMPORT)
@@ -2076,7 +2061,7 @@ public class UserImportAPITest {
       .statusCode(500);
   }
 
-  private String getWiremockUrl() {
-    return HOST + ":" + wireMockRule.port();
+  private String getOkapiUrl() {
+    return HOST + ":" + MOCK_PORT;
   }
 }

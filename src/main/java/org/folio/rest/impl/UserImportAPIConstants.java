@@ -9,8 +9,6 @@ public class UserImportAPIConstants {
     "Failed to add permissions for user with externalSystemId: ";
   public static final String FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID =
     "Failed to create new user with externalSystemId: ";
-  public static final String FAILED_TO_REGISTER_PERMISSIONS =
-    "Failed to register permissions for user with externalSystemId: ";
   public static final String FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID = "Failed to update user with externalSystemId: ";
   public static final String FAILED_TO_IMPORT_USERS = "Failed to import users.";
   public static final String FAILED_TO_LIST_ADDRESS_TYPES = "Failed to list address types.";
@@ -18,7 +16,6 @@ public class UserImportAPIConstants {
   public static final String FAILED_TO_LIST_SERVICE_POINTS = "Failed to list service points.";
   public static final String FAILED_TO_LIST_DEPARTMENTS = "Failed to list departments.";
   public static final String FAILED_TO_LIST_CUSTOM_FIELDS = "Failed to list custom fields.";
-  public static final String FAILED_TO_GET_USER_PREFERENCE = "Failed to get user preference.";
   public static final String FAILED_TO_CREATE_USER_PREFERENCE = "Failed to create new user preference.";
   public static final String FAILED_TO_UPDATE_USER_PREFERENCE = "Failed to update user preference.";
   public static final String FAILED_TO_DELETE_USER_PREFERENCE = "Failed to delete user preference.";
@@ -30,15 +27,10 @@ public class UserImportAPIConstants {
   public static final String USER_DEACTIVATION_SKIPPED = "Users were not deactivated because of import failures.";
   public static final String USER_SCHEMA_MISMATCH = "Failed to map existing users. This could be caused by schema mismatch.";
 
-  public static final String HTTP_HEADER_CONTENT_TYPE = "Content-type";
-  public static final String HTTP_HEADER_VALUE_APPLICATION_JSON = "application/json";
-  public static final String HTTP_HEADER_VALUE_TEXT_PLAIN = "text/plain";
-  public static final String HTTP_HEADER_ACCEPT = "Accept";
-
   public static final String CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
   public static final String LIMIT_ALL = "?limit=" + Integer.MAX_VALUE;
-  public static final String GET_MODULE_ID_ENDPOINT = "/_/proxy/tenants/%s/modules?provide=%s";
-  public static final String USERS_INTERFACE_NAME = "users";
+  public static final String GET_MODULES_WITH_INTERFACE = "/_/proxy/tenants/%s/interfaces/%s";
+  public static final String CUSTOM_FIELDS_INTERFACE_NAME = "custom-fields";
 
   public static final String USERS_ENDPOINT = "/users";
   public static final String PERMS_USERS_ENDPOINT = "/perms/users";
@@ -48,9 +40,6 @@ public class UserImportAPIConstants {
   public static final String DEPARTMENTS_ENDPOINT = "/departments";
   public static final String REQUEST_PREFERENCES_ENDPOINT = "/request-preference-storage/request-preference";
   public static final String REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT = REQUEST_PREFERENCES_ENDPOINT + "%s";
-
-  public static final int CONN_TO = 5000;
-  public static final int IDLE_TO = 10000;
 
   private UserImportAPIConstants() {
 

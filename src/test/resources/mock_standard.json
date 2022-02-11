@@ -1,0 +1,16 @@
+{
+  "mocks": [
+    {
+      "url": "/_/proxy/tenants/diku/interfaces/custom-fields",
+      "method": "get",
+      "status": 200,
+      "receivedData": [
+        {
+          "id": "mod-users"
+        }
+      ],
+      "receivedPath": "",
+      "sendData": {}
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "mocks": [
     {
-      "url": "/addressTypes?limit=2147483647",
+      "url": "/addresstypes?limit=2147483647",
       "method": "get",
       "status": 200,
       "receivedData": {
@@ -154,7 +154,7 @@
     {
       "url": "/request-preference-storage/request-preference",
       "method": "post",
-      "status": 200,
+      "status": 201,
       "receivedData": {
         "id": "9c007bbd-8c4b-46eb-bd4a-a5b94892f84f",
         "userId": "2a424823-588a-45ee-9441-a6384b6614b5",
