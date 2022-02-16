@@ -1,3 +1,14 @@
+## 3.6.4 2022-02-16
+
+Fixes:
+
+ * [MODUIMP-64](https://issues.folio.org/browse/MODUIMP-64) Use WebClient rather than HttpClientFactory, HttpClientInterface
+ * [MODUIMP-63](https://issues.folio.org/browse/MODUIMP-63) Socket leak
+ * [MODUIMP-62](https://issues.folio.org/browse/MODUIMP-62) Mod-user-import throws an error if users are assigned a department that is not
+   part of the first ten departments in a /departments API call
+ * [MODUIMP-30](https://issues.folio.org/browse/MODUIMP-30) mod-user-import module crashes on loading 30k Users in performance environment
+ * [MODUIMP-29](https://issues.folio.org/browse/MODUIMP-29) Import of new users can result in users w/o permissions users record
+
 ## 3.6.3 2021-12-17
 
  * [MODUIMP-60](https://issues.folio.org/browse/MODUIMP-60) Log4j 2.16.0, Vert.x 4.2.2, RMB 33.2.2 (CVE-2021-45046)
