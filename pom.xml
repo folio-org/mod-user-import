@@ -29,7 +29,6 @@
     </pluginRepository>
   </pluginRepositories>
 
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -38,6 +37,7 @@
     <generate_routing_context>/user-import</generate_routing_context>
 
     <raml-module-builder-version>33.2.5</raml-module-builder-version>
+    <log4j.version>2.17.2</log4j.version>
     <lombok.version>1.18.12</lombok.version>
     <aspectj.version>1.9.6</aspectj.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
@@ -45,6 +45,18 @@
     <junit.version>4.13.2</junit.version>
     <rest-assured.version>4.4.0</rest-assured.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>1.17.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -87,7 +99,30 @@
       <version>${vertx.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>${log4j.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mockserver</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mock-server</groupId>
+      <artifactId>mockserver-client-java</artifactId>
+      <version>5.13.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
   <distributionManagement>
     <repository>
       <id>folio-nexus</id>
@@ -352,6 +387,19 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0-M6</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

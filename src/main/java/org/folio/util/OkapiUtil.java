@@ -24,7 +24,8 @@ public final class OkapiUtil {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
         .expect(ResponsePredicate.SC_OK)
         .send()
-        .map(res -> extractModuleIds(res.bodyAsJsonArray()));
+        .map(res -> extractModuleIds(res.bodyAsJsonArray()))
+        .recover(e -> HttpClientUtil.errorManagement(e, "Failed to get modules providing interface " + interfaceName));
   }
 
   private static List<String> extractModuleIds(JsonArray jsonArray) {
