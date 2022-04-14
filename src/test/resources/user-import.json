@@ -1,0 +1,71 @@
+{
+    "users": [
+        {
+            "username": "usul",
+            "externalSystemId": "10191",
+            "patronGroup": "undergrad",
+            "active": true,
+            "personal": {
+                "firstName": "Paul",
+                "lastName": "Atreides",
+                "middleName": "Mua'Dib",
+                "preferredFirstName": "Usul"
+            },
+            "customFields": {
+                "classYear": "2023"
+            }
+        },
+        {
+            "username": "chani",
+            "externalSystemId": "10192",
+            "patronGroup": "graduate",
+            "active": true,
+            "personal": {
+                "firstName": "Chani",
+                "lastName": "Kynes",
+                "preferredFirstName": "Sihaya"
+            },
+            "customFields": {
+                "classYear": "2024"
+            }
+        }
+    ],
+    "included": {
+        "customFields": [
+            {
+                "refId": "classYear",
+                "selectField": {
+                    "options": {
+                        "values": [
+                            {
+                                "value": "2023"
+                            },
+                            {
+                                "value": "2024"
+                            },
+                            {
+                                "value": "2025"
+                            },
+                            {
+                                "value": "Employee"
+                            },
+                            {
+                                "value": "Exchange Student"
+                            },
+                            {
+                                "value": "Other"
+                            },
+                            {
+                                "value": "Part Time"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "totalRecords": 2,
+    "deactivateMissingUsers": false,
+    "updateOnlyPresentFields": true
+}
+

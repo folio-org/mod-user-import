@@ -1,0 +1,38 @@
+{
+    "name" : "Class Year",
+    "refId" : "classYear",
+    "type" : "SINGLE_SELECT_DROPDOWN",
+    "entityType" : "user",
+    "visible" : true,
+    "required" : false,
+    "isRepeatable" : false,
+    "order" : 1,
+    "helpText" : "",
+    "selectField" : {
+        "multiSelect" : false,
+        "options" : {
+            "values" : [
+                {
+                    "id" : "opt_0",
+                    "value" : "Employee",
+                    "default" : false
+                },
+                {
+                    "id" : "opt_1",
+                    "value" : "Exchange Student",
+                    "default" : false
+                },
+                {
+                    "id" : "opt_2",
+                    "value" : "Other",
+                    "default" : false
+                },
+                {
+                    "id" : "opt_3",
+                    "value" : "Part Time",
+                    "default" : false
+                }
+            ]
+        }
+    }
+}

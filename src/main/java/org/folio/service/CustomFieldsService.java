@@ -49,7 +49,8 @@ public class CustomFieldsService {
           return Future.succeededFuture(systemCustomFields);
         }
         return updateCustomFields(importCustomFields, systemCustomFields, headers);
-      });
+      })
+      .recover(e -> HttpClientUtil.errorManagement(e, "Failed to prepare custom fields"));
   }
 
   public Optional<CustomField> findCustomFieldByRefId(Set<CustomField> customFields, String refId) {
@@ -69,7 +70,9 @@ public class CustomFieldsService {
       updateValues(systemCustomField, importCustomField);
       futures.add(updateCustomField(systemCustomField, okapiHeaders));
     }
-    return GenericCompositeFuture.all(futures).map(systemCustomFields);
+    return GenericCompositeFuture.all(futures)
+        .map(systemCustomFields)
+        .recover(e -> HttpClientUtil.errorManagement(e, "Failed to update custom fields"));
   }
 
   private void updateValues(CustomField target, CustomField source) {
@@ -134,7 +137,7 @@ public class CustomFieldsService {
     String query = CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, query)
         .expect(ResponsePredicate.SC_NO_CONTENT)
-        .send()
+        .sendJson(customField)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_CUSTOM_FIELD))
         .mapEmpty();
   }
