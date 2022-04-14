@@ -40,7 +40,8 @@ public class DepartmentsService {
         } else {
           return succeededFuture(systemDepartments);
         }
-      });
+      })
+      .recover(e -> HttpClientUtil.errorManagement(e, "Failed to prepare departments"));
   }
 
   public Optional<Department> findDepartmentByName(Set<Department> departments, String name) {

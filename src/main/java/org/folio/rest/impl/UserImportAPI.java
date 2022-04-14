@@ -436,16 +436,15 @@ public class UserImportAPI implements UserImport {
 
     // create permission before user object to avoid user without permission
     // a dangling permission user object does not hurt.
-    return addEmptyPermissionSetForUser(okapiHeaders, user).compose(x ->
-        HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
+    return addEmptyPermissionSetForUser(okapiHeaders, user)
+        .compose(x ->
+          HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
             .expect(ResponsePredicate.SC_CREATED)
             .sendJsonObject(JsonObject.mapFrom(user))
-            .map(res -> SingleUserImportResponse.created(user.getExternalSystemId()))
-            .otherwise(e -> SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
-                    500, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID
-                    + user.getExternalSystemId())
-            ));
-    // e.getMessage() not used
+            .map(res -> SingleUserImportResponse.created(user.getExternalSystemId())))
+        .onFailure(e -> LOGGER.error(() -> "create new user: " + e.getMessage(), e))
+        .otherwise(e -> SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
+            500, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
   }
 
   private Future<RequestPreference> createUserPreference(User user, UserImportData userImportData,
