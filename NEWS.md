@@ -1,3 +1,9 @@
+## 3.6.4 2022-04-15
+
+Fixes:
+
+ * [MODUIMP-67](https://issues.folio.org/browse/MODUIMP-67) Unable to Update Custom Fields via User Import
+
 ## 3.6.4 2022-02-16
 
 Fixes:
