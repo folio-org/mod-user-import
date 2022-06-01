@@ -36,12 +36,12 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder-version>33.2.9</raml-module-builder-version>
+    <raml-module-builder-version>34.0.0-SNAPSHOT</raml-module-builder-version>
     <log4j.version>2.17.2</log4j.version>
-    <lombok.version>1.18.12</lombok.version>
+    <lombok.version>1.18.24</lombok.version>
     <aspectj.version>1.9.6</aspectj.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
-    <vertx.version>4.2.7</vertx.version>
+    <vertx.version>4.3.1</vertx.version>
     <junit.version>4.13.2</junit.version>
     <rest-assured.version>4.4.0</rest-assured.version>
   </properties>
@@ -49,9 +49,16 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
-        <version>1.17.0</version>
+        <version>1.17.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -95,8 +102,15 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-unit</artifactId>
-      <version>${vertx.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
