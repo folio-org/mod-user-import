@@ -1,3 +1,12 @@
+## 3.6.6 2022-06-08
+
+Fixes:
+
+ * [MODUIMP-67](https://issues.folio.org/browse/MODUIMP-67) Unable to Update Custom Fields via User Import
+ * [MODUIMP-69](https://issues.folio.org/browse/MODUIMP-69) Update RMB, Vertx, Jackson-Databind (CVE-2020-36518)
+ * [MODUIMP-71](https://issues.folio.org/browse/MODUIMP-71) Update to RMB 34.0.0, Vert.x 4.3.1
+ * [FOLIO-3484](https://issues.folio.org/browse/FOLIO-3484) Rebuild all released alpine-jre-openjdk11 containers fixing ZipException
+
 ## 3.6.5 2022-04-15
 
 Fixes:
