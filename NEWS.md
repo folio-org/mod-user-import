@@ -1,7 +1,3 @@
-## 3.7.0 IN-PROGRESS
-
-* [MODUIMP-75] (https://issues.folio.org/browse/MODUIMP-75) - Now supports users interface versions 15.2 16.0
-
 ## 3.6.3 2021-12-17
 
  * [MODUIMP-60](https://issues.folio.org/browse/MODUIMP-60) Log4j 2.16.0, Vert.x 4.2.2, RMB 33.2.2 (CVE-2021-45046)
