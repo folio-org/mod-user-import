@@ -162,6 +162,8 @@ This should be true if the users missing from the current import batch should be
 ### updateOnlyPresentFields
 This should be true if only the fields present in the import should be updated, e.g. if a user address was added in FOLIO but that type of address is not present in the imported data then the address will be preserved.
 
+Currently this only works for addresses. Please more embedded fields need this feature open a story a https://issues.folio.org/projects/MODUIMP/issues
+
 ### sourceType
 A prefix for the <code>externalSystemId</code> to be stored in the system. This field is useful for those organizations that has multiple sources of users. With this field the multiple sources can be separated. The source type is appended to the beginning of the <code>externalSystemId</code> with an underscore, e.g. if the user's <code>externalSystemId</code> in the import is somebody012 and the <code>sourceType</code> is test, the user's <code>externalSystemId</code> will be test_somebody012.
 

@@ -23,7 +23,7 @@
       "type": "boolean"
     },
     "updateOnlyPresentFields": {
-      "description": "Indicates whether to update only present fields in user's data",
+      "description": "Indicates whether to update only present fields in user's data. Currently this only works for addresses.",
       "type": "boolean"
     },
     "sourceType": {
