@@ -36,14 +36,14 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder-version>34.0.0</raml-module-builder-version>
-    <log4j.version>2.17.2</log4j.version>
+    <raml-module-builder-version>35.0.2</raml-module-builder-version>
+    <log4j.version>2.19.0</log4j.version>
     <lombok.version>1.18.24</lombok.version>
-    <aspectj.version>1.9.6</aspectj.version>
+    <aspectj.version>1.9.7</aspectj.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
-    <vertx.version>4.3.1</vertx.version>
+    <vertx.version>4.3.4</vertx.version>
     <junit.version>4.13.2</junit.version>
-    <rest-assured.version>5.1.0</rest-assured.version>
+    <rest-assured.version>5.2.0</rest-assured.version>
   </properties>
 
   <dependencyManagement>
@@ -58,7 +58,7 @@
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
-        <version>1.17.2</version>
+        <version>1.17.5</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -91,13 +91,7 @@
     <dependency>
       <groupId>jakarta.xml.bind</groupId>
       <artifactId>jakarta.xml.bind-api</artifactId>
-      <version>2.3.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
-      <version>2.3.6</version>
+      <version>2.3.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
