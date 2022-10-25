@@ -1,3 +1,34 @@
+## 3.7.0 2022-10-25
+
+ * [MODUIMP-75](https://issues.folio.org/browse/MODUIMP-75) Allow users interface 15.2 thru 16.0
+ * [MODUIMP-79](https://issues.folio.org/browse/MODUIMP-79) Upgrade to RMB 35.0.2, Vert.x 4.3.4
+
+## 3.6.6 2022-06-08
+
+Fixes:
+
+ * [MODUIMP-67](https://issues.folio.org/browse/MODUIMP-67) Unable to Update Custom Fields via User Import
+ * [MODUIMP-69](https://issues.folio.org/browse/MODUIMP-69) Update RMB, Vertx, Jackson-Databind (CVE-2020-36518)
+ * [MODUIMP-71](https://issues.folio.org/browse/MODUIMP-71) Update to RMB 34.0.0, Vert.x 4.3.1
+ * [FOLIO-3484](https://issues.folio.org/browse/FOLIO-3484) Rebuild all released alpine-jre-openjdk11 containers fixing ZipException
+
+## 3.6.5 2022-04-15
+
+Fixes:
+
+ * [MODUIMP-67](https://issues.folio.org/browse/MODUIMP-67) Unable to Update Custom Fields via User Import
+
+## 3.6.4 2022-02-16
+
+Fixes:
+
+ * [MODUIMP-64](https://issues.folio.org/browse/MODUIMP-64) Use WebClient rather than HttpClientFactory, HttpClientInterface
+ * [MODUIMP-63](https://issues.folio.org/browse/MODUIMP-63) Socket leak
+ * [MODUIMP-62](https://issues.folio.org/browse/MODUIMP-62) Mod-user-import throws an error if users are assigned a department that is not
+   part of the first ten departments in a /departments API call
+ * [MODUIMP-30](https://issues.folio.org/browse/MODUIMP-30) mod-user-import module crashes on loading 30k Users in performance environment
+ * [MODUIMP-29](https://issues.folio.org/browse/MODUIMP-29) Import of new users can result in users w/o permissions users record
+
 ## 3.6.3 2021-12-17
 
  * [MODUIMP-60](https://issues.folio.org/browse/MODUIMP-60) Log4j 2.16.0, Vert.x 4.2.2, RMB 33.2.2 (CVE-2021-45046)
