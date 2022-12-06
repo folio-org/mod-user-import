@@ -1,3 +1,10 @@
+## 3.7.1 2022-12-06
+
+ * [MODUIMP-68](https://issues.folio.org/browse/MODUIMP-68): Make patronGroup optional
+ * [MODUIMP-81](https://issues.folio.org/browse/MODUIMP-81): RMB 35.0.4, Vert.x 4.3.5
+ * [FOLIO-602](https://issues.folio.org/browse/FOLIO-602): Fix baseUri
+ * [MODUIMP-76](https://issues.folio.org/browse/MODUIMP-76): Javadoc and tests for overwriting fields
+
 ## 3.7.0 2022-10-25
 
  * [MODUIMP-75](https://issues.folio.org/browse/MODUIMP-75) Allow users interface 15.2 thru 16.0
