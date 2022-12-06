@@ -90,11 +90,13 @@ public class UserDataProcessingService {
     setPreferenceAddressType(preference, userImportData);
   }
 
-  /*
+  /**
    * Currently this deep copy only works for addresses.
-   * If more embedded fields will raise a need for this feature this function needs to be updated.
+   *
+   * <p>For a List (proxyFor), a Set (departments) or a Map (meta) the new replaces the old one,
+   * the old elements are not kept.
    */
-  public User updateExistingUserWithIncomingFields(User user, User existingUser) {
+  public static User updateExistingUserWithIncomingFields(User user, User existingUser) {
     JsonObject current = JsonObject.mapFrom(user);
     JsonObject existing = JsonObject.mapFrom(existingUser);
 
