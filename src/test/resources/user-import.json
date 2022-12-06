@@ -28,6 +28,10 @@
             "customFields": {
                 "classYear": "2024"
             }
+        },
+        {
+            "username": "grouplessperson",
+            "externalSystemId": "0"
         }
     ],
     "included": {

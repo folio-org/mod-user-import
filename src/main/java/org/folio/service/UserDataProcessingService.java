@@ -175,9 +175,12 @@ public class UserDataProcessingService {
     return updatedAddresses;
   }
 
-  private void setPatronGroup(User user, UserImportData userImportData) {
-    Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
+  static void setPatronGroup(User user, UserImportData userImportData) {
     String patronGroupName = user.getPatronGroup();
+    if (patronGroupName == null) {
+      return;
+    }
+    Map<String, String> patronGroups = userImportData.getSystemData().getPatronGroups();
     String patronGroupId = patronGroups.get(patronGroupName);
     if (patronGroupId == null) {
       throw new PatronGroupMappingFailedException(patronGroupName);
