@@ -53,7 +53,7 @@ public class UserImportIT {
 
   @ClassRule
   public static final GenericContainer<?> modUsers =
-    new GenericContainer<>(DockerImageName.parse("folioorg/mod-users:18.2.0"))
+    new GenericContainer<>(DockerImageName.parse("folioorg/mod-users:19.0.0"))
       .withNetwork(network)
       .withNetworkAliases("mod-users")
       .withExposedPorts(8081)
@@ -74,7 +74,7 @@ public class UserImportIT {
 
   @ClassRule
   public static final MockServerContainer okapi =
-    new MockServerContainer(DockerImageName.parse("mockserver/mockserver:mockserver-5.13.2"))
+    new MockServerContainer(DockerImageName.parse("mockserver/mockserver:mockserver-5.14.0"))
       .withNetwork(network)
       .withNetworkAliases("okapi")
       .withExposedPorts(1080);
