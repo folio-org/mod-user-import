@@ -41,6 +41,9 @@ import io.vertx.core.json.JsonObject;
 public class UserImportIT {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportIT.class);
+  private static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
+    .parse("mockserver/mockserver")
+    .withTag("mockserver-" + MockServerClient.class.getPackage().getImplementationVersion());
   private static final Network network = Network.newNetwork();
   private static String modUsersUri;
 
@@ -74,7 +77,7 @@ public class UserImportIT {
 
   @ClassRule
   public static final MockServerContainer okapi =
-    new MockServerContainer(DockerImageName.parse("mockserver/mockserver:mockserver-5.14.0"))
+    new MockServerContainer(MOCKSERVER_IMAGE)
       .withNetwork(network)
       .withNetworkAliases("okapi")
       .withExposedPorts(1080);
