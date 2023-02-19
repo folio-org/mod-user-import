@@ -1,3 +1,7 @@
+## 3.7.2 2023-02-20
+
+ * [MODUIMP-84](https://issues.folio.org/browse/MODUIMP-84) RMB 35.0.6, Vert.x 4.3.8
+
 ## 3.7.1 2022-12-06
 
  * [MODUIMP-68](https://issues.folio.org/browse/MODUIMP-68): Make patronGroup optional
