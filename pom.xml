@@ -39,7 +39,7 @@
     <raml-module-builder-version>35.0.6</raml-module-builder-version>
     <log4j.version>2.19.0</log4j.version>
     <lombok.version>1.18.24</lombok.version>
-    <aspectj.version>1.9.7</aspectj.version>
+    <aspectj.version>1.9.19</aspectj.version>
     <jetbrains-annotations.version>20.0.0</jetbrains-annotations.version>
     <vertx.version>4.3.8</vertx.version>
     <junit.version>4.13.2</junit.version>
@@ -173,7 +173,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -220,13 +220,13 @@
       </plugin>
 
       <plugin>
-        <groupId>com.nickwongdev</groupId>
+        <groupId>dev.aspectj</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
-        <version>1.12.6</version>
+        <version>1.13.1</version>
         <configuration>
           <verbose>true</verbose>
           <showWeaveInfo>false</showWeaveInfo>
-          <complianceLevel>11</complianceLevel>
+          <release>17</release>
           <includes>
             <include>**/impl/*.java</include>
             <include>**/*.aj</include>
