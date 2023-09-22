@@ -33,12 +33,11 @@
       "type": "string"
     },
     "departments": {
-      "description": "A UUIDs corresponding to the departments the user belongs to",
+      "description": "List of names of the departments the user belongs to",
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "type": "string",
-        "$ref": "raml-util/schemas/uuid.schema"
+        "type": "string"
       }
     },
     "meta": {
