@@ -1,3 +1,22 @@
+## 3.8.0 2023-10-12
+
+ * [MODUIMP-89](https://issues.folio.org/browse/MODUIMP-89) Upgrade dependencies for Poppy (RMB, etc.)
+ * [MODUIMP-87](https://issues.folio.org/browse/MODUIMP-87) Incorrect json schema for departments in user import
+ * [MODUIMP-86](https://issues.folio.org/browse/MODUIMP-86) Update to Java 17
+ * [MODUIMP-85](https://issues.folio.org/browse/MODUIMP-85), [FOLIO-3678](https://issues.folio.org/browse/FOLIO-3678) Use GitHub Workflows api-lint and api-schema-lint and api-doc
+ * [MODUIMP-77](https://issues.folio.org/browse/MODUIMP-77) Run mockserver version from pom for arm64 support 
+
+## 3.7.2 2023-02-20
+
+ * [MODUIMP-84](https://issues.folio.org/browse/MODUIMP-84) RMB 35.0.6, Vert.x 4.3.8
+
+## 3.7.1 2022-12-06
+
+ * [MODUIMP-68](https://issues.folio.org/browse/MODUIMP-68): Make patronGroup optional
+ * [MODUIMP-81](https://issues.folio.org/browse/MODUIMP-81): RMB 35.0.4, Vert.x 4.3.5
+ * [FOLIO-602](https://issues.folio.org/browse/FOLIO-602): Fix baseUri
+ * [MODUIMP-76](https://issues.folio.org/browse/MODUIMP-76): Javadoc and tests for overwriting fields
+
 ## 3.7.0 2022-10-25
 
  * [MODUIMP-75](https://issues.folio.org/browse/MODUIMP-75) Allow users interface 15.2 thru 16.0
