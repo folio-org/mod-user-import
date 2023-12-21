@@ -115,7 +115,7 @@
       "sendData": {}
     },
     {
-      "url": "/users?query=externalSystemId%3D%3D%2811_12+or+21_22+or+31_32+or+41_42+or+51_52+or+61_62+or+71_72+or+81_82+or+91_92+or+101_102%29&limit=20&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%3D%28%2211_12%22+or+%2221_22%22+or+%2231_32%22+or+%2241_42%22+or+%2251_52%22+or+%2261_62%22+or+%2271_72%22+or+%2281_82%22+or+%2291_92%22+or+%22101_102%22%29&limit=20&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {

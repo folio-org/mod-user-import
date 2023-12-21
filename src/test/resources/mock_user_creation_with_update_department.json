@@ -137,7 +137,7 @@
       "sendData": {}
     },
     {
-      "url": "/users?query=externalSystemId%3D%3D%28amy_cabble%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
+      "url": "/users?query=externalSystemId%3D%3D%28%22amy_cabble%22%29&limit=2&offset=0&orderBy=externalSystemId&order=asc",
       "method": "get",
       "status": 200,
       "receivedData": {
