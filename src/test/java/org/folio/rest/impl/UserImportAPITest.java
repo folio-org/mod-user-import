@@ -300,23 +300,20 @@ public class UserImportAPITest {
       .statusCode(422);
   }
 
-  /*
-   * This test does not reflect real-time environment currently.
-   */
-  //  @Test
-  public void testImportWithUserWithEmptyExternalSystemId() throws IOException {
+  @Test
+  public void testImportWithUserWithMaskedExternalSystemId() throws IOException {
 
-    mock.setMockJsonContent("mock_user_creation_with_empty_externalsystemid.json");
+    mock.setMockJsonContent("mock_user_creation_with_masked_externalsystemid.json");
 
     List<User> users = new ArrayList<>();
     User testUser = generateUser("1234567", "Amy", "Cabble", null);
-    testUser.setExternalSystemId("");
+    testUser.setExternalSystemId("amy/cab*ble");
     users.add(testUser);
     users.add(testUser);
 
     UserdataimportCollection collection = new UserdataimportCollection()
       .withUsers(users)
-      .withTotalRecords(1);
+      .withTotalRecords(users.size());
 
     given()
       .header(TENANT_HEADER)
@@ -328,14 +325,9 @@ public class UserImportAPITest {
       .then()
       .body(MESSAGE, equalTo(UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY))
       .body(TOTAL_RECORDS, equalTo(2))
-      .body(CREATED_RECORDS, equalTo(1))
+      .body(CREATED_RECORDS, equalTo(2))
       .body(UPDATED_RECORDS, equalTo(0))
-      .body(FAILED_RECORDS, equalTo(1))
-      .body(FAILED_USERS, hasSize(1))
-      .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(testUser.getExternalSystemId()))
-      .body(FAILED_USERS + "[0]." + USERNAME, equalTo(testUser.getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE,
-        equalTo(UserImportAPIConstants.FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + testUser.getExternalSystemId()))
+      .body(FAILED_RECORDS, equalTo(0))
       .statusCode(200);
   }
 

@@ -65,6 +65,7 @@ import org.folio.service.ServicePointsService;
 import org.folio.service.UserDataProcessingService;
 import org.folio.service.UserPreferenceService;
 import org.folio.util.HttpClientUtil;
+import org.folio.util.StringUtil;
 
 public class UserImportAPI implements UserImport {
 
@@ -303,18 +304,15 @@ public class UserImportAPI implements UserImport {
   private Future<List> listUsers(Map<String, String> okapiHeaders,
       List<User> users, String sourceType) {
 
+    var prefix = Strings.isNullOrEmpty(sourceType) ? "" : sourceType + "_";
     StringBuilder userQueryBuilder = new StringBuilder("externalSystemId==(");
     for (int i = 0; i < users.size(); i++) {
-      if (!Strings.isNullOrEmpty(sourceType)) {
-        userQueryBuilder.append(sourceType).append("_");
-      }
-      userQueryBuilder.append(users.get(i).getExternalSystemId());
-      if (i < users.size() - 1) {
+      if (i > 0) {
         userQueryBuilder.append(" or ");
-      } else {
-        userQueryBuilder.append(")");
       }
+      StringUtil.appendCqlEncoded(userQueryBuilder, prefix + users.get(i).getExternalSystemId());
     }
+    userQueryBuilder.append(")");
     final String userSearchQuery = generateUserSearchQuery(userQueryBuilder.toString(), users.size() * 2, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
         .expect(ResponsePredicate.SC_OK)
