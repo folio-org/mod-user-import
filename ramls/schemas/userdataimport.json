@@ -29,7 +29,7 @@
       "type": "string"
     },
     "patronGroup": {
-      "description": "A UUID corresponding to the group the user belongs to",
+      "description": "The name of the patron group the user belongs to",
       "type": "string"
     },
     "departments": {
@@ -124,7 +124,7 @@
                 "type": "string"
               },
               "addressTypeId": {
-                "description": "A UUID that corresponds with an address type object",
+                "description": "The name of an address type object at the /addresstypes API.",
                 "type": "string"
               },
               "primaryAddress": {
@@ -136,7 +136,7 @@
           }
         },
         "preferredContactTypeId": {
-          "description": "Id of user's preferred contact type",
+          "description": "Name of user's preferred contact type. One of mail, email, text, phone, mobile.",
           "type": "string"
         }
       },
