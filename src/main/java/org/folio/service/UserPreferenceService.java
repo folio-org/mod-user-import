@@ -9,7 +9,7 @@ import static org.folio.rest.impl.UserImportAPIConstants.REQUEST_PREFERENCES_SEA
 
 import java.util.Map;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
