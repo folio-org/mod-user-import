@@ -9,8 +9,8 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 /**
  * The same as {@link ResponsePredicate} but with response body included in the Exception message.
  */
-public interface ChattyResponsePredicate {
-  ErrorConverter errorConverter = ErrorConverter.createFullBody(result -> {
+public final class ChattyResponsePredicate {
+  private static final ErrorConverter CONVERTER = ErrorConverter.createFullBody(result -> {
     String message = result.message() + " - " + result.response().bodyAsString();
     return new NoStackTraceThrowable(message);
   });
@@ -18,15 +18,18 @@ public interface ChattyResponsePredicate {
   /**
    * 200 OK
    */
-  ResponsePredicate SC_OK = create(ResponsePredicate.SC_OK, errorConverter);
+  public static final ResponsePredicate SC_OK = create(ResponsePredicate.SC_OK, CONVERTER);
 
   /**
    * 201 Created
    */
-  ResponsePredicate SC_CREATED = create(ResponsePredicate.SC_CREATED, errorConverter);
+  public static final ResponsePredicate SC_CREATED = create(ResponsePredicate.SC_CREATED, CONVERTER);
 
   /**
    * 204 No Content
    */
-  ResponsePredicate SC_NO_CONTENT = create(ResponsePredicate.SC_NO_CONTENT, errorConverter);
+  public static final ResponsePredicate SC_NO_CONTENT = create(ResponsePredicate.SC_NO_CONTENT, CONVERTER);
+
+  private ChattyResponsePredicate() {
+  }
 }
