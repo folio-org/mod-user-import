@@ -6,6 +6,8 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_F
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_INTERFACE_NAME;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,6 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -136,7 +137,7 @@ public class CustomFieldsService {
   private Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
     String query = CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, query)
-        .expect(ResponsePredicate.SC_NO_CONTENT)
+        .expect(SC_NO_CONTENT)
         .sendJson(customField)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_CUSTOM_FIELD))
         .mapEmpty();
@@ -160,7 +161,7 @@ public class CustomFieldsService {
 
   private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, headers, CUSTOM_FIELDS_ENDPOINT + LIMIT_ALL)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .map(res -> extractCustomFields(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_CUSTOM_FIELDS));
