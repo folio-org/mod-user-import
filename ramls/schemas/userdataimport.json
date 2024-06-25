@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "User Schema",
-  "description": "A user",
+  "description": "A user; the same as used for /users API but with \"requestPreference\" property and \"require\" restriction added, and \"patronGroups\", \"departments\", \"addressTypeId\" and \"preferredContactTypeId\" are names and not UUIDs.",
   "type": "object",
   "properties": {
     "username": {
@@ -13,19 +13,19 @@
       "type": "string"
     },
     "externalSystemId": {
-      "description": "An ID that corresponds to an external authority",
+      "description": "A unique ID that corresponds to an external authority",
       "type": "string"
     },
     "barcode": {
-      "description": "The library barcode for this user",
+      "description": "The unique library barcode for this user",
       "type": "string"
     },
     "active": {
-      "description": "A flag to determine if a user can log in, take out loans, etc.",
+      "description": "A flag to determine if the user's account is effective and not expired. The tenant configuration can require the user to be active for login. Active is different from the loan patron block",
       "type": "boolean"
     },
     "type": {
-      "description": "The class of user",
+      "description": "The class of user like staff or patron; this is different from patronGroup; it can store shadow, system user and dcb types also",
       "type": "string"
     },
     "patronGroup": {
@@ -138,6 +138,11 @@
         "preferredContactTypeId": {
           "description": "Name of user's preferred contact type. One of mail, email, text, phone, mobile.",
           "type": "string"
+        },
+        "profilePictureLink": {
+          "description": "Link to the profile picture",
+          "type": "string",
+          "format": "uri"
         }
       },
       "additionalProperties": false,
@@ -177,6 +182,16 @@
       "description": "Object that contains custom field",
       "type": "object",
       "additionalProperties": true
+    },
+    "preferredEmailCommunication": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["Support", "Programs", "Services"]
+      },
+      "maxItems": 3,
+      "uniqueItems": true,
+      "description": "Preferred email communication types"
     },
 
 
