@@ -3,7 +3,7 @@ package org.folio.util;
 import java.util.Collection;
 import java.util.Objects;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 public class ValidationUtil {
 

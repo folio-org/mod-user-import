@@ -12,7 +12,7 @@ import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
 
 import java.util.Map;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
