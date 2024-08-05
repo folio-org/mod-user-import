@@ -29,11 +29,11 @@
       "type": "string"
     },
     "patronGroup": {
-      "description": "The name of the patron group the user belongs to",
+      "description": "The name of the patron group the user belongs to; this is different from the patronGroup property of the /users API that is a UUID.",
       "type": "string"
     },
     "departments": {
-      "description": "List of names of the departments the user belongs to",
+      "description": "List of names of the departments the user belongs to; this is different from the departments property of the /users API this is a UUID.",
       "type": "array",
       "uniqueItems": true,
       "items": {
@@ -124,7 +124,7 @@
                 "type": "string"
               },
               "addressTypeId": {
-                "description": "The name of an address type object at the /addresstypes API.",
+                "description": "The name of an address type object at the /addresstypes API; this is different from the addressTypeId property of the /users API that is a UUID.",
                 "type": "string"
               },
               "primaryAddress": {
@@ -136,7 +136,7 @@
           }
         },
         "preferredContactTypeId": {
-          "description": "Name of user's preferred contact type. One of mail, email, text, phone, mobile.",
+          "description": "Name of user's preferred contact type. One of mail, email, text, phone, mobile.  This is different from the preferredContactTypeId property of the /users API that is a UUID.",
           "type": "string"
         },
         "profilePictureLink": {
