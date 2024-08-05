@@ -3,6 +3,7 @@ package org.folio.service;
 import static org.folio.rest.impl.UserImportAPIConstants.ADDRESS_TYPES_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
 
 import java.util.Map;
 
@@ -10,7 +11,6 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.util.HttpClientUtil;
 import org.folio.util.JsonObjectUtil;
 
@@ -21,7 +21,7 @@ public class AddressTypeService {
 
   public Future<Map<String, String>> getAddressTypes(Map<String, String> okapiHeaders) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, ADDRESS_TYPES_ENDPOINT + LIMIT_ALL)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .map(res -> extractAddressTypes(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_ADDRESS_TYPES));

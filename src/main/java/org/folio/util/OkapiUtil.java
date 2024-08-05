@@ -1,6 +1,7 @@
 package org.folio.util;
 
 import static org.folio.rest.impl.UserImportAPIConstants.GET_MODULES_WITH_INTERFACE;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,6 @@ import java.util.stream.IntStream;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.rest.tools.utils.TenantTool;
 
 public final class OkapiUtil {
@@ -22,7 +22,7 @@ public final class OkapiUtil {
 
     String requestUri = String.format(GET_MODULES_WITH_INTERFACE, TenantTool.tenantId(okapiHeaders), interfaceName);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .map(res -> extractModuleIds(res.bodyAsJsonArray()))
         .recover(e -> HttpClientUtil.errorManagement(e, "Failed to get modules providing interface " + interfaceName));

@@ -5,6 +5,9 @@ import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.impl.UserImportAPIConstants.DEPARTMENTS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_DEPARTMENTS;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_CREATED;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +20,6 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
@@ -81,7 +83,7 @@ public class DepartmentsService {
 
   private Future<Set<Department>> getDepartments(Map<String, String> okapiHeaders) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, DEPARTMENTS_ENDPOINT + LIMIT_ALL)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .map(res -> extractDepartments(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_DEPARTMENTS));
@@ -92,7 +94,7 @@ public class DepartmentsService {
       department.setCode(generateCode(department.getName()));
     }
     return HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, DEPARTMENTS_ENDPOINT)
-        .expect(ResponsePredicate.SC_CREATED)
+        .expect(SC_CREATED)
         .sendJsonObject(JsonObject.mapFrom(department))
         .map(res -> res.bodyAsJsonObject().mapTo(Department.class))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_CREATE_DEPARTMENT_MESSAGE));
@@ -100,7 +102,7 @@ public class DepartmentsService {
 
   private Future<Void> updateDepartment(Department existed, Department updated, Map<String, String> okapiHeaders) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, DEPARTMENTS_ENDPOINT + "/" + existed.getId())
-        .expect(ResponsePredicate.SC_NO_CONTENT)
+        .expect(SC_NO_CONTENT)
         .sendJsonObject(JsonObject.mapFrom(updated))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_DEPARTMENT_MESSAGE))
         .mapEmpty();

@@ -13,6 +13,9 @@ import static org.folio.rest.impl.UserImportAPIConstants.USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_CREATED;
+import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +41,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -315,7 +317,7 @@ public class UserImportAPI implements UserImport {
     userQueryBuilder.append(")");
     final String userSearchQuery = generateUserSearchQuery(userQueryBuilder.toString(), users.size() * 2, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .map(res -> getUsersFromResult(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
@@ -414,7 +416,7 @@ public class UserImportAPI implements UserImport {
     final String userUpdateQuery = UriBuilder.fromPath(USERS_ENDPOINT + "/" + user.getId()).build().toString();
 
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, userUpdateQuery)
-        .expect(ResponsePredicate.SC_NO_CONTENT)
+        .expect(SC_NO_CONTENT)
         .sendJson(asJsonObject(user))
         .map(x -> SingleUserImportResponse.updated(user.getExternalSystemId()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID
@@ -437,7 +439,7 @@ public class UserImportAPI implements UserImport {
     return addEmptyPermissionSetForUser(okapiHeaders, user)
         .compose(x ->
           HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
-            .expect(ResponsePredicate.SC_CREATED)
+            .expect(SC_CREATED)
             .sendJsonObject(asJsonObject(user))
             .map(res -> SingleUserImportResponse.created(user.getExternalSystemId())))
         .onFailure(e -> LOGGER.error(() -> "create new user: " + e.getMessage(), e))
@@ -505,7 +507,7 @@ public class UserImportAPI implements UserImport {
     final String permissionAddQuery = UriBuilder.fromPath(PERMS_USERS_ENDPOINT).build().toString();
 
     return HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, permissionAddQuery)
-        .expect(ResponsePredicate.SC_CREATED)
+        .expect(SC_CREATED)
         .sendJsonObject(object)
         .map(HttpResponse::bodyAsJsonObject)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID
@@ -528,7 +530,7 @@ public class UserImportAPI implements UserImport {
     int limit = 10;
     final String userSearchQuery = generateUserSearchQuery(query, limit, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .compose(res -> listAllUsers(res.bodyAsJsonObject(), okapiHeaders, query, limit))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
@@ -568,7 +570,7 @@ public class UserImportAPI implements UserImport {
 
     final String userSearchQuery = generateUserSearchQuery(query, limit, offset);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(SC_OK)
         .send()
         .<Void>map(
             res -> {
