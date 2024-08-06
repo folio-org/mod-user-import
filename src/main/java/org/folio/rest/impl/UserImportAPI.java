@@ -417,7 +417,7 @@ public class UserImportAPI implements UserImport {
 
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, userUpdateQuery)
         .expect(SC_NO_CONTENT)
-        .sendJson(JsonObject.mapFrom(user))
+        .sendJson(asJsonObject(user))
         .map(x -> SingleUserImportResponse.updated(user.getExternalSystemId()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID
             + user.getExternalSystemId()));
@@ -440,11 +440,20 @@ public class UserImportAPI implements UserImport {
         .compose(x ->
           HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
             .expect(SC_CREATED)
-            .sendJsonObject(JsonObject.mapFrom(user))
+            .sendJsonObject(asJsonObject(user))
             .map(res -> SingleUserImportResponse.created(user.getExternalSystemId())))
         .onFailure(e -> LOGGER.error(() -> "create new user: " + e.getMessage(), e))
         .otherwise(e -> SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
             500, FAILED_TO_CREATE_NEW_USER_WITH_EXTERNAL_SYSTEM_ID + user.getExternalSystemId()));
+  }
+
+  private JsonObject asJsonObject(User user) {
+    var jsonObject = JsonObject.mapFrom(user);
+    if (user.getPreferredEmailCommunication().isEmpty()) {
+      // delete optional array to be compatible with Poppy and Quesnelia versions of mod-users
+      jsonObject.remove("preferredEmailCommunication");
+    }
+    return jsonObject;
   }
 
   private Future<RequestPreference> createUserPreference(User user, UserImportData userImportData,
