@@ -1,11 +1,11 @@
 package org.folio.service;
 
 import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_ENDPOINT;
-import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_GET_USER_MODULE_ID;
+import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_INTERFACE_NAME;
+import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_MODULE_NAME;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
-import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_INTERFACE_NAME;
 import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
 import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
 
@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.model.UserImportData;
 import org.folio.model.exception.CustomFieldMappingFailedException;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CheckboxField;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -41,8 +40,7 @@ public class CustomFieldsService {
   public Future<Set<CustomField>> prepareCustomFields(UserImportData importData, Map<String, String> okapiHeaders) {
     Map<String, String> headers = new CaseInsensitiveMap<>(okapiHeaders);
 
-    return OkapiUtil.getModulesProvidingInterface(CUSTOM_FIELDS_INTERFACE_NAME, headers)
-      .compose(moduleIds -> updateHeaders(moduleIds, headers))
+    return OkapiUtil.setModuleIdForMultipleInterface(CUSTOM_FIELDS_INTERFACE_NAME, CUSTOM_FIELDS_MODULE_NAME, headers)
       .compose(o -> getCustomFields(headers))
       .compose(systemCustomFields -> {
         Set<CustomField> importCustomFields = importData.getCustomFields();
@@ -148,15 +146,6 @@ public class CustomFieldsService {
       return extractFunc.apply(o1);
     }
     return ObjectUtils.defaultIfNull(extractFunc.apply(o1), extractFunc.apply(o2));
-  }
-
-  private Future<Void> updateHeaders(List<String> moduleIds, Map<String, String> headers) {
-    if (moduleIds.size() != 1) {
-      return Future.failedFuture(FAILED_TO_GET_USER_MODULE_ID);
-    } else {
-      headers.put(XOkapiHeaders.MODULE_ID, moduleIds.get(0));
-      return Future.succeededFuture();
-    }
   }
 
   private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
