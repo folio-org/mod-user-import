@@ -22,7 +22,6 @@ import io.vertx.junit5.VertxTestContext;
 class OkapiUtilTest {
 
   static String okapiUrl;
-  Map<String,String> headers;
 
   @RegisterExtension
   RunTestOnContext runTestOnContext = new RunTestOnContext();
