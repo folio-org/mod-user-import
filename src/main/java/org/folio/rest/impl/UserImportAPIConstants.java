@@ -21,7 +21,6 @@ public class UserImportAPIConstants {
   public static final String FAILED_TO_DELETE_USER_PREFERENCE = "Failed to delete user preference.";
   public static final String FAILED_TO_UPDATE_CUSTOM_FIELD = "Failed to update custom field.";
   public static final String FAILED_USER_PREFERENCE_VALIDATION = "User Preference validation failed: ";
-  public static final String FAILED_TO_GET_USER_MODULE_ID = "Interface 'users' must be provided only by one module";
   public static final String ERROR_MESSAGE = " Error message: ";
   public static final String USERS_WERE_IMPORTED_SUCCESSFULLY = "Users were imported successfully.";
   public static final String USER_DEACTIVATION_SKIPPED = "Users were not deactivated because of import failures.";
@@ -31,6 +30,7 @@ public class UserImportAPIConstants {
   public static final String LIMIT_ALL = "?limit=" + Integer.MAX_VALUE;
   public static final String GET_MODULES_WITH_INTERFACE = "/_/proxy/tenants/%s/interfaces/%s";
   public static final String CUSTOM_FIELDS_INTERFACE_NAME = "custom-fields";
+  public static final String CUSTOM_FIELDS_MODULE_NAME = "mod-users";
 
   public static final String USERS_ENDPOINT = "/users";
   public static final String PERMS_USERS_ENDPOINT = "/perms/users";

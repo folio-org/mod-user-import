@@ -11,6 +11,8 @@ import java.util.stream.IntStream;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
+import org.folio.okapi.common.ModuleId;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.tools.utils.TenantTool;
 
 public final class OkapiUtil {
@@ -18,20 +20,44 @@ public final class OkapiUtil {
   private OkapiUtil() {
   }
 
-  public static Future<List<String>> getModulesProvidingInterface(String interfaceName, Map<String, String> okapiHeaders) {
+  /**
+   * Set the module id header for the interface.
+   *
+   * <p>See <a href="https://github.com/folio-org/okapi/blob/master/doc/guide.md#multiple-interfaces">
+   * multiple interfaces</a> documentation.
+   *
+   * @param interfaceName the interface with "interfaceType": "multiple", for example custom-fields
+   * @param moduleName the module name (product name) without version, for example mod-users
+   * @param okapiHeaders where to get the "X-Okapi-Tenant" header and where to write the "X-Okapi-Module-Id" header
+   * @return
+   */
+  public static Future<Void> setModuleIdForMultipleInterface(
+      String interfaceName, String moduleName, Map<String, String> okapiHeaders) {
 
     String requestUri = String.format(GET_MODULES_WITH_INTERFACE, TenantTool.tenantId(okapiHeaders), interfaceName);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
         .expect(SC_OK)
         .send()
-        .map(res -> extractModuleIds(res.bodyAsJsonArray()))
-        .recover(e -> HttpClientUtil.errorManagement(e, "Failed to get modules providing interface " + interfaceName));
+        .compose(res -> {
+          var list = extractModuleIds(res.bodyAsJsonArray(), moduleName);
+          if (list.isEmpty()) {
+            return Future.failedFuture("No module found.");
+          }
+          if (list.size() != 1) {
+            return Future.failedFuture("Multiple modules found: " + list.toString());
+          }
+          okapiHeaders.put(XOkapiHeaders.MODULE_ID, list.get(0));
+          return Future.<Void>succeededFuture();
+        })
+        .recover(e -> HttpClientUtil.errorManagement(e,
+            "Failed to get module id for " + moduleName + " module providing interface " + interfaceName));
   }
 
-  private static List<String> extractModuleIds(JsonArray jsonArray) {
+  private static List<String> extractModuleIds(JsonArray jsonArray, String moduleName) {
     return IntStream.range(0, jsonArray.size())
         .mapToObj(jsonArray::getJsonObject)
         .map(o -> o.getString("id"))
+        .filter(moduleId -> new ModuleId(moduleId).getProduct().equals(moduleName))
         .distinct()
         .collect(Collectors.toList());
   }
