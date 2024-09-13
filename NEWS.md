@@ -1,3 +1,15 @@
+## 3.8.1 2024-09-13
+
+Fixes:
+
+ * [MODUIMP-97](https://folio-org.atlassian.net/browse/MODUIMP-97) Failed to prepare custom fields Interface 'users'
+ * [MODUIMP-95](https://folio-org.atlassian.net/browse/MODUIMP-95) Add preferredEmailCommunication and profilePictureLink to user schema
+ * [MODUIMP-93](https://folio-org.atlassian.net/browse/MODUIMP-93) Pass error message from other modules (mod-users, ...)
+ * [MODUIMP-94](https://folio-org.atlassian.net/browse/MODUIMP-94) RMB 35.2.2, Vert.x 4.5.7
+ * Fix description of patronGroup, addressTypeId, preferredContactTypeId
+ * [MODUIMP-91](https://folio-org.atlassian.net/browse/MODUIMP-91) Mask externalSystemId
+ * [MODUIMP-88](https://folio-org.atlassian.net/browse/MODUIMP-88) Check "error" in GET /\_/tenant/\<tenantid> in UserImportIT
+
 ## 3.8.0 2023-10-12
 
  * [MODUIMP-89](https://issues.folio.org/browse/MODUIMP-89) Upgrade dependencies for Poppy (RMB, etc.)
