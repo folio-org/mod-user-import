@@ -4,24 +4,15 @@
   "provides": [
     {
       "id": "user-import",
-      "version": "2.1",
+      "version": "2.2",
       "handlers": [
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/user-import",
-          "permissionsRequired": [
-            "user-import.add"
-          ]
-        },
         {
           "methods": [
             "POST"
           ],
           "pathPattern": "/user-import",
           "permissionsRequired": [
-            "user-import.add"
+            "user-import.post"
           ],
           "modulePermissions": [
             "addresstypes.collection.get",
@@ -48,16 +39,19 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "user-import.add",
+      "permissionName": "user-import.post",
       "displayName": "Import users",
-      "description": ""
+      "description": "",
+      "replaces": [
+        "user-import.add"
+      ]
     },
     {
       "permissionName": "user-import.all",
       "displayName": "User import - all permissions",
       "description": "",
       "subPermissions": [
-        "user-import.add"
+        "user-import.post"
       ],
       "visible": true
     }
