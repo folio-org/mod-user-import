@@ -1,3 +1,8 @@
+## 3.9.0 2024-11-01
+
+* [MODUIMP-96](https://folio-org.atlassian.net/browse/MODUIMP-96) Permissions rename
+* [MODUIMP-98](https://folio-org.atlassian.net/browse/MODUIMP-98) Upgrade dependencies for Ramsons: RMB 35.3.0, Vert.x 4.5.10, etc.
+
 ## 3.8.1 2024-09-13
 
 Fixes:
