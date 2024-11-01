@@ -13,6 +13,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
+import org.folio.postgres.testing.PostgresTesterContainer;
+import org.folio.util.PostgresTester;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -42,6 +44,7 @@ import io.vertx.core.json.JsonObject;
 public class UserImportIT {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportIT.class);
+  private static final String POSTGRES_IMAGE_NAME = PostgresTesterContainer.getImageName();
   private static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
     .parse("mockserver/mockserver")
     .withTag("mockserver-" + MockServerClient.class.getPackage().getImplementationVersion());
@@ -68,7 +71,7 @@ public class UserImportIT {
       .withEnv("DB_DATABASE", "postgres");
 
   @ClassRule
-  public static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:12-alpine")
+  public static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE_NAME)
     .withNetwork(network)
     .withNetworkAliases("postgres")
     .withExposedPorts(5432)
