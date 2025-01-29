@@ -1,16 +1,13 @@
 package org.folio.util;
 
-import static org.folio.rest.impl.UserImportAPIConstants.GET_MODULES_WITH_INTERFACE;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
-
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
+import org.folio.okapi.common.ChattyHttpResponseExpectation;
 import org.folio.okapi.common.ModuleId;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.tools.utils.TenantTool;
@@ -34,10 +31,11 @@ public final class OkapiUtil {
   public static Future<Void> setModuleIdForMultipleInterface(
       String interfaceName, String moduleName, Map<String, String> okapiHeaders) {
 
-    String requestUri = String.format(GET_MODULES_WITH_INTERFACE, TenantTool.tenantId(okapiHeaders), interfaceName);
+    String requestUri = String.format("/_/proxy/tenants/%s/modules?provide=%s",
+        TenantTool.tenantId(okapiHeaders), PercentCodec.encode(interfaceName));
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
-        .expect(SC_OK)
         .send()
+        .expecting(ChattyHttpResponseExpectation.SC_OK)
         .compose(res -> {
           var list = extractModuleIds(res.bodyAsJsonArray(), moduleName);
           if (list.isEmpty()) {
@@ -59,7 +57,7 @@ public final class OkapiUtil {
         .map(o -> o.getString("id"))
         .filter(moduleId -> new ModuleId(moduleId).getProduct().equals(moduleName))
         .distinct()
-        .collect(Collectors.toList());
+        .toList();
   }
 
 }

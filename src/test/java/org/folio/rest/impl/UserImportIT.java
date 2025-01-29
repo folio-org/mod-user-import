@@ -5,36 +5,43 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.util.PostgresTester;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.HttpForward;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.DockerImageName;
-
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.http.ContentType;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 /**
  * This integration test runs in the maven integration-test phase and tests that
@@ -45,10 +52,9 @@ public class UserImportIT {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportIT.class);
   private static final String POSTGRES_IMAGE_NAME = PostgresTesterContainer.getImageName();
-  private static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
-    .parse("mockserver/mockserver")
-    .withTag("mockserver-" + MockServerClient.class.getPackage().getImplementationVersion());
   private static final Network network = Network.newNetwork();
+  /** set true for debugging. */
+  public static final boolean IS_LOG_ENABLED = false;
   private static String modUsersUri;
 
   @ClassRule
@@ -80,36 +86,43 @@ public class UserImportIT {
     .withDatabaseName("postgres");
 
   @ClassRule
-  public static final MockServerContainer okapi =
-    new MockServerContainer(MOCKSERVER_IMAGE)
-      .withNetwork(network)
-      .withNetworkAliases("okapi")
-      .withExposedPorts(1080);
+  public static final WireMockRule OKAPI_MOCK =
+      new WireMockRule(WireMockConfiguration.wireMockConfig()
+        .notifier(new ConsoleNotifier(IS_LOG_ENABLED))
+        .dynamicPort());
 
   @BeforeClass
   public static void beforeClass() {
-    module.followOutput(new Slf4jLogConsumer(LOGGER).withSeparateOutputStreams());
+    Testcontainers.exposeHostPorts(OKAPI_MOCK.port());
+
+    if (IS_LOG_ENABLED) {
+      module.followOutput(new Slf4jLogConsumer(LOGGER)
+          .withSeparateOutputStreams().withPrefix("mod-user-import"));
+      modUsers.followOutput(new Slf4jLogConsumer(LOGGER)
+          .withSeparateOutputStreams().withPrefix("mod-users"));
+    }
+
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + module.getHost() + ":" + module.getFirstMappedPort();
 
-    var mockServerClient = new MockServerClient(okapi.getHost(), okapi.getServerPort());
-    mockServerClient.when(request("/_/proxy/tenants/diku/interfaces/custom-fields"))
-      .respond(response().withStatusCode(200).withBody("[{\"id\": \"mod-users\"}]"));
-    mockServerClient.when(request("/perms/users").withMethod("POST"))
-      .respond(response().withStatusCode(201));
-    mockServerClient.when(request("/service-points"))
-      .respond(response().withStatusCode(200).withBody("{\"servicepoints\": []}"));
-    forwardToModUsers(mockServerClient, "/addresstypes.*");
-    forwardToModUsers(mockServerClient, "/custom-fields.*");
-    forwardToModUsers(mockServerClient, "/departments.*");
-    forwardToModUsers(mockServerClient, "/groups.*");
-    forwardToModUsers(mockServerClient, "/proxiesfor.*");
-    forwardToModUsers(mockServerClient, "/users.*");
+    stubFor(get(urlEqualTo("/_/proxy/tenants/diku/modules?provide=custom-fields"))
+        .willReturn(okJson("[{\"id\": \"mod-users\"}]")));
+    stubFor(post(urlPathEqualTo("/perms/users"))
+        .willReturn(aResponse().withStatus(201)));
+    stubFor(get(urlPathEqualTo("/service-points"))
+        .willReturn(okJson("{\"servicepoints\": []}")));
+    forwardToModUsers("/addresstypes.*");
+    forwardToModUsers("/custom-fields.*");
+    forwardToModUsers("/departments.*");
+    forwardToModUsers("/groups.*");
+    forwardToModUsers("/proxiesfor.*");
+    forwardToModUsers("/users.*");
 
+    var okapiUrl = "http://host.testcontainers.internal:" + OKAPI_MOCK.port();
     RestAssured.requestSpecification = new RequestSpecBuilder()
       .addHeader("x-okapi-tenant", "diku")
-      .addHeader("x-okapi-url", "http://okapi:1080")
-      .addHeader("x-okapi-url-to", "http://okapi:1080")
+      .addHeader("x-okapi-url", okapiUrl)
+      .addHeader("x-okapi-url-to", okapiUrl)
       .addHeader("X-Okapi-User-Id", "2205005b-ca51-4a04-87fd-938eefa8f6de")  // username: rick
       .setContentType(ContentType.JSON)
       .build();
@@ -118,9 +131,9 @@ public class UserImportIT {
     enableTenant();
   }
 
-  private static void forwardToModUsers(MockServerClient mockServerClient, String path) {
-    mockServerClient.when(request(path))
-      .forward(HttpForward.forward().withHost("mod-users").withPort(8081));
+  private static void forwardToModUsers(String pathRegex) {
+    stubFor(any(urlPathMatching(pathRegex))
+        .willReturn(aResponse().proxiedFrom("http://mod-users:8081")));
   }
 
   private static void enableTenant() {
