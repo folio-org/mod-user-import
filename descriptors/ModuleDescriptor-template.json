@@ -72,6 +72,10 @@
     {
       "id": "service-points",
       "version": "3.2"
+    },
+    {
+      "id": "okapi",
+      "version": "1.9"
     }
   ],
   "launchDescriptor": {
