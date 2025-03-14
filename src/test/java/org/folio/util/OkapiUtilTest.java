@@ -30,23 +30,23 @@ class OkapiUtilTest {
   static void setUp(Vertx vertx, VertxTestContext vtc) {
     vertx.createHttpServer()
     .requestHandler(request -> {
-      switch (request.path()) {
-        case "/_/proxy/tenants/one/interfaces/custom-fields":
+      switch (request.path() + "?" + request.query()) {
+        case "/_/proxy/tenants/one/modules?provide=custom-fields":
           request.response().setStatusCode(200).end("""
                           [{"id": "mod-orders-storage-13.8.0"}, {"id": "mod-users-1.2.3"}]
                           """);
           break;
-        case "/_/proxy/tenants/zero/interfaces/custom-fields":
+        case "/_/proxy/tenants/zero/modules?provide=custom-fields":
           request.response().setStatusCode(200).end("""
                           []
                           """);
           break;
-        case "/_/proxy/tenants/two/interfaces/custom-fields":
+        case "/_/proxy/tenants/two/modules?provide=custom-fields":
           request.response().setStatusCode(200).end("""
                           [{"id": "mod-users-0.0.1"}, {"id": "mod-users-0.0.2"}]
                           """);
           break;
-        case "/_/proxy/tenants/diku/interfaces/500":
+        case "/_/proxy/tenants/diku/modules?provide=500":
           request.response().setStatusCode(500).end("big fail");
           break;
         default:

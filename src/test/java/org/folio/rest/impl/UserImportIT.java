@@ -98,7 +98,7 @@ public class UserImportIT {
           server {
             listen 9130;
             default_type application/json;
-            location /_/proxy/tenants/diku/interfaces/custom-fields {
+            location /_/proxy/tenants/diku/modules {
               return 200 '[{"id": "mod-users"}]';
             }
             location /perms/users {

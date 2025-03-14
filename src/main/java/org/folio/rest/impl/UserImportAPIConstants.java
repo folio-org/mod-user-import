@@ -28,7 +28,6 @@ public class UserImportAPIConstants {
 
   public static final String CUSTOM_FIELDS_ENDPOINT = "/custom-fields";
   public static final String LIMIT_ALL = "?limit=" + Integer.MAX_VALUE;
-  public static final String GET_MODULES_WITH_INTERFACE = "/_/proxy/tenants/%s/interfaces/%s";
   public static final String CUSTOM_FIELDS_INTERFACE_NAME = "custom-fields";
   public static final String CUSTOM_FIELDS_MODULE_NAME = "mod-users";
 

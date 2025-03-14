@@ -1,7 +1,7 @@
 {
   "mocks": [
     {
-      "url": "/_/proxy/tenants/diku/interfaces/custom-fields",
+      "url": "/_/proxy/tenants/diku/modules?provide=custom-fields",
       "method": "get",
       "status": 200,
       "receivedData": [
