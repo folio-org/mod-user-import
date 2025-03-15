@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
 
 public class MockJson extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MockJson.class);
@@ -98,6 +97,7 @@ public class MockJson extends AbstractVerticle {
     return false;
   }
 
+  @Override
   public void start(Promise<Void> promise) {
     final int port = context.config().getInteger("http.port");
 
