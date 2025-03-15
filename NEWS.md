@@ -1,3 +1,10 @@
+## 3.10.0 2025-03-15
+
+* [MODUIMP-99](https://folio-org.atlassian.net/browse/MODUIMP-99) Replace /\_/proxy/tenants/%s/interfaces/%s calls
+* [MODUIMP-100](https://folio-org.atlassian.net/browse/MODUIMP-100) Missing okapi interface dependency in module descriptor
+* [MODUIMP-101](https://folio-org.atlassian.net/browse/MODUIMP-101) Update deps for Sunflower: RMB 35.4.0, Vertx 4.5.13, …
+* [FOLREL-619](https://folio-org.atlassian.net/browse/FOLREL-619) Update to mod-user-import Java 21
+
 ## 3.9.0 2024-11-01
 
 * [MODUIMP-96](https://folio-org.atlassian.net/browse/MODUIMP-96) Permissions rename
