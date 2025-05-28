@@ -1,3 +1,7 @@
+## 3.10.1 2025-05-26
+
+* [MODUIMP-102](https://folio-org.atlassian.net/browse/MODUIMP-102): Support DATE\_PICKER custom field type
+
 ## 3.10.0 2025-03-15
 
 * [MODUIMP-99](https://folio-org.atlassian.net/browse/MODUIMP-99) Replace /\_/proxy/tenants/%s/interfaces/%s calls
