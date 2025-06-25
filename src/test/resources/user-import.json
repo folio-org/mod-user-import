@@ -21,6 +21,7 @@
             "patronGroup": "graduate",
             "active": true,
             "personal": {
+                "pronouns": "He/Him",
                 "firstName": "Chani",
                 "lastName": "Kynes",
                 "preferredFirstName": "Sihaya"

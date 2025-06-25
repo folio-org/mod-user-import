@@ -184,6 +184,7 @@ public class UserImportIT {
     then().
       statusCode(200).
       body("users[0].username", is("chani")).
+      body("users[0].personal.pronouns", is("He/Him")).
       body("users[0].customFields.classYear", startsWith("opt_"));
   }
 
