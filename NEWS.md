@@ -1,6 +1,10 @@
+## 3.10.2 2025-09-02
+
+* [MODUIMP-103](https://folio-org.atlassian.net/browse/MODUIMP-103) user-import schema does not include the users personal.pronouns field
+
 ## 3.10.1 2025-05-26
 
-* [MODUIMP-102](https://folio-org.atlassian.net/browse/MODUIMP-102): Support DATE\_PICKER custom field type
+* [MODUIMP-102](https://folio-org.atlassian.net/browse/MODUIMP-102) Support DATE\_PICKER custom field type
 
 ## 3.10.0 2025-03-15
 
