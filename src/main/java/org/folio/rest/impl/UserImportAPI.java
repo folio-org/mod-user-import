@@ -13,9 +13,9 @@ import static org.folio.rest.impl.UserImportAPIConstants.USERS_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.USERS_WERE_IMPORTED_SUCCESSFULLY;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_DEACTIVATION_SKIPPED;
 import static org.folio.rest.impl.UserImportAPIConstants.USER_SCHEMA_MISMATCH;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_CREATED;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_CREATED;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_NO_CONTENT;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_OK;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +49,6 @@ import org.folio.model.UserImportData;
 import org.folio.model.UserRecordImportStatus;
 import org.folio.model.UserSystemData;
 import org.folio.model.exception.UserMappingFailedException;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.Department;
@@ -144,7 +143,7 @@ public class UserImportAPI implements UserImport {
     Future<Set<Department>> departmentsFuture = depService.prepareDepartments(importData, okapiHeaders)
         .onSuccess(systemDataBuilder::departments);
 
-    return CompositeFuture
+    return Future
         .all(addressTypesFuture, patronGroupsFuture, servicePointsFuture, customFieldsFuture, departmentsFuture)
         .map(o -> importData.withSystemData(systemDataBuilder.build()));
   }
@@ -184,7 +183,7 @@ public class UserImportAPI implements UserImport {
             return Future.succeededFuture(userMappingFailureResponse);
           }
           List<Future<ImportResponse>> futures = processAllUsersInPartitions(userImportData, existingUserMap, okapiHeaders);
-          return GenericCompositeFuture.all(futures)
+          return Future.all(futures)
               .compose(ar -> {
                 LOGGER.info("Processing user search result.");
                 ImportResponse compositeResponse = processFutureResponses(futures);
@@ -246,7 +245,7 @@ public class UserImportAPI implements UserImport {
           = processUserBatch(okapiHeaders, currentPartition, userImportData);
       futures.add(userBatchProcessResponse);
     }
-    return GenericCompositeFuture.all(futures)
+    return Future.all(futures)
         .map(res -> {
           ImportResponse successResponse = processFutureResponses(futures);
           successResponse.setMessage(USERS_WERE_IMPORTED_SUCCESSFULLY);
@@ -317,8 +316,8 @@ public class UserImportAPI implements UserImport {
     userQueryBuilder.append(")");
     final String userSearchQuery = generateUserSearchQuery(userQueryBuilder.toString(), users.size() * 2, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .map(res -> getUsersFromResult(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESPONSE));
   }
@@ -334,7 +333,7 @@ public class UserImportAPI implements UserImport {
       .map(user -> processUser(user, userImportData, existingUsers, okapiHeaders))
       .collect(Collectors.toList());
 
-    return GenericCompositeFuture.all(futures)
+    return Future.all(futures)
         .onSuccess(x -> LOGGER.info("User creation and update has finished for the current batch."))
         .map(x -> processSuccessfulImportResponse(futures))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_IMPORT_USERS));
@@ -416,8 +415,8 @@ public class UserImportAPI implements UserImport {
     final String userUpdateQuery = UriBuilder.fromPath(USERS_ENDPOINT + "/" + user.getId()).build().toString();
 
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, userUpdateQuery)
-        .expect(SC_NO_CONTENT)
         .sendJson(asJsonObject(user))
+        .expecting(SC_NO_CONTENT)
         .map(x -> SingleUserImportResponse.updated(user.getExternalSystemId()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_WITH_EXTERNAL_SYSTEM_ID
             + user.getExternalSystemId()));
@@ -439,8 +438,8 @@ public class UserImportAPI implements UserImport {
     return addEmptyPermissionSetForUser(okapiHeaders, user)
         .compose(x ->
           HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, userCreationQuery)
-            .expect(SC_CREATED)
             .sendJsonObject(asJsonObject(user))
+            .expecting(SC_CREATED)
             .map(res -> SingleUserImportResponse.created(user.getExternalSystemId())))
         .onFailure(e -> LOGGER.error(() -> "create new user: " + e.getMessage(), e))
         .otherwise(e -> SingleUserImportResponse.failed(user.getExternalSystemId(), user.getUsername(),
@@ -507,8 +506,8 @@ public class UserImportAPI implements UserImport {
     final String permissionAddQuery = UriBuilder.fromPath(PERMS_USERS_ENDPOINT).build().toString();
 
     return HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, permissionAddQuery)
-        .expect(SC_CREATED)
         .sendJsonObject(object)
+        .expecting(SC_CREATED)
         .map(HttpResponse::bodyAsJsonObject)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_ADD_PERMISSIONS_FOR_USER_WITH_EXTERNAL_SYSTEM_ID
             + user.getExternalSystemId())
@@ -530,8 +529,8 @@ public class UserImportAPI implements UserImport {
     int limit = 10;
     final String userSearchQuery = generateUserSearchQuery(query, limit, 0);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .compose(res -> listAllUsers(res.bodyAsJsonObject(), okapiHeaders, query, limit))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_PROCESS_USER_SEARCH_RESULT));
   }
@@ -556,7 +555,7 @@ public class UserImportAPI implements UserImport {
     for (int offset = 1; offset < numberOfPages; offset++) {
       futures.add(processResponse(existingUserList, okapiHeaders, query, limit, offset * limit));
     }
-    return GenericCompositeFuture.all(futures)
+    return Future.all(futures)
         .map(x -> existingUserList)
         .recover(e -> Future.failedFuture(FAILED_TO_PROCESS_USERS + extractErrorMessage(e)));
   }
@@ -570,8 +569,8 @@ public class UserImportAPI implements UserImport {
 
     final String userSearchQuery = generateUserSearchQuery(query, limit, offset);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, userSearchQuery)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .<Void>map(
             res -> {
               List<Map> users = getUsersFromResult(res.bodyAsJsonObject());
@@ -599,7 +598,7 @@ public class UserImportAPI implements UserImport {
         futures.add(updateUser(okapiHeaders, user));
       }
     }
-    return GenericCompositeFuture.all(futures)
+    return Future.all(futures)
         .<Void>mapEmpty()
         .recover(e -> HttpClientUtil.errorManagement(e, "Failed to deactivate users"));
   }

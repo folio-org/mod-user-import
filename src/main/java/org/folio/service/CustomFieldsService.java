@@ -6,8 +6,8 @@ import static org.folio.rest.impl.UserImportAPIConstants.CUSTOM_FIELDS_MODULE_NA
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_CUSTOM_FIELDS;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_CUSTOM_FIELD;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_OK;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_NO_CONTENT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.folio.model.UserImportData;
 import org.folio.model.exception.CustomFieldMappingFailedException;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.CheckboxField;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -69,7 +68,7 @@ public class CustomFieldsService {
       updateValues(systemCustomField, importCustomField);
       futures.add(updateCustomField(systemCustomField, okapiHeaders));
     }
-    return GenericCompositeFuture.all(futures)
+    return Future.all(futures)
         .map(systemCustomFields)
         .recover(e -> HttpClientUtil.errorManagement(e, "Failed to update custom fields"));
   }
@@ -135,8 +134,8 @@ public class CustomFieldsService {
   private Future<Void> updateCustomField(CustomField customField, Map<String, String> okapiHeaders) {
     String query = CUSTOM_FIELDS_ENDPOINT + "/" + customField.getId();
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, query)
-        .expect(SC_NO_CONTENT)
         .sendJson(customField)
+        .expecting(SC_NO_CONTENT)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_CUSTOM_FIELD))
         .mapEmpty();
   }
@@ -150,8 +149,8 @@ public class CustomFieldsService {
 
   private Future<Set<CustomField>> getCustomFields(Map<String, String> headers) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, headers, CUSTOM_FIELDS_ENDPOINT + LIMIT_ALL)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .map(res -> extractCustomFields(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_CUSTOM_FIELDS));
   }

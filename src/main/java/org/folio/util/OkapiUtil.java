@@ -1,17 +1,14 @@
 package org.folio.util;
 
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_OK;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
-import org.folio.HttpStatus;
-import org.folio.okapi.common.ChattyHttpResponseExpectation;
 import org.folio.okapi.common.ModuleId;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.tools.utils.TenantTool;
@@ -39,7 +36,7 @@ public final class OkapiUtil {
         .formatted(TenantTool.tenantId(okapiHeaders), PercentCodec.encode(interfaceName));
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, requestUri)
         .send()
-        .expecting(ChattyHttpResponseExpectation.SC_OK)
+        .expecting(SC_OK)
         .compose(res -> {
           var list = extractModuleIds(res.bodyAsJsonArray(), moduleName);
           if (list.isEmpty()) {
