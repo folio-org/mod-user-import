@@ -3,7 +3,7 @@ package org.folio.service;
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_LIST_SERVICE_POINTS;
 import static org.folio.rest.impl.UserImportAPIConstants.LIMIT_ALL;
 import static org.folio.rest.impl.UserImportAPIConstants.SERVICE_POINTS_ENDPOINT;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_OK;
 
 import java.util.Map;
 
@@ -21,8 +21,8 @@ public class ServicePointsService {
 
   public Future<Map<String, String>> getServicePoints(Map<String, String> okapiHeaders) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, SERVICE_POINTS_ENDPOINT + LIMIT_ALL)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .map(res -> extractServicePoints(res.bodyAsJsonObject()))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_LIST_SERVICE_POINTS));
   }

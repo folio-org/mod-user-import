@@ -6,9 +6,9 @@ import static org.folio.rest.impl.UserImportAPIConstants.FAILED_TO_UPDATE_USER_P
 import static org.folio.rest.impl.UserImportAPIConstants.FAILED_USER_PREFERENCE_VALIDATION;
 import static org.folio.rest.impl.UserImportAPIConstants.REQUEST_PREFERENCES_ENDPOINT;
 import static org.folio.rest.impl.UserImportAPIConstants.REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_OK;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_CREATED;
-import static org.folio.rest.validator.ChattyResponsePredicate.SC_NO_CONTENT;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_OK;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_CREATED;
+import static org.folio.okapi.common.ChattyHttpResponseExpectation.SC_NO_CONTENT;
 
 import java.util.Map;
 
@@ -34,8 +34,8 @@ public class UserPreferenceService {
   public Future<RequestPreference> get(Map<String, String> okapiHeaders, String userId) {
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT, "?query=userId==" + userId);
     return HttpClientUtil.getRequestOkapi(HttpMethod.GET, okapiHeaders, query)
-        .expect(SC_OK)
         .send()
+        .expecting(SC_OK)
         .map(res -> res.bodyAsJsonObject().getJsonArray(REQUEST_PREFERENCES_ARRAY_KEY)
             .getJsonObject(0).mapTo(RequestPreference.class))
         .otherwiseEmpty(); // if not OK, return, success null.
@@ -44,8 +44,8 @@ public class UserPreferenceService {
   public Future<Void> update(Map<String, String> okapiHeaders, RequestPreference entity) {
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT, "/" + entity.getId());
     return HttpClientUtil.getRequestOkapi(HttpMethod.PUT, okapiHeaders, query)
-        .expect(SC_NO_CONTENT)
         .sendJsonObject(JsonObject.mapFrom(entity))
+        .expecting(SC_NO_CONTENT)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_UPDATE_USER_PREFERENCE))
         .mapEmpty();
   }
@@ -53,16 +53,16 @@ public class UserPreferenceService {
   public Future<Void> delete(Map<String, String> okapiHeaders, String id) {
     String query = String.format(REQUEST_PREFERENCES_SEARCH_QUERY_ENDPOINT, "/" + id);
     return HttpClientUtil.getRequestOkapi(HttpMethod.DELETE, okapiHeaders, query)
-        .expect(SC_NO_CONTENT)
         .send()
+        .expecting(SC_NO_CONTENT)
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_DELETE_USER_PREFERENCE))
         .mapEmpty();
   }
 
   public Future<RequestPreference> create(Map<String, String> okapiHeaders, RequestPreference entity) {
     return HttpClientUtil.getRequestOkapi(HttpMethod.POST, okapiHeaders, REQUEST_PREFERENCES_ENDPOINT)
-        .expect(SC_CREATED)
         .sendJsonObject(JsonObject.mapFrom(entity))
+        .expecting(SC_CREATED)
         .map(res -> res.bodyAsJsonObject().mapTo(RequestPreference.class))
         .recover(e -> HttpClientUtil.errorManagement(e, FAILED_TO_CREATE_USER_PREFERENCE));
   }
@@ -74,7 +74,7 @@ public class UserPreferenceService {
       LOGGER.error(FAILED_USER_PREFERENCE_VALIDATION + ex.getMessage());
       return Future.failedFuture(FAILED_USER_PREFERENCE_VALIDATION + ex.getMessage());
     } catch (Exception e) {
-      LOGGER.error("Error occurred" + e.getMessage());
+      LOGGER.error("Error occurred: {}", e.getMessage(), e);
       return Future.failedFuture(e);
     }
     return Future.succeededFuture();
