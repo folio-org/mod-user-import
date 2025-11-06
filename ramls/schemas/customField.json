@@ -77,6 +77,10 @@
       "$ref": "textField.json",
       "readonly": true
     },
+    "displayInAccordion": {
+      "type": "string",
+      "description": "Display in accordion names for the custom field"
+    },
     "metadata": {
       "description": "User metadata information",
       "$ref": "raml-util/schemas/metadata.schema",
