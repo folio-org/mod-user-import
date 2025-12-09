@@ -1,3 +1,7 @@
+## 3.9.1 2025-12-08
+
+* [MODUIMP-112](https://folio-org.atlassian.net/browse/MODUIMP-112) RMB Logging release - RMB 35.3.1, Vert.x 4.5.22
+
 ## 3.9.0 2024-11-01
 
 * [MODUIMP-96](https://folio-org.atlassian.net/browse/MODUIMP-96) Permissions rename
