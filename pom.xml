@@ -36,7 +36,7 @@
     <jsonschema_paths>schemas/**</jsonschema_paths>
     <generate_routing_context>/user-import</generate_routing_context>
 
-    <raml-module-builder-version>35.4.0</raml-module-builder-version>
+    <raml-module-builder-version>35.4.1</raml-module-builder-version>
     <lombok.version>1.18.36</lombok.version>
     <aspectj.version>1.9.22.1</aspectj.version>
     <jetbrains-annotations.version>26.0.2</jetbrains-annotations.version>
