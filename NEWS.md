@@ -1,3 +1,8 @@
+## 3.10.3 2026-02-19
+
+* [MODUIMP-115](https://folio-org.atlassian.net/browse/MODUIMP-115) Vert.x 4.5.25 + RMB 35.4.2 fixing CVE-2025-67735 Netty CRLF injection request smuggling
+* [MODUIMP-113](https://folio-org.atlassian.net/browse/MODUIMP-113) RMB 35.4.1 - RMB Logging release
+
 ## 3.10.2 2025-09-02
 
 * [MODUIMP-103](https://folio-org.atlassian.net/browse/MODUIMP-103) user-import schema does not include the users personal.pronouns field
