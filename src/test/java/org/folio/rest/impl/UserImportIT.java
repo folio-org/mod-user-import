@@ -18,20 +18,21 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import org.apache.commons.io.IOUtils;
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.NginxContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.nginx.NginxContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -39,23 +40,24 @@ import org.testcontainers.utility.DockerImageName;
  * the shaded fat uber jar works, that the Docker container works, and that
  * the interaction with the mod-users container works.
  */
-public class UserImportIT {
+@Testcontainers
+class UserImportIT {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserImportIT.class);
   private static final String POSTGRES_IMAGE_NAME = PostgresTesterContainer.getImageName();
   private static final Network network = Network.newNetwork();
   private static String modUsersUri;
 
-  @ClassRule
-  public static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"))
+  @Container
+  static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"))
     .withNetwork(network)
     .withNetworkAliases("kafka")
     .withListener("kafka:29092")
     .withStartupAttempts(3)
     .withLogConsumer(logConsumer("kafka"));
 
-  @ClassRule
-  public static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE_NAME)
+  @Container
+  static final PostgreSQLContainer postgres = new PostgreSQLContainer(POSTGRES_IMAGE_NAME)
     .withNetwork(network)
     .withNetworkAliases("postgres")
     .withUsername("username")
@@ -64,17 +66,17 @@ public class UserImportIT {
     .withStartupAttempts(3)
     .withLogConsumer(logConsumer("pg"));
 
-  @ClassRule
-  public static final GenericContainer<?> modUserImport =
+  @Container
+  static final GenericContainer<?> modUserImport =
     new GenericContainer<>(new ImageFromDockerfile("mod-user-import").withFileFromPath(".", Path.of(".")))
       .withNetwork(network)
       .withNetworkAliases("mod-user-import")
       .withExposedPorts(8081)
       .withLogConsumer(logConsumer("mui"));
 
-  @ClassRule
-  public static final GenericContainer<?> modUsers =
-    new GenericContainer<>(DockerImageName.parse("folioorg/mod-users:19.5.0"))
+  @Container
+  static final GenericContainer<?> modUsers =
+    new GenericContainer<>(DockerImageName.parse("folioorg/mod-users:19.6.0"))
       .withNetwork(network)
       .withNetworkAliases("mod-users")
       .withExposedPorts(8081)
@@ -88,9 +90,9 @@ public class UserImportIT {
       .dependsOn(postgres, kafka)
       .withLogConsumer(logConsumer("mod-users"));
 
-  @ClassRule
-  public static final NginxContainer<?> okapi =  // mock okapi and other modules
-    new NginxContainer<>("nginx:alpine-slim")
+  @Container
+  static final NginxContainer okapi =  // mock okapi and other modules
+    new NginxContainer("nginx:alpine-slim")
       .withNetwork(network)
       .withNetworkAliases("okapi")
       .withExposedPorts(9130)
@@ -116,8 +118,8 @@ public class UserImportIT {
       .dependsOn(modUsers)
       .withLogConsumer(logConsumer("okapi"));
 
-  @BeforeClass
-  public static void beforeClass() {
+  @BeforeAll
+  static void beforeClass() {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + modUserImport.getHost() + ":" + modUserImport.getFirstMappedPort();
     RestAssured.requestSpecification = new RequestSpecBuilder()
@@ -135,7 +137,7 @@ public class UserImportIT {
     String location =
         given().
           body(new JsonObject()
-              .put("module_to", "99.99.99")
+              .put("module_to", "mod-users-99.99.99")
               .put("parameters", new JsonArray()
                   .add(new JsonObject().put("key", "loadReference").put("value", "true"))
                   .add(new JsonObject().put("key", "loadSample").put("value", "true")))
@@ -156,7 +158,7 @@ public class UserImportIT {
   }
 
   @Test
-  public void healthTest() {
+  void healthTest() {
     when().
       get("/admin/health").
     then().
@@ -164,7 +166,7 @@ public class UserImportIT {
   }
 
   @Test
-  public void userImportWithCustomFields() {
+  void userImportWithCustomFields() {
     given().
       body(getResource("/custom-fields.json")).
     when().
