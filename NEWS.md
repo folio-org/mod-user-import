@@ -1,3 +1,11 @@
+## 3.11.0 2026-04-22
+
+Trillium R1-2026 release
+
+* [MODUIMP-108](https://folio-org.atlassian.net/browse/MODUIMP-108) Upgrade module to Vert.x 5.0
+* [MODUIMP-106](https://folio-org.atlassian.net/browse/MODUIMP-106) Allow displayInAccordion property in custom field
+* [MODUIMP-117](https://folio-org.atlassian.net/browse/MODUIMP-117) Trillium dependencies: Vertx 5.0.11, log4j 2.25.4, …
+
 ## 3.10.2 2025-09-02
 
 * [MODUIMP-103](https://folio-org.atlassian.net/browse/MODUIMP-103) user-import schema does not include the users personal.pronouns field
