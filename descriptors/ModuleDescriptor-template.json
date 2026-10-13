@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "user-import",
-      "version": "2.2",
+      "version": "2.3",
       "handlers": [
         {
           "methods": [
