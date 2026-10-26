@@ -141,11 +141,11 @@
           }
         },
         "preferredContactTypeId": {
-          "description": "Name of user's preferred contact type. One of mail, email, text, phone, mobile.  This is different from the preferredContactTypeId property of the /users API that is a UUID.",
+          "description": "(Deprecated) Name of user's preferred contact type. One of mail, email, text, phone, mobile.  This is different from the deprecated preferredContactTypeId property of the /users API that is a UUID.",
           "type": "string"
         },
         "preferredContactTypeIds": {
-          "description": "IDs of user's preferred contact types, same as the preferredContactTypeIds property of the /users API",
+          "description": "IDs of user's preferred contact types like Email, Mail, or Text Message (see ui-users contactTypes.js), same as the preferredContactTypeIds property of the /users API",
           "type": "array",
           "items": {
             "type": "string"
