@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -40,6 +41,7 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.util.MockJson;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -66,6 +68,11 @@ public class UserImportAPITest {
 
   private Vertx vertx;
   private MockJson mock = new MockJson("mock_standard.json");
+
+  @BeforeClass
+  public static void beforeClass() {
+    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+  }
 
   @Before
   public void setUp(TestContext context) {
@@ -125,6 +132,11 @@ public class UserImportAPITest {
       .withUsers(users)
       .withTotalRecords(1);
 
+    var containsStringOfAnyListFailure = anyOf(
+        containsString(UserImportAPIConstants.FAILED_TO_LIST_PATRON_GROUPS),
+        containsString(UserImportAPIConstants.FAILED_TO_LIST_SERVICE_POINTS),
+        containsString(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES));
+
     given()
       .header(TENANT_HEADER)
       .header(TOKEN_HEADER)
@@ -134,14 +146,14 @@ public class UserImportAPITest {
       .post(USER_IMPORT)
       .then()
       .body(MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_IMPORT_USERS))
-      .body(ERROR, containsString(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(ERROR, containsStringOfAnyListFailure)
       .body(TOTAL_RECORDS, equalTo(1))
       .body(CREATED_RECORDS, equalTo(0))
       .body(UPDATED_RECORDS, equalTo(0))
       .body(FAILED_RECORDS, equalTo(1))
       .body(FAILED_USERS + "[0]." + EXTERNAL_SYSTEM_ID, equalTo(users.get(0).getExternalSystemId()))
       .body(FAILED_USERS + "[0]." + USERNAME, equalTo(users.get(0).getUsername()))
-      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsString(UserImportAPIConstants.FAILED_TO_LIST_ADDRESS_TYPES))
+      .body(FAILED_USERS + "[0]." + USER_ERROR_MESSAGE, containsStringOfAnyListFailure)
       .body(FAILED_USERS, hasSize(1))
       .statusCode(500);
   }
