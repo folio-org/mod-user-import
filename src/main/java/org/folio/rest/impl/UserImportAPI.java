@@ -452,6 +452,10 @@ public class UserImportAPI implements UserImport {
       // delete optional array to be compatible with Poppy and Quesnelia versions of mod-users
       jsonObject.remove("preferredEmailCommunication");
     }
+    if (user.getPersonal() != null && user.getPersonal().getPreferredContactTypeIds().isEmpty()) {
+      // delete optional array to be compatible with mod-users before users interface 16.5
+      jsonObject.getJsonObject("personal").remove("preferredContactTypeIds");
+    }
     return jsonObject;
   }
 
